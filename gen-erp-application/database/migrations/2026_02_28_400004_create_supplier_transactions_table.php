@@ -1,0 +1,36 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('supplier_transactions', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('company_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('supplier_id')->constrained('suppliers')->cascadeOnDelete();
+            $table->string('type', 30); // bill|payment|debit_note|adjustment
+            $table->string('reference_type', 100)->nullable();
+            $table->unsignedBigInteger('reference_id')->nullable();
+            $table->bigInteger('amount');
+            $table->bigInteger('balance_after');
+            $table->string('description', 500);
+            $table->date('transaction_date');
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('created_at')->useCurrent();
+
+            $table->index(
+                ['company_id', 'supplier_id', 'transaction_date'],
+                'st_company_supp_date_idx'
+            );
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('supplier_transactions');
+    }
+};
