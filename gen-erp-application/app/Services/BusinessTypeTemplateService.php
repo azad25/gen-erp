@@ -6,6 +6,7 @@ use App\Enums\BusinessType;
 use App\Models\AlertRule;
 use App\Models\Company;
 use App\Models\EntityAlias;
+use App\Models\LeaveType;
 use App\Models\WorkflowDefinition;
 use App\Models\WorkflowStatus;
 use App\Models\WorkflowTransition;
@@ -59,6 +60,7 @@ class BusinessTypeTemplateService
         $this->applyDefaultSettings($company);
         $this->applyDefaultWorkflows($company);
         $this->applyDefaultAlertRules($company);
+        $this->applyDefaultLeaveTypes($company);
         (new DefaultUnitsSeeder)->seedForCompany($company);
     }
 
@@ -321,6 +323,37 @@ class BusinessTypeTemplateService
                 'cooldown_minutes' => 0,
                 'is_active' => true,
             ]);
+        }
+    }
+
+    /**
+     * Seed default leave types for a company based on Bangladesh labour law.
+     */
+    private function applyDefaultLeaveTypes(Company $company): void
+    {
+        $businessType = $company->business_type instanceof BusinessType
+            ? $company->business_type
+            : BusinessType::from($company->business_type);
+
+        $defaults = [
+            ['name' => 'Annual Leave', 'days_per_year' => 18, 'carry_forward' => true, 'max_carry_forward_days' => 10],
+            ['name' => 'Sick Leave', 'days_per_year' => 14, 'carry_forward' => false],
+            ['name' => 'Casual Leave', 'days_per_year' => 10, 'carry_forward' => false],
+            ['name' => 'Maternity Leave', 'days_per_year' => 112, 'is_paid' => true, 'carry_forward' => false],
+            ['name' => 'Paternity Leave', 'days_per_year' => 3, 'is_paid' => true, 'carry_forward' => false],
+        ];
+
+        if ($businessType === BusinessType::RMG) {
+            $defaults[] = ['name' => 'Festival Bonus Leave', 'days_per_year' => 2, 'carry_forward' => false];
+        }
+
+        foreach ($defaults as $d) {
+            LeaveType::withoutGlobalScopes()->create(array_merge([
+                'company_id' => $company->id,
+                'is_paid' => true,
+                'requires_approval' => true,
+                'max_carry_forward_days' => 0,
+            ], $d));
         }
     }
 }

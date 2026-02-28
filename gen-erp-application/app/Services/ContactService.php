@@ -202,6 +202,30 @@ class ContactService
         ];
     }
 
+    public function recordSupplierTransaction(
+        Supplier $supplier,
+        string $type,
+        int $amount,
+        string $description,
+        ?Model $reference = null,
+    ): SupplierTransaction {
+        $balanceAfter = $supplier->currentBalance() + $amount;
+
+        return SupplierTransaction::withoutGlobalScopes()->create([
+            'company_id' => $supplier->company_id,
+            'supplier_id' => $supplier->id,
+            'type' => $type,
+            'reference_type' => $reference ? get_class($reference) : null,
+            'reference_id' => $reference?->getKey(),
+            'amount' => $amount,
+            'balance_after' => $balanceAfter,
+            'description' => $description,
+            'transaction_date' => now()->toDateString(),
+            'created_by' => auth()->id(),
+            'created_at' => now(),
+        ]);
+    }
+
     /**
      * @return array{net: int, tds_amount: int, vds_amount: int}
      */
