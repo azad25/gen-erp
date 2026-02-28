@@ -2,6 +2,7 @@
 
 namespace App\Filament\Support;
 
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -113,9 +114,9 @@ class TableStyles
     /**
      * Create a modern boolean column with icons.
      */
-    public static function boolean(string $name, string $label = null): TextColumn
+    public static function boolean(string $name, string $label = null): IconColumn
     {
-        return TextColumn::make($name)
+        return IconColumn::make($name)
             ->label($label ?? __(ucfirst($name)))
             ->boolean()
             ->sortable()

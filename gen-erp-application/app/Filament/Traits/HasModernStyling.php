@@ -12,17 +12,19 @@ use Filament\Tables\Table;
 trait HasModernStyling
 {
     /**
-     * Apply modern table styling.
+     * Apply modern table styling and advanced datatable features.
      */
     public static function modernTable(Table $table): Table
     {
         return $table
-            ->striped()
+            // Removed striped() for cleaner SaaS aesthetic
             ->defaultPaginationPageOption(25)
             ->paginationPageOptions([10, 25, 50, 100])
             ->persistFiltersInSession()
             ->persistSearchInSession()
             ->persistSortInSession()
+            // Enable advanced column toggling layout
+            ->columnToggleFormColumns(2)
             ->deferLoading()
             ->extremePaginationLinks()
             ->poll('30s');

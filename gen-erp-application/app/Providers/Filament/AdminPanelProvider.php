@@ -59,7 +59,6 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('components.home.logo', ['attributes' => new \Illuminate\View\ComponentAttributeBag(['class' => 'h-8 w-8'])]))
             ->darkModeBrandLogo(fn () => view('components.home.logo', ['attributes' => new \Illuminate\View\ComponentAttributeBag(['class' => 'h-8 w-8'])]))
             ->brandLogoHeight('2rem')
-            ->darkMode(false)
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('280px')
             ->collapsedSidebarWidth('80px')
@@ -142,5 +141,26 @@ class AdminPanelProvider extends PanelProvider
             'info' => Color::Cyan,
             'gray' => Color::Slate,
         ]);
+
+        // Global Component Styling for Modern SaaS Aesthetic
+        \Filament\Tables\Table::configureUsing(function (\Filament\Tables\Table $table): void {
+            $table
+                ->paginationPageOptions([10, 25, 50, 100])
+                ->defaultPaginationPageOption(25)
+                ->extremePaginationLinks()
+                ->persistSearchInSession()
+                ->persistSortInSession()
+                ->persistFiltersInSession()
+                ->persistColumnSearchesInSession()
+                ->deferLoading();
+        });
+
+        \Filament\Tables\Actions\Action::configureUsing(function (\Filament\Tables\Actions\Action $action): void {
+            $action->button(); // Default all table actions to pill buttons (styled via CSS)
+        });
+
+        \Filament\Pages\Actions\Action::configureUsing(function (\Filament\Pages\Actions\Action $action): void {
+            $action->button();
+        });
     }
 }
