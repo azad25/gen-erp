@@ -18,6 +18,7 @@ class SupplierPayment extends Model
 
     protected $fillable = [
         'company_id',
+        'branch_id',
         'supplier_id',
         'payment_method_id',
         'payment_number',

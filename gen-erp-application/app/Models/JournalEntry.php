@@ -19,6 +19,7 @@ class JournalEntry extends Model
 
     protected $fillable = [
         'company_id',
+        'branch_id',
         'entry_number',
         'entry_date',
         'reference_type',

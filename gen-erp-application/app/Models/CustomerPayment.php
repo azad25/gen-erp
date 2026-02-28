@@ -18,6 +18,7 @@ class CustomerPayment extends Model
 
     protected $fillable = [
         'company_id',
+        'branch_id',
         'customer_id',
         'payment_method_id',
         'receipt_number',

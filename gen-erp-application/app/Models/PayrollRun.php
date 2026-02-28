@@ -17,6 +17,7 @@ class PayrollRun extends Model
 
     protected $fillable = [
         'company_id',
+        'branch_id',
         'run_number',
         'period_month',
         'period_year',
