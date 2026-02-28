@@ -30,8 +30,8 @@ return new class extends Migration
                 'cfv_company_entity_id_idx'
             );
             $table->index(
-                ['company_id', 'field_key', 'value_text'],
-                'cfv_company_key_text_idx'
+                ['company_id', 'field_key'],
+                'cfv_company_key_idx'
             );
         });
     }
