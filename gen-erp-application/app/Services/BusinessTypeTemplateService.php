@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BusinessType;
+use App\Models\Account;
 use App\Models\AlertRule;
 use App\Models\Company;
 use App\Models\EntityAlias;
@@ -61,6 +62,7 @@ class BusinessTypeTemplateService
         $this->applyDefaultWorkflows($company);
         $this->applyDefaultAlertRules($company);
         $this->applyDefaultLeaveTypes($company);
+        $this->applyDefaultAccounts($company);
         (new DefaultUnitsSeeder)->seedForCompany($company);
     }
 
@@ -354,6 +356,41 @@ class BusinessTypeTemplateService
                 'requires_approval' => true,
                 'max_carry_forward_days' => 0,
             ], $d));
+        }
+    }
+
+    /**
+     * Seed default chart of accounts for a new company.
+     */
+    private function applyDefaultAccounts(Company $company): void
+    {
+        $accounts = [
+            ['code' => '1001', 'name' => 'Cash in Hand', 'account_type' => 'asset', 'sub_type' => 'cash'],
+            ['code' => '1002', 'name' => 'Cash at Bank', 'account_type' => 'asset', 'sub_type' => 'bank'],
+            ['code' => '1003', 'name' => 'Accounts Receivable', 'account_type' => 'asset', 'sub_type' => 'receivable'],
+            ['code' => '1004', 'name' => 'Inventory', 'account_type' => 'asset', 'sub_type' => 'inventory'],
+            ['code' => '1005', 'name' => 'VAT Receivable', 'account_type' => 'asset', 'sub_type' => 'other'],
+            ['code' => '2001', 'name' => 'Accounts Payable', 'account_type' => 'liability', 'sub_type' => 'payable'],
+            ['code' => '2002', 'name' => 'VAT Payable', 'account_type' => 'liability', 'sub_type' => 'current_liability'],
+            ['code' => '2003', 'name' => 'TDS Payable', 'account_type' => 'liability', 'sub_type' => 'current_liability'],
+            ['code' => '2004', 'name' => 'Salary Payable', 'account_type' => 'liability', 'sub_type' => 'current_liability'],
+            ['code' => '3001', 'name' => 'Owner\'s Capital', 'account_type' => 'equity', 'sub_type' => 'other'],
+            ['code' => '3002', 'name' => 'Retained Earnings', 'account_type' => 'equity', 'sub_type' => 'retained_earnings'],
+            ['code' => '4001', 'name' => 'Sales Revenue', 'account_type' => 'income', 'sub_type' => 'revenue'],
+            ['code' => '4002', 'name' => 'Other Income', 'account_type' => 'income', 'sub_type' => 'other'],
+            ['code' => '5001', 'name' => 'Cost of Goods Sold', 'account_type' => 'expense', 'sub_type' => 'cogs'],
+            ['code' => '5002', 'name' => 'Salary Expense', 'account_type' => 'expense', 'sub_type' => 'operating_expense'],
+            ['code' => '5003', 'name' => 'Rent Expense', 'account_type' => 'expense', 'sub_type' => 'operating_expense'],
+            ['code' => '5004', 'name' => 'Utilities', 'account_type' => 'expense', 'sub_type' => 'operating_expense'],
+            ['code' => '5005', 'name' => 'Other Expense', 'account_type' => 'expense', 'sub_type' => 'operating_expense'],
+        ];
+
+        foreach ($accounts as $a) {
+            Account::withoutGlobalScopes()->create(array_merge($a, [
+                'company_id' => $company->id,
+                'is_system' => true,
+                'is_active' => true,
+            ]));
         }
     }
 }
