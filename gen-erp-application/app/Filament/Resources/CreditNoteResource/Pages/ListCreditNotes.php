@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\CreditNoteResource\Pages;
 
 use App\Filament\Resources\CreditNoteResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListCreditNotes extends ListRecords
+class ListCreditNotes extends BaseListPage
 {
     protected static string $resource = CreditNoteResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

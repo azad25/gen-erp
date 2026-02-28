@@ -1,0 +1,75 @@
+/* Inter Font - Variable */
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype-variations');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype-variations');
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Noto Sans Bengali - Variable */
+@font-face {
+    font-family: 'Noto Sans Bengali';
+    src: url('Noto_Sans_Bengali/NotoSansBengali-VariableFont_wdth,wght.ttf') format('truetype-variations');
+    font-weight: 100 900;
+    font-stretch: 62.5% 100%;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Noto Sans Bengali - Static Weights (Fallback) */
+@font-face {
+    font-family: 'Noto Sans Bengali';
+    src: url('Noto_Sans_Bengali/static/NotoSansBengali-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Sans Bengali';
+    src: url('Noto_Sans_Bengali/static/NotoSansBengali-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Sans Bengali';
+    src: url('Noto_Sans_Bengali/static/NotoSansBengali-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Sans Bengali';
+    src: url('Noto_Sans_Bengali/static/NotoSansBengali-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Sans Bengali';
+    src: url('Noto_Sans_Bengali/static/NotoSansBengali-ExtraBold.ttf') format('truetype');
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Sans Bengali';
+    src: url('Noto_Sans_Bengali/static/NotoSansBengali-Black.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}

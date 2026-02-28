@@ -48,12 +48,13 @@ class NotificationService
                         $renderedBody,
                     ));
                 } elseif ($channel === 'email') {
-                    // TODO: Phase 7 — dispatch queued email via SendNotificationJob
-                    Log::info('Email notification queued', [
-                        'event' => $event->value,
-                        'user' => $userId,
-                        'subject' => $renderedSubject,
-                    ]);
+                    \App\Jobs\SendNotificationJob::dispatch(
+                        $user->email,
+                        $user->name,
+                        $renderedSubject,
+                        $renderedBody,
+                        $event->value,
+                    );
                 }
             }
         }

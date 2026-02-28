@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\InvoiceStatus;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -22,7 +25,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class InvoiceResource extends Resource
+class InvoiceResource extends BaseResource
 {
     protected static ?string $model = Invoice::class;
 
@@ -123,7 +126,7 @@ class InvoiceResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('invoice_number')->label(__('Invoice #'))->searchable()->sortable(),
                 TextColumn::make('customer.name')->label(__entity('customer'))->searchable()->sortable(),
@@ -148,7 +151,7 @@ class InvoiceResource extends Resource
                 SelectFilter::make('status')
                     ->options(InvoiceStatus::options()),
             ])
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

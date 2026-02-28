@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\LeaveTypeResource\Pages;
 
 use App\Filament\Resources\LeaveTypeResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateLeaveType extends CreateRecord
+class CreateLeaveType extends BaseCreatePage
 {
     protected static string $resource = LeaveTypeResource::class;
 }

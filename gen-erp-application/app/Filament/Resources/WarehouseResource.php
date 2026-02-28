@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\WarehouseResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\Warehouse;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -14,7 +17,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class WarehouseResource extends Resource
+class WarehouseResource extends BaseResource
 {
     protected static ?string $model = Warehouse::class;
 
@@ -50,14 +53,14 @@ class WarehouseResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('code')->label(__('Code'))->searchable()->sortable(),
                 TextColumn::make('name')->label(__('Name'))->searchable()->sortable(),
                 IconColumn::make('is_default')->label(__('Default'))->boolean(),
                 IconColumn::make('is_active')->label(__('Active'))->boolean(),
             ])
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

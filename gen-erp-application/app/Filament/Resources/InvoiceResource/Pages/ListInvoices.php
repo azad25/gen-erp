@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
 use App\Filament\Resources\InvoiceResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListInvoices extends ListRecords
+class ListInvoices extends BaseListPage
 {
     protected static string $resource = InvoiceResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

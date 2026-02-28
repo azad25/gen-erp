@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\GoodsReceiptResource\Pages;
 
 use App\Filament\Resources\GoodsReceiptResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditGoodsReceipt extends EditRecord
+class EditGoodsReceipt extends BaseEditPage
 {
     protected static string $resource = GoodsReceiptResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\CustomFieldType;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Filament\Resources\CustomFieldDefinitionResource\Pages;
 use App\Models\CustomFieldDefinition;
 use Filament\Forms\Components\KeyValue;
@@ -17,7 +20,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 
-class CustomFieldDefinitionResource extends Resource
+class CustomFieldDefinitionResource extends BaseResource
 {
     protected static ?string $model = CustomFieldDefinition::class;
 
@@ -99,7 +102,7 @@ class CustomFieldDefinitionResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('label')
                     ->label(__('Label'))
@@ -131,9 +134,7 @@ class CustomFieldDefinitionResource extends Resource
             ])
             ->defaultSort('display_order')
             ->reorderable('display_order')
-            ->actions([
-                EditAction::make(),
-            ]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\PurchaseReturnResource\Pages;
 
 use App\Filament\Resources\PurchaseReturnResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditPurchaseReturn extends EditRecord
+class EditPurchaseReturn extends BaseEditPage
 {
     protected static string $resource = PurchaseReturnResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

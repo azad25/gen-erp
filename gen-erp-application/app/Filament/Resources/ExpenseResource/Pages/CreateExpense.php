@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\ExpenseResource\Pages;
 
 use App\Filament\Resources\ExpenseResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateExpense extends CreateRecord
+class CreateExpense extends BaseCreatePage
 {
     protected static string $resource = ExpenseResource::class;
 }

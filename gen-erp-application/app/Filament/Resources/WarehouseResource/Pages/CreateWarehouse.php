@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\WarehouseResource\Pages;
 
 use App\Filament\Resources\WarehouseResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateWarehouse extends CreateRecord
+class CreateWarehouse extends BaseCreatePage
 {
     protected static string $resource = WarehouseResource::class;
 }

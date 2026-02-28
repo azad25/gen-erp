@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\NumberSequenceResource\Pages;
 
 use App\Filament\Resources\NumberSequenceResource;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditNumberSequence extends EditRecord
+class EditNumberSequence extends BaseEditPage
 {
     protected static string $resource = NumberSequenceResource::class;
 }

@@ -3,17 +3,9 @@
 namespace App\Filament\Resources\WorkflowDefinitionResource\Pages;
 
 use App\Filament\Resources\WorkflowDefinitionResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditWorkflowDefinition extends EditRecord
+class EditWorkflowDefinition extends BaseEditPage
 {
     protected static string $resource = WorkflowDefinitionResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            DeleteAction::make(),
-        ];
-    }
 }

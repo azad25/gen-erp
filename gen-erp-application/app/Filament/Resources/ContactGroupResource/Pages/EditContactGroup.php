@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\ContactGroupResource\Pages;
 
 use App\Filament\Resources\ContactGroupResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditContactGroup extends EditRecord
+class EditContactGroup extends BaseEditPage
 {
     protected static string $resource = ContactGroupResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

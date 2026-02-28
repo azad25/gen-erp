@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\StockTransferStatus;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Filament\Resources\StockTransferResource\Pages;
 use App\Models\Product;
 use App\Models\StockTransfer;
@@ -18,7 +21,7 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class StockTransferResource extends Resource
+class StockTransferResource extends BaseResource
 {
     protected static ?string $model = StockTransfer::class;
 
@@ -74,7 +77,7 @@ class StockTransferResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('reference_number')->label(__('Ref #'))->searchable()->sortable(),
                 TextColumn::make('fromWarehouse.name')->label(__('From'))->sortable(),
@@ -87,7 +90,7 @@ class StockTransferResource extends Resource
                 TextColumn::make('transfer_date')->label(__('Date'))->date('d M Y')->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\GoodsReceiptResource\Pages;
 
 use App\Filament\Resources\GoodsReceiptResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateGoodsReceipt extends CreateRecord
+class CreateGoodsReceipt extends BaseCreatePage
 {
     protected static string $resource = GoodsReceiptResource::class;
 }

@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SupplierResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\ContactGroup;
 use App\Models\Supplier;
 use App\Services\CustomFieldService;
@@ -21,7 +24,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class SupplierResource extends Resource
+class SupplierResource extends BaseResource
 {
     protected static ?string $model = Supplier::class;
 
@@ -155,7 +158,7 @@ class SupplierResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('supplier_code')->label(__('Code'))->searchable()->sortable(),
                 TextColumn::make('name')->label(__('Name'))->searchable()->sortable(),
@@ -167,7 +170,7 @@ class SupplierResource extends Resource
                 IconColumn::make('is_active')->label(__('Active'))->boolean(),
             ])
             ->defaultSort('name')
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

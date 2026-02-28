@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\PurchaseOrderStatus;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Filament\Resources\PurchaseOrderResource\Pages;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
@@ -22,7 +25,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class PurchaseOrderResource extends Resource
+class PurchaseOrderResource extends BaseResource
 {
     protected static ?string $model = PurchaseOrder::class;
 
@@ -122,7 +125,7 @@ class PurchaseOrderResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('reference_number')->label(__('Ref #'))->searchable()->sortable(),
                 TextColumn::make('supplier.name')->label(__entity('supplier'))->searchable()->sortable(),
@@ -143,7 +146,7 @@ class PurchaseOrderResource extends Resource
                 SelectFilter::make('status')
                     ->options(PurchaseOrderStatus::options()),
             ])
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PaymentMethodResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\PaymentMethod;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -14,7 +17,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class PaymentMethodResource extends Resource
+class PaymentMethodResource extends BaseResource
 {
     protected static ?string $model = PaymentMethod::class;
 
@@ -51,7 +54,7 @@ class PaymentMethodResource extends Resource
             TextColumn::make('name')->label(__('Name'))->searchable()->sortable(),
             TextColumn::make('type')->label(__('Type'))->sortable(),
             IconColumn::make('is_active')->label(__('Active'))->boolean(),
-        ])->actions([EditAction::make()]);
+        ])->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

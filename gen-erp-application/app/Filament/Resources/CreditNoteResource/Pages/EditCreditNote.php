@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\CreditNoteResource\Pages;
 
 use App\Filament\Resources\CreditNoteResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditCreditNote extends EditRecord
+class EditCreditNote extends BaseEditPage
 {
     protected static string $resource = CreditNoteResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

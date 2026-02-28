@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\ContactGroupResource\Pages;
 
 use App\Filament\Resources\ContactGroupResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateContactGroup extends CreateRecord
+class CreateContactGroup extends BaseCreatePage
 {
     protected static string $resource = ContactGroupResource::class;
 }

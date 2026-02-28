@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\AccountSubType;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Enums\AccountType;
 use App\Filament\Resources\AccountResource\Pages;
 use App\Models\Account;
@@ -19,7 +22,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class AccountResource extends Resource
+class AccountResource extends BaseResource
 {
     protected static ?string $model = Account::class;
 
@@ -59,7 +62,7 @@ class AccountResource extends Resource
             IconColumn::make('is_active')->label(__('Active'))->boolean(),
         ])->defaultSort('code')
             ->filters([SelectFilter::make('account_type')->options(AccountType::options())])
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

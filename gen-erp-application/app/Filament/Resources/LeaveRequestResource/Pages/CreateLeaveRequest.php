@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\LeaveRequestResource\Pages;
 
 use App\Filament\Resources\LeaveRequestResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateLeaveRequest extends CreateRecord
+class CreateLeaveRequest extends BaseCreatePage
 {
     protected static string $resource = LeaveRequestResource::class;
 }

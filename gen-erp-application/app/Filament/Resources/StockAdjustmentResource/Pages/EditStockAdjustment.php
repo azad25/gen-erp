@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\StockAdjustmentResource\Pages;
 
 use App\Filament\Resources\StockAdjustmentResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditStockAdjustment extends EditRecord
+class EditStockAdjustment extends BaseEditPage
 {
     protected static string $resource = StockAdjustmentResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

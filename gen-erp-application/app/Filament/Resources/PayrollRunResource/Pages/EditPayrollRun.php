@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\PayrollRunResource\Pages;
 
 use App\Filament\Resources\PayrollRunResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditPayrollRun extends EditRecord
+class EditPayrollRun extends BaseEditPage
 {
     protected static string $resource = PayrollRunResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

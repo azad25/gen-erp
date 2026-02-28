@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\AccountResource\Pages;
 
 use App\Filament\Resources\AccountResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListAccounts extends ListRecords
+class ListAccounts extends BaseListPage
 {
     protected static string $resource = AccountResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PurchaseReturnResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\GoodsReceipt;
 use App\Models\Product;
 use App\Models\PurchaseReturn;
@@ -19,7 +22,7 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class PurchaseReturnResource extends Resource
+class PurchaseReturnResource extends BaseResource
 {
     protected static ?string $model = PurchaseReturn::class;
 
@@ -59,7 +62,7 @@ class PurchaseReturnResource extends Resource
             TextColumn::make('return_date')->label(__('Date'))->date('d M Y')->sortable(),
             TextColumn::make('total_amount')->label(__('Total'))->formatStateUsing(fn (int $state): string => '৳'.number_format($state / 100, 2))->sortable(),
             TextColumn::make('status')->label(__('Status'))->badge(),
-        ])->defaultSort('created_at', 'desc')->actions([EditAction::make()]);
+        ])->defaultSort('created_at', 'desc')->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

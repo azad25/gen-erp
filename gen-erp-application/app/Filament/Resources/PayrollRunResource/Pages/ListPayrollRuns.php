@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\PayrollRunResource\Pages;
 
 use App\Filament\Resources\PayrollRunResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListPayrollRuns extends ListRecords
+class ListPayrollRuns extends BaseListPage
 {
     protected static string $resource = PayrollRunResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

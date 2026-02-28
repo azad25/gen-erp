@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\SalesOrderResource\Pages;
 
 use App\Filament\Resources\SalesOrderResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditSalesOrder extends EditRecord
+class EditSalesOrder extends BaseEditPage
 {
     protected static string $resource = SalesOrderResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

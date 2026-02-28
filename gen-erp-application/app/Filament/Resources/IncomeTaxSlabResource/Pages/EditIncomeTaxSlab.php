@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\IncomeTaxSlabResource\Pages;
 
 use App\Filament\Resources\IncomeTaxSlabResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditIncomeTaxSlab extends EditRecord
+class EditIncomeTaxSlab extends BaseEditPage
 {
     protected static string $resource = IncomeTaxSlabResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

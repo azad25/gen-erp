@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\StockAdjustmentResource\Pages;
 
 use App\Filament\Resources\StockAdjustmentResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListStockAdjustments extends ListRecords
+class ListStockAdjustments extends BaseListPage
 {
     protected static string $resource = StockAdjustmentResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\GoodsReceiptStatus;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Filament\Resources\GoodsReceiptResource\Pages;
 use App\Models\GoodsReceipt;
 use App\Models\Product;
@@ -20,7 +23,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class GoodsReceiptResource extends Resource
+class GoodsReceiptResource extends BaseResource
 {
     protected static ?string $model = GoodsReceipt::class;
 
@@ -99,7 +102,7 @@ class GoodsReceiptResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('receipt_number')->label(__('GRN #'))->searchable()->sortable(),
                 TextColumn::make('supplier.name')->label(__entity('supplier'))->searchable()->sortable(),
@@ -119,7 +122,7 @@ class GoodsReceiptResource extends Resource
                 SelectFilter::make('status')
                     ->options(GoodsReceiptStatus::options()),
             ])
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\SalesReturnResource\Pages;
 
 use App\Filament\Resources\SalesReturnResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditSalesReturn extends EditRecord
+class EditSalesReturn extends BaseEditPage
 {
     protected static string $resource = SalesReturnResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

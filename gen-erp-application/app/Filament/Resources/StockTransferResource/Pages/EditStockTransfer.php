@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\StockTransferResource\Pages;
 
 use App\Filament\Resources\StockTransferResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditStockTransfer extends EditRecord
+class EditStockTransfer extends BaseEditPage
 {
     protected static string $resource = StockTransferResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

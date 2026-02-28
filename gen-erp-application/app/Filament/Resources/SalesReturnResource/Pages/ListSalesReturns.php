@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\SalesReturnResource\Pages;
 
 use App\Filament\Resources\SalesReturnResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListSalesReturns extends ListRecords
+class ListSalesReturns extends BaseListPage
 {
     protected static string $resource = SalesReturnResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

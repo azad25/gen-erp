@@ -6,6 +6,7 @@ use App\Enums\ProductType;
 use App\Models\Traits\BelongsToCompany;
 use App\Models\Traits\DispatchesModelEvents;
 use App\Models\Traits\HasCustomFields;
+use App\Models\Traits\HasDocuments;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ class Product extends Model
     use BelongsToCompany;
     use DispatchesModelEvents;
     use HasCustomFields;
+    use HasDocuments;
     use HasFactory;
     use SoftDeletes;
 

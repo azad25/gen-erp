@@ -27,16 +27,29 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('app')
             ->path('app')
-            ->login()
-            ->registration()
+            ->login(\App\Filament\Pages\Auth\Login::class)
+            ->registration(\App\Filament\Pages\Auth\Register::class)
             ->colors([
-                'primary' => Color::hex('#1B4F72'),
-                'gray' => Color::Slate,
+                'primary' => Color::Blue,
+                'gray' => Color::Gray,
+                'success' => Color::Emerald,
+                'warning' => Color::Amber,
+                'danger' => Color::Red,
+                'info' => Color::Sky,
             ])
+            ->font('Inter')
+            ->favicon(asset('images/favicon.png'))
+            ->brandName('GenERP BD')
+            ->brandLogo(asset('images/logo.svg'))
+            ->brandLogoHeight('2rem')
             ->darkMode()
             ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('16rem')
+            ->collapsedSidebarWidth('5rem')
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->navigationGroups([
                 NavigationGroup::make(__('Dashboard')),
                 NavigationGroup::make(__('Sales')),

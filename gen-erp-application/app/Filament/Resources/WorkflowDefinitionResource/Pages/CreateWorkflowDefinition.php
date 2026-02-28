@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\WorkflowDefinitionResource\Pages;
 
 use App\Filament\Resources\WorkflowDefinitionResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateWorkflowDefinition extends CreateRecord
+class CreateWorkflowDefinition extends BaseCreatePage
 {
     protected static string $resource = WorkflowDefinitionResource::class;
 }

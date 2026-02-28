@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\AdjustmentReason;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Enums\StockAdjustmentStatus;
 use App\Filament\Resources\StockAdjustmentResource\Pages;
 use App\Models\Product;
@@ -19,7 +22,7 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class StockAdjustmentResource extends Resource
+class StockAdjustmentResource extends BaseResource
 {
     protected static ?string $model = StockAdjustment::class;
 
@@ -79,7 +82,7 @@ class StockAdjustmentResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('reference_number')->label(__('Ref #'))->searchable()->sortable(),
                 TextColumn::make('warehouse.name')->label(__('Warehouse'))->sortable(),
@@ -96,7 +99,7 @@ class StockAdjustmentResource extends Resource
                 TextColumn::make('adjustment_date')->label(__('Date'))->date('d M Y')->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

@@ -2,3 +2,5 @@
 /.agents
 /phase-1-development.md
 /rules.md
+*.md
+/fonts

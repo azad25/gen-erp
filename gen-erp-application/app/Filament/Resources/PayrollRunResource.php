@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\PayrollRunStatus;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Filament\Resources\PayrollRunResource\Pages;
 use App\Models\PayrollRun;
 use Filament\Forms\Components\DatePicker;
@@ -17,7 +20,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class PayrollRunResource extends Resource
+class PayrollRunResource extends BaseResource
 {
     protected static ?string $model = PayrollRun::class;
 

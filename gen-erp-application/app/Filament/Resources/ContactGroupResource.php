@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ContactGroupResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\ContactGroup;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -13,7 +16,7 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class ContactGroupResource extends Resource
+class ContactGroupResource extends BaseResource
 {
     protected static ?string $model = ContactGroup::class;
 
@@ -48,14 +51,14 @@ class ContactGroupResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('name')->label(__('Name'))->searchable()->sortable(),
                 TextColumn::make('type')->label(__('Type'))->badge()->sortable(),
                 TextColumn::make('customers_count')->label(__('Customers'))->counts('customers'),
                 TextColumn::make('suppliers_count')->label(__('Suppliers'))->counts('suppliers'),
             ])
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\CreditNoteResource\Pages;
 
 use App\Filament\Resources\CreditNoteResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateCreditNote extends CreateRecord
+class CreateCreditNote extends BaseCreatePage
 {
     protected static string $resource = CreditNoteResource::class;
 }

@@ -12,11 +12,15 @@
   <img src="https://img.shields.io/badge/Pest-F7DE1C?style=flat-square&logo=testing-library&logoColor=black" alt="Pest Testing" />
 </p>
 
+
 ## 🎯 Project Vision
 
 **GenERP BD** aims to eliminate the need for custom ERP software for SMEs in Bangladesh. By providing a core engine with infinite configuration options, it adapts to the business rather than forcing the business to adapt to it. It operates on a **Freemium SaaS** model with a "Bangla-first" approach.
 
 With **GenERP BD**, businesses get enterprise-grade features with completely dynamic configuration, eliminating the need for expensive custom development per industry. From a sole freelancer to a 1,000-employee RMG factory, this application scales and configures to map their operations inherently.
+<p align="center">
+  <img src="preview.png" alt="GenERP BD Preview" width="100%" />
+</p>
 
 ## ✨ Core Platform Capabilities
 
@@ -113,10 +117,6 @@ Security is baked into the foundation, ensuring robust enterprise-grade protecti
 - **XSS & CSRF Guardrails:** Full escape on user data in Blade and Alpine.js, enforced `VerifyCsrfToken` middleware on all mutations. Complete whitelist MIME validation.
 - **Brute Force Resiliency:** Login paths configured natively using caching throttle blocks integrated closely via Cloudflare CDN network layers.
 - **Restricted Uploader Context:** Stored items leverage obfuscated UUID generation isolated inside private system scopes (no public web access).
-
-## 🤖 AI-Assisted Architecture
-
-This project is iteratively built leveraging modern AI-assisted engineering rules defined in the rigid `.cursor/rules` configurations. It establishes code-level guarantees avoiding anti-patterns, imposing strict compliance checks for the BD business standards, securing bilingual components, and enforcing proper Filament v4 coding implementations. For ongoing work, generating explicit Test (Pest) coverages and ensuring zero raw SQL is automated through systemic prompt guidelines.
 
 ## 📄 License & Ownership
 

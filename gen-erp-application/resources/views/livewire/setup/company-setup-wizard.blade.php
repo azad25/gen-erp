@@ -1,6 +1,5 @@
-<x-layouts.guest :title="__('Company Setup')">
-    <div style="max-width: 600px; margin: 2rem auto; padding: 2rem;">
-        <h1>{{ __('Set Up Your Company') }}</h1>
+<div>
+    <h1>{{ __('Set Up Your Company') }}</h1>
 
         {{-- Step indicator --}}
         <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
@@ -127,4 +126,4 @@
             </div>
         @endif
     </div>
-</x-layouts.guest>
+</div>

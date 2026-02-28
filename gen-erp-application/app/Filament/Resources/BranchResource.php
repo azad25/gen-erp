@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\BranchResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Warehouse;
@@ -18,7 +21,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class BranchResource extends Resource
+class BranchResource extends BaseResource
 {
     protected static ?string $model = Branch::class;
 
@@ -65,7 +68,7 @@ class BranchResource extends Resource
             IconColumn::make('is_headquarters')->label(__('HQ'))->boolean(),
             IconColumn::make('is_active')->label(__('Active'))->boolean(),
             TextColumn::make('users_count')->label(__('Members'))->counts('users'),
-        ])->actions([EditAction::make()]);
+        ])->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

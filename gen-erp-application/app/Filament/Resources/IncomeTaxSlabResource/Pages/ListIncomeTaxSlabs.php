@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\IncomeTaxSlabResource\Pages;
 
 use App\Filament\Resources\IncomeTaxSlabResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListIncomeTaxSlabs extends ListRecords
+class ListIncomeTaxSlabs extends BaseListPage
 {
     protected static string $resource = IncomeTaxSlabResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

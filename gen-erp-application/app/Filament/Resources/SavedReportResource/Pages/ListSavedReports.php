@@ -3,16 +3,9 @@
 namespace App\Filament\Resources\SavedReportResource\Pages;
 
 use App\Filament\Resources\SavedReportResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListSavedReports extends ListRecords
+class ListSavedReports extends BaseListPage
 {
     protected static string $resource = SavedReportResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            \Filament\Actions\CreateAction::make(),
-        ];
-    }
 }

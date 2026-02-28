@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\StockTransferResource\Pages;
 
 use App\Filament\Resources\StockTransferResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateStockTransfer extends CreateRecord
+class CreateStockTransfer extends BaseCreatePage
 {
     protected static string $resource = StockTransferResource::class;
 }

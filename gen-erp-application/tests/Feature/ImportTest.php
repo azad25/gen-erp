@@ -3,10 +3,15 @@
 use App\Models\Company;
 use App\Models\User;
 use App\Services\ImportService;
+use Illuminate\Support\Facades\Queue;
 
 // ═══════════════════════════════════════════════
 // ImportTest — 5 tests
 // ═══════════════════════════════════════════════
+
+beforeEach(function (): void {
+    Queue::fake();
+});
 
 test('queueImport creates ImportJob with pending status', function (): void {
     $company = Company::factory()->create();

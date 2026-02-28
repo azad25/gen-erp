@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\PayrollRunResource\Pages;
 
 use App\Filament\Resources\PayrollRunResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreatePayrollRun extends CreateRecord
+class CreatePayrollRun extends BaseCreatePage
 {
     protected static string $resource = PayrollRunResource::class;
 }

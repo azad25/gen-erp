@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\StockAdjustmentResource\Pages;
 
 use App\Filament\Resources\StockAdjustmentResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateStockAdjustment extends CreateRecord
+class CreateStockAdjustment extends BaseCreatePage
 {
     protected static string $resource = StockAdjustmentResource::class;
 }

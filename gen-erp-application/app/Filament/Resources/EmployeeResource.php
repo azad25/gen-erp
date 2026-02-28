@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\EmployeeStatus;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Enums\EmploymentType;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Models\Department;
@@ -22,7 +25,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class EmployeeResource extends Resource
+class EmployeeResource extends BaseResource
 {
     protected static ?string $model = Employee::class;
 
@@ -83,7 +86,7 @@ class EmployeeResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('employee_code')->label(__('Code'))->searchable()->sortable(),
                 TextColumn::make('first_name')->label(__('Name'))->formatStateUsing(fn (Employee $r) => $r->fullName())->searchable(),

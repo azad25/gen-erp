@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\NumberSequenceResource\Pages;
 
 use App\Filament\Resources\NumberSequenceResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListNumberSequences extends ListRecords
+class ListNumberSequences extends BaseListPage
 {
     protected static string $resource = NumberSequenceResource::class;
 }

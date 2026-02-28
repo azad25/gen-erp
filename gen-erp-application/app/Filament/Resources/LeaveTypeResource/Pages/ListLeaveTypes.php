@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\LeaveTypeResource\Pages;
 
 use App\Filament\Resources\LeaveTypeResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListLeaveTypes extends ListRecords
+class ListLeaveTypes extends BaseListPage
 {
     protected static string $resource = LeaveTypeResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

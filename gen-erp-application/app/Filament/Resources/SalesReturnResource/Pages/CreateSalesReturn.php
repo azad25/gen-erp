@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\SalesReturnResource\Pages;
 
 use App\Filament\Resources\SalesReturnResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateSalesReturn extends CreateRecord
+class CreateSalesReturn extends BaseCreatePage
 {
     protected static string $resource = SalesReturnResource::class;
 }

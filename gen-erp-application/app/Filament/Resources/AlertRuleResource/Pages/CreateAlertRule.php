@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\AlertRuleResource\Pages;
 
 use App\Filament\Resources\AlertRuleResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateAlertRule extends CreateRecord
+class CreateAlertRule extends BaseCreatePage
 {
     protected static string $resource = AlertRuleResource::class;
 }

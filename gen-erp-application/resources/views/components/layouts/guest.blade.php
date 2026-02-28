@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? __('GenERP BD') }}</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="antialiased">
-    <main>
+<body class="antialiased bg-gray-50">
+    <main class="min-h-screen">
         {{ $slot }}
     </main>
     @livewireScripts

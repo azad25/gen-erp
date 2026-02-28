@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductCategoryResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\ProductCategory;
 use App\Models\TaxGroup;
 use Filament\Forms\Components\FileUpload;
@@ -18,7 +21,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 
-class ProductCategoryResource extends Resource
+class ProductCategoryResource extends BaseResource
 {
     protected static ?string $model = ProductCategory::class;
 
@@ -88,7 +91,7 @@ class ProductCategoryResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('name')
                     ->label(__('Name'))
@@ -115,9 +118,7 @@ class ProductCategoryResource extends Resource
                     ->sortable(),
             ])
             ->defaultSort('display_order')
-            ->actions([
-                EditAction::make(),
-            ]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SupplierPaymentResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\PaymentMethod;
 use App\Models\Supplier;
 use App\Models\SupplierPayment;
@@ -16,7 +19,7 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class SupplierPaymentResource extends Resource
+class SupplierPaymentResource extends BaseResource
 {
     protected static ?string $model = SupplierPayment::class;
 
@@ -73,7 +76,7 @@ class SupplierPaymentResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('payment_number')->label(__('Payment #'))->searchable()->sortable(),
                 TextColumn::make('supplier.name')->label(__entity('supplier'))->searchable()->sortable(),
@@ -88,7 +91,7 @@ class SupplierPaymentResource extends Resource
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

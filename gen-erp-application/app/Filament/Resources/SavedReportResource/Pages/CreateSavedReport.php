@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\SavedReportResource\Pages;
 
 use App\Filament\Resources\SavedReportResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateSavedReport extends CreateRecord
+class CreateSavedReport extends BaseCreatePage
 {
     protected static string $resource = SavedReportResource::class;
 

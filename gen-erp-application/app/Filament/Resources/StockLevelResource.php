@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\StockLevelResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\StockLevel;
 use App\Models\Warehouse;
 use Filament\Resources\Resource;
@@ -10,7 +13,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class StockLevelResource extends Resource
+class StockLevelResource extends BaseResource
 {
     protected static ?string $model = StockLevel::class;
 
@@ -29,7 +32,7 @@ class StockLevelResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('product.name')->label(__('Product'))->searchable()->sortable(),
                 TextColumn::make('product.sku')->label(__('SKU'))->searchable(),

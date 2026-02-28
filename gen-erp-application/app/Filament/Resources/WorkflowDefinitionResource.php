@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\CompanyRole;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Enums\WorkflowDocumentType;
 use App\Filament\Resources\WorkflowDefinitionResource\Pages;
 use App\Models\WorkflowDefinition;
@@ -20,7 +23,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 
-class WorkflowDefinitionResource extends Resource
+class WorkflowDefinitionResource extends BaseResource
 {
     protected static ?string $model = WorkflowDefinition::class;
 
@@ -165,7 +168,7 @@ class WorkflowDefinitionResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('document_type')
                     ->label(__('Document Type'))
@@ -186,9 +189,7 @@ class WorkflowDefinitionResource extends Resource
                     ->label(__('Default'))
                     ->boolean(),
             ])
-            ->actions([
-                EditAction::make(),
-            ]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

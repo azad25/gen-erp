@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CustomerResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\ContactGroup;
 use App\Models\Customer;
 use App\Services\CustomFieldService;
@@ -21,7 +24,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class CustomerResource extends Resource
+class CustomerResource extends BaseResource
 {
     protected static ?string $model = Customer::class;
 
@@ -141,7 +144,7 @@ class CustomerResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('customer_code')->label(__('Code'))->searchable()->sortable(),
                 TextColumn::make('name')->label(__('Name'))->searchable()->sortable(),
@@ -167,7 +170,7 @@ class CustomerResource extends Resource
                             ->pluck('name', 'id')
                     ),
             ])
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

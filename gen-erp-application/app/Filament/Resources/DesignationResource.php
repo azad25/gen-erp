@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\DesignationResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\Department;
 use App\Models\Designation;
 use Filament\Forms\Components\Select;
@@ -15,7 +18,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class DesignationResource extends Resource
+class DesignationResource extends BaseResource
 {
     protected static ?string $model = Designation::class;
 
@@ -49,7 +52,7 @@ class DesignationResource extends Resource
             TextColumn::make('department.name')->label(__('Department'))->sortable(),
             TextColumn::make('grade')->label(__('Grade')),
             IconColumn::make('is_active')->label(__('Active'))->boolean(),
-        ])->actions([EditAction::make()]);
+        ])->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

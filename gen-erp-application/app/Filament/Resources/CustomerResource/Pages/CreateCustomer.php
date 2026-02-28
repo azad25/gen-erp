@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\CustomerResource\Pages;
 
 use App\Filament\Resources\CustomerResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateCustomer extends CreateRecord
+class CreateCustomer extends BaseCreatePage
 {
     protected static string $resource = CustomerResource::class;
 }

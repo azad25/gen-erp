@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\SupplierPaymentResource\Pages;
 
 use App\Filament\Resources\SupplierPaymentResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditSupplierPayment extends EditRecord
+class EditSupplierPayment extends BaseEditPage
 {
     protected static string $resource = SupplierPaymentResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

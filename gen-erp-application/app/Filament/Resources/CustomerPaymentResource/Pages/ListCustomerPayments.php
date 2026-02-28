@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\CustomerPaymentResource\Pages;
 
 use App\Filament\Resources\CustomerPaymentResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListCustomerPayments extends ListRecords
+class ListCustomerPayments extends BaseListPage
 {
     protected static string $resource = CustomerPaymentResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

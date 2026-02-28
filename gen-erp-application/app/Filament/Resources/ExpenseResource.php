@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\ExpenseStatus;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Filament\Resources\ExpenseResource\Pages;
 use App\Models\Account;
 use App\Models\Expense;
@@ -17,7 +20,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class ExpenseResource extends Resource
+class ExpenseResource extends BaseResource
 {
     protected static ?string $model = Expense::class;
 

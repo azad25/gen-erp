@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\DesignationResource\Pages;
 
 use App\Filament\Resources\DesignationResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditDesignation extends EditRecord
+class EditDesignation extends BaseEditPage
 {
     protected static string $resource = DesignationResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

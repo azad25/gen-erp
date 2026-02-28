@@ -3,16 +3,9 @@
 namespace App\Filament\Resources\WorkflowDefinitionResource\Pages;
 
 use App\Filament\Resources\WorkflowDefinitionResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListWorkflowDefinitions extends ListRecords
+class ListWorkflowDefinitions extends BaseListPage
 {
     protected static string $resource = WorkflowDefinitionResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            \Filament\Actions\CreateAction::make(),
-        ];
-    }
 }

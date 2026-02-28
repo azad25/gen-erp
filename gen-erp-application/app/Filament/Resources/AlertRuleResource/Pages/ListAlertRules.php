@@ -3,16 +3,9 @@
 namespace App\Filament\Resources\AlertRuleResource\Pages;
 
 use App\Filament\Resources\AlertRuleResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListAlertRules extends ListRecords
+class ListAlertRules extends BaseListPage
 {
     protected static string $resource = AlertRuleResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            \Filament\Actions\CreateAction::make(),
-        ];
-    }
 }

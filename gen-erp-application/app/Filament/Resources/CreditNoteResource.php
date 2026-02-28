@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\CreditNoteStatus;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Filament\Resources\CreditNoteResource\Pages;
 use App\Models\CreditNote;
 use App\Models\Customer;
@@ -20,7 +23,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class CreditNoteResource extends Resource
+class CreditNoteResource extends BaseResource
 {
     protected static ?string $model = CreditNote::class;
 
@@ -87,7 +90,7 @@ class CreditNoteResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('credit_note_number')->label(__('CN #'))->searchable()->sortable(),
                 TextColumn::make('customer.name')->label(__entity('customer'))->searchable(),
@@ -104,7 +107,7 @@ class CreditNoteResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([SelectFilter::make('status')->options(CreditNoteStatus::options())])
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

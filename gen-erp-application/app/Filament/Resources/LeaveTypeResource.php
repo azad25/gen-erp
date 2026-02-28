@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\LeaveTypeResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\LeaveType;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -13,7 +16,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class LeaveTypeResource extends Resource
+class LeaveTypeResource extends BaseResource
 {
     protected static ?string $model = LeaveType::class;
 
@@ -50,7 +53,7 @@ class LeaveTypeResource extends Resource
             IconColumn::make('is_paid')->label(__('Paid'))->boolean(),
             IconColumn::make('carry_forward')->label(__('Carry Forward'))->boolean(),
             IconColumn::make('requires_approval')->label(__('Approval'))->boolean(),
-        ])->actions([EditAction::make()]);
+        ])->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

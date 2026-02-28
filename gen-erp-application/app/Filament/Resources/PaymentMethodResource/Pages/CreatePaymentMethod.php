@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\PaymentMethodResource\Pages;
 
 use App\Filament\Resources\PaymentMethodResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreatePaymentMethod extends CreateRecord
+class CreatePaymentMethod extends BaseCreatePage
 {
     protected static string $resource = PaymentMethodResource::class;
 }

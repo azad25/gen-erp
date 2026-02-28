@@ -3,17 +3,9 @@
 namespace App\Filament\Resources\AlertRuleResource\Pages;
 
 use App\Filament\Resources\AlertRuleResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditAlertRule extends EditRecord
+class EditAlertRule extends BaseEditPage
 {
     protected static string $resource = AlertRuleResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            DeleteAction::make(),
-        ];
-    }
 }

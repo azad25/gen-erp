@@ -3,16 +3,9 @@
 namespace App\Filament\Resources\CustomFieldDefinitionResource\Pages;
 
 use App\Filament\Resources\CustomFieldDefinitionResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListCustomFieldDefinitions extends ListRecords
+class ListCustomFieldDefinitions extends BaseListPage
 {
     protected static string $resource = CustomFieldDefinitionResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            \Filament\Actions\CreateAction::make(),
-        ];
-    }
 }

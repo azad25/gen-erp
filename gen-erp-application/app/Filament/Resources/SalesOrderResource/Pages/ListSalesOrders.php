@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\SalesOrderResource\Pages;
 
 use App\Filament\Resources\SalesOrderResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListSalesOrders extends ListRecords
+class ListSalesOrders extends BaseListPage
 {
     protected static string $resource = SalesOrderResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

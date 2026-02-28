@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\AttendanceStatus;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Filament\Resources\AttendanceResource\Pages;
 use App\Models\Attendance;
 use App\Models\Employee;
@@ -16,7 +19,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class AttendanceResource extends Resource
+class AttendanceResource extends BaseResource
 {
     protected static ?string $model = Attendance::class;
 
@@ -55,7 +58,7 @@ class AttendanceResource extends Resource
             TextColumn::make('overtime_hours')->label(__('OT')),
         ])->defaultSort('attendance_date', 'desc')
             ->filters([SelectFilter::make('status')->options(AttendanceStatus::options())])
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

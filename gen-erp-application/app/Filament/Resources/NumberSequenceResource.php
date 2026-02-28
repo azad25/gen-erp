@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\NumberSequenceResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\NumberSequence;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -15,7 +18,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class NumberSequenceResource extends Resource
+class NumberSequenceResource extends BaseResource
 {
     protected static ?string $model = NumberSequence::class;
 
@@ -53,7 +56,7 @@ class NumberSequenceResource extends Resource
             TextColumn::make('next_number')->label(__('Next #'))->sortable(),
             TextColumn::make('reset_frequency')->label(__('Reset'))->badge(),
             IconColumn::make('include_date')->label(__('Date'))->boolean(),
-        ])->actions([EditAction::make()]);
+        ])->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

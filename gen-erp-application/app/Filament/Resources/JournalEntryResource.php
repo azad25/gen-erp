@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\JournalEntryStatus;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Filament\Resources\JournalEntryResource\Pages;
 use App\Models\Account;
 use App\Models\JournalEntry;
@@ -17,7 +20,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class JournalEntryResource extends Resource
+class JournalEntryResource extends BaseResource
 {
     protected static ?string $model = JournalEntry::class;
 

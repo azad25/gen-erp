@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\SalesOrderStatus;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Filament\Resources\SalesOrderResource\Pages;
 use App\Models\Customer;
 use App\Models\Product;
@@ -22,7 +25,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class SalesOrderResource extends Resource
+class SalesOrderResource extends BaseResource
 {
     protected static ?string $model = SalesOrder::class;
 
@@ -122,7 +125,7 @@ class SalesOrderResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('reference_number')->label(__('Ref #'))->searchable()->sortable(),
                 TextColumn::make('customer.name')->label(__entity('customer'))->searchable()->sortable(),
@@ -143,7 +146,7 @@ class SalesOrderResource extends Resource
                 SelectFilter::make('status')
                     ->options(SalesOrderStatus::options()),
             ])
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\IncomeTaxSlabResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\IncomeTaxSlab;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -10,7 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class IncomeTaxSlabResource extends Resource
+class IncomeTaxSlabResource extends BaseResource
 {
     protected static ?string $model = IncomeTaxSlab::class;
 

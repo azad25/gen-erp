@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\AttendanceResource\Pages;
 
 use App\Filament\Resources\AttendanceResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateAttendance extends CreateRecord
+class CreateAttendance extends BaseCreatePage
 {
     protected static string $resource = AttendanceResource::class;
 }

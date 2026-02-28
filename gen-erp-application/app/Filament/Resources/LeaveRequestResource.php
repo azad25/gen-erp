@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\LeaveRequestResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
@@ -16,7 +19,7 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class LeaveRequestResource extends Resource
+class LeaveRequestResource extends BaseResource
 {
     protected static ?string $model = LeaveRequest::class;
 
@@ -52,7 +55,7 @@ class LeaveRequestResource extends Resource
             TextColumn::make('to_date')->label(__('To'))->date('d M Y'),
             TextColumn::make('total_days')->label(__('Days')),
             TextColumn::make('status')->label(__('Status'))->badge(),
-        ])->defaultSort('created_at', 'desc')->actions([EditAction::make()]);
+        ])->defaultSort('created_at', 'desc')->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

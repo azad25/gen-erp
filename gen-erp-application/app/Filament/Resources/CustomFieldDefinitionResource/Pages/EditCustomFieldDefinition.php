@@ -3,22 +3,13 @@
 namespace App\Filament\Resources\CustomFieldDefinitionResource\Pages;
 
 use App\Filament\Resources\CustomFieldDefinitionResource;
+use App\Filament\Pages\BaseEditPage;
 use App\Jobs\FilterableCustomFieldJob;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
 
-class EditCustomFieldDefinition extends EditRecord
+class EditCustomFieldDefinition extends BaseEditPage
 {
     protected static string $resource = CustomFieldDefinitionResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            DeleteAction::make(),
-        ];
-    }
-
-    protected function afterSave(): void
+protected function afterSave(): void
     {
         $record = $this->record;
 

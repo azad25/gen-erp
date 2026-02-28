@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\DepartmentResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\Department;
 use App\Models\Employee;
 use Filament\Forms\Components\Select;
@@ -15,7 +18,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class DepartmentResource extends Resource
+class DepartmentResource extends BaseResource
 {
     protected static ?string $model = Department::class;
 
@@ -51,7 +54,7 @@ class DepartmentResource extends Resource
             TextColumn::make('parent.name')->label(__('Parent')),
             TextColumn::make('employees_count')->label(__('Employees'))->counts('employees'),
             IconColumn::make('is_active')->label(__('Active'))->boolean(),
-        ])->actions([EditAction::make()]);
+        ])->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

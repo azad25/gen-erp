@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CustomerPaymentResource\Pages;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Models\Customer;
 use App\Models\CustomerPayment;
 use App\Models\PaymentMethod;
@@ -16,7 +19,7 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class CustomerPaymentResource extends Resource
+class CustomerPaymentResource extends BaseResource
 {
     protected static ?string $model = CustomerPayment::class;
 
@@ -63,7 +66,7 @@ class CustomerPaymentResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('receipt_number')->label(__('Receipt #'))->searchable()->sortable(),
                 TextColumn::make('customer.name')->label(__entity('customer'))->searchable()->sortable(),
@@ -75,7 +78,7 @@ class CustomerPaymentResource extends Resource
                 TextColumn::make('paymentMethod.name')->label(__('Method')),
             ])
             ->defaultSort('created_at', 'desc')
-            ->actions([EditAction::make()]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array

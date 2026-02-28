@@ -31,7 +31,7 @@ class ImportService
             'created_by' => $user->id,
         ]);
 
-        // TODO: Phase 7 — dispatch ProcessImportJob::dispatch($job)->onQueue('imports');
+        \App\Jobs\ProcessImportJob::dispatch($job);
 
         return $job;
     }

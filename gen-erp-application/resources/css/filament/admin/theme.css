@@ -1,0 +1,1147 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Bengali:wght@400;500;700&display=swap');
+@import 'tailwindcss';
+
+/* ============================================
+   GenERP BD - Professional Enterprise Theme
+   Trustworthy Corporate Blue Palette
+   Inspired by Odoo, Zoho, NetSuite
+   ============================================ */
+
+@theme {
+    /* Professional Blue Palette - Enterprise Standard */
+    --color-primary-50: #eff6ff;
+    --color-primary-100: #dbeafe;
+    --color-primary-200: #bfdbfe;
+    --color-primary-300: #93c5fd;
+    --color-primary-400: #60a5fa;
+    --color-primary-500: #3b82f6;
+    --color-primary-600: #1e40af;
+    --color-primary-700: #1e3a8a;
+    --color-primary-800: #1e3a8a;
+    --color-primary-900: #1e3a8a;
+    --color-primary-950: #172554;
+    
+    /* Neutral Grays - Professional */
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-300: #d1d5db;
+    --color-gray-400: #9ca3af;
+    --color-gray-500: #6b7280;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-800: #1f2937;
+    --color-gray-900: #111827;
+    --color-gray-950: #030712;
+    
+    /* Semantic Colors - Muted Professional */
+    --color-success-50: #f0fdf4;
+    --color-success-100: #dcfce7;
+    --color-success-500: #10b981;
+    --color-success-600: #059669;
+    --color-success-700: #047857;
+    
+    --color-warning-50: #fffbeb;
+    --color-warning-100: #fef3c7;
+    --color-warning-500: #f59e0b;
+    --color-warning-600: #d97706;
+    --color-warning-700: #b45309;
+    
+    --color-danger-50: #fef2f2;
+    --color-danger-100: #fee2e2;
+    --color-danger-500: #ef4444;
+    --color-danger-600: #dc2626;
+    --color-danger-700: #b91c1c;
+    
+    --color-info-50: #eff6ff;
+    --color-info-100: #dbeafe;
+    --color-info-500: #3b82f6;
+    --color-info-600: #2563eb;
+    --color-info-700: #1d4ed8;
+}
+
+/* ============================================
+   Typography - Bilingual Support
+   ============================================ */
+
+body {
+    font-family: 'Inter', 'Noto Sans Bengali', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Bangla text optimization */
+[lang="bn"], .bangla-text {
+    font-family: 'Noto Sans Bengali', 'Inter', system-ui, sans-serif;
+    letter-spacing: 0;
+}
+
+/* ============================================
+   Professional Component Styling
+   ============================================ */
+
+/* Cards & Sections */
+.fi-section,
+.fi-card,
+.fi-widget {
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.dark .fi-section,
+.dark .fi-card,
+.dark .fi-widget {
+    background: #1f2937;
+    border-color: #374151;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+}
+
+.fi-section:hover,
+.fi-card:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    border-color: #d1d5db;
+}
+
+.dark .fi-section:hover,
+.dark .fi-card:hover {
+    border-color: #4b5563;
+}
+
+/* Form Sections */
+.modern-form-section {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.dark .modern-form-section {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.modern-form-section-compact {
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e5e7eb;
+}
+
+.dark .modern-form-section-compact {
+    background: #111827;
+    border-color: #374151;
+}
+
+/* Buttons - Professional Style */
+.fi-btn-primary,
+.modern-submit-button {
+    background: #1e40af !important;
+    color: white !important;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.fi-btn-primary:hover,
+.modern-submit-button:hover {
+    background: #1e3a8a !important;
+    box-shadow: 0 4px 6px -1px rgb(30 64 175 / 0.3);
+    transform: translateY(-1px);
+}
+
+.fi-btn-secondary,
+.modern-secondary-button,
+.modern-cancel-button {
+    background: white !important;
+    color: #1e40af !important;
+    border: 1px solid #d1d5db !important;
+    font-weight: 600;
+    border-radius: 0.5rem;
+}
+
+.fi-btn-secondary:hover,
+.modern-secondary-button:hover,
+.modern-cancel-button:hover {
+    background: #f9fafb !important;
+    border-color: #1e40af !important;
+}
+
+.modern-back-button {
+    background: #f9fafb !important;
+    color: #6b7280 !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+.modern-back-button:hover {
+    background: white !important;
+    color: #1e40af !important;
+}
+
+.modern-delete-button {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fecaca !important;
+}
+
+.modern-delete-button:hover {
+    background: #fee2e2 !important;
+    border-color: #dc2626 !important;
+}
+
+/* Tables - Professional */
+.modern-table {
+    background: white;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.dark .modern-table {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.fi-ta-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.fi-ta-header-cell {
+    background: #f9fafb;
+    color: #374151;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1rem;
+}
+
+.dark .fi-ta-header-cell {
+    background: #111827;
+    color: #d1d5db;
+}
+
+.fi-ta-row:hover {
+    background: #f9fafb;
+}
+
+.dark .fi-ta-row:hover {
+    background: #111827;
+}
+
+.fi-ta-cell {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.dark .fi-ta-cell {
+    border-bottom-color: #374151;
+}
+
+/* Status Badges - Professional */
+.fi-badge {
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.modern-badge-column .fi-badge {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+/* Money Column */
+.modern-money-column {
+    font-family: 'Inter', monospace;
+    font-weight: 600;
+    color: #1e40af;
+}
+
+.dark .modern-money-column {
+    color: #60a5fa;
+}
+
+/* Navigation & Sidebar */
+.fi-sidebar {
+    background: white;
+    border-right: 1px solid #e5e7eb;
+}
+
+.dark .fi-sidebar {
+    background: #1f2937;
+    border-right-color: #374151;
+}
+
+.fi-sidebar-nav-item {
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.fi-sidebar-nav-item:hover {
+    background: #f9fafb;
+    color: #1e40af;
+}
+
+.dark .fi-sidebar-nav-item:hover {
+    background: #111827;
+    color: #60a5fa;
+}
+
+.fi-sidebar-nav-item-active {
+    background: #eff6ff !important;
+    color: #1e40af !important;
+    font-weight: 600;
+}
+
+.dark .fi-sidebar-nav-item-active {
+    background: #1e3a8a !important;
+    color: #dbeafe !important;
+}
+
+/* Top Navigation */
+.fi-topbar {
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.dark .fi-topbar {
+    background: #1f2937;
+    border-bottom-color: #374151;
+}
+
+/* Page Headers */
+.modern-page-header {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.dark .modern-page-header {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.modern-page-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.dark .modern-page-title {
+    color: #f9fafb;
+}
+
+.modern-page-subtitle {
+    font-size: 1rem;
+    color: #6b7280;
+}
+
+.dark .modern-page-subtitle {
+    color: #9ca3af;
+}
+
+/* Widgets - Professional Dashboard */
+.fi-wi-stats-overview-stat {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.dark .fi-wi-stats-overview-stat {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.fi-wi-stats-overview-stat:hover {
+    border-color: #1e40af;
+    box-shadow: 0 4px 6px -1px rgb(30 64 175 / 0.1);
+    transform: translateY(-2px);
+}
+
+.fi-wi-stats-overview-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e40af;
+}
+
+.dark .fi-wi-stats-overview-stat-value {
+    color: #60a5fa;
+}
+
+.fi-wi-stats-overview-stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Charts */
+.fi-wi-chart {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+}
+
+.dark .fi-wi-chart {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+/* Forms - Professional Input Styling */
+.fi-input,
+.fi-select,
+.fi-textarea {
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    transition: all 0.2s ease;
+}
+
+.fi-input:focus,
+.fi-select:focus,
+.fi-textarea:focus {
+    border-color: #1e40af;
+    ring-color: #1e40af;
+    box-shadow: 0 0 0 3px rgb(30 64 175 / 0.1);
+}
+
+.dark .fi-input,
+.dark .fi-select,
+.dark .fi-textarea {
+    background: #111827;
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+/* Modals */
+.fi-modal {
+    border-radius: 0.75rem;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.fi-modal-header {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1.5rem;
+}
+
+.dark .fi-modal-header {
+    background: #111827;
+    border-bottom-color: #374151;
+}
+
+/* Notifications */
+.fi-no {
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.dark .fi-no {
+    border-color: #374151;
+}
+
+.fi-no-success {
+    background: #f0fdf4;
+    border-color: #10b981;
+}
+
+.dark .fi-no-success {
+    background: #064e3b;
+    border-color: #059669;
+}
+
+.fi-no-warning {
+    background: #fffbeb;
+    border-color: #f59e0b;
+}
+
+.dark .fi-no-warning {
+    background: #78350f;
+    border-color: #d97706;
+}
+
+.fi-no-danger {
+    background: #fef2f2;
+    border-color: #ef4444;
+}
+
+.dark .fi-no-danger {
+    background: #7f1d1d;
+    border-color: #dc2626;
+}
+
+/* Tabs - Professional */
+.fi-tabs {
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.dark .fi-tabs {
+    border-bottom-color: #374151;
+}
+
+.fi-tabs-item {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: #6b7280;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.fi-tabs-item:hover {
+    color: #1e40af;
+    background: #f9fafb;
+}
+
+.dark .fi-tabs-item:hover {
+    color: #60a5fa;
+    background: #111827;
+}
+
+.fi-tabs-item-active {
+    color: #1e40af !important;
+    border-bottom-color: #1e40af !important;
+    font-weight: 600;
+}
+
+.dark .fi-tabs-item-active {
+    color: #60a5fa !important;
+    border-bottom-color: #60a5fa !important;
+}
+
+/* Pagination */
+.fi-pagination {
+    background: white;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+.dark .fi-pagination {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.fi-pagination-item {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.fi-pagination-item:hover {
+    background: #f9fafb;
+    color: #1e40af;
+}
+
+.dark .fi-pagination-item:hover {
+    background: #111827;
+    color: #60a5fa;
+}
+
+.fi-pagination-item-active {
+    background: #1e40af !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+/* Filters */
+.fi-ta-filters {
+    background: #f9fafb;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+}
+
+.dark .fi-ta-filters {
+    background: #111827;
+    border-color: #374151;
+}
+
+/* Action Buttons in Tables */
+.fi-ta-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.fi-ta-action-btn {
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+}
+
+.fi-ta-action-btn:hover {
+    background: #f9fafb;
+    color: #1e40af;
+}
+
+.dark .fi-ta-action-btn:hover {
+    background: #111827;
+    color: #60a5fa;
+}
+
+/* Dropdown Menus */
+.fi-dropdown-panel {
+    background: white;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.dark .fi-dropdown-panel {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.fi-dropdown-list-item {
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.fi-dropdown-list-item:hover {
+    background: #f9fafb;
+    color: #1e40af;
+}
+
+.dark .fi-dropdown-list-item:hover {
+    background: #111827;
+    color: #60a5fa;
+}
+
+/* Loading States */
+.fi-loading {
+    color: #1e40af;
+}
+
+.dark .fi-loading {
+    color: #60a5fa;
+}
+
+/* Empty States */
+.fi-ta-empty-state {
+    padding: 3rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+.fi-ta-empty-state-icon {
+    color: #d1d5db;
+    margin-bottom: 1rem;
+}
+
+/* Breadcrumbs */
+.fi-breadcrumbs {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.fi-breadcrumbs-item:hover {
+    color: #1e40af;
+}
+
+.dark .fi-breadcrumbs-item:hover {
+    color: #60a5fa;
+}
+
+/* Search Input */
+.fi-ta-search-field {
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+}
+
+.fi-ta-search-field:focus {
+    border-color: #1e40af;
+    ring-color: #1e40af;
+}
+
+/* Checkbox & Radio */
+.fi-checkbox,
+.fi-radio {
+    border-color: #d1d5db;
+    color: #1e40af;
+}
+
+.fi-checkbox:checked,
+.fi-radio:checked {
+    background-color: #1e40af;
+    border-color: #1e40af;
+}
+
+/* Toggle Switch */
+.fi-toggle {
+    background-color: #d1d5db;
+}
+
+.fi-toggle:checked {
+    background-color: #1e40af;
+}
+
+/* File Upload */
+.fi-fo-file-upload {
+    border: 2px dashed #d1d5db;
+    border-radius: 0.75rem;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+}
+
+.fi-fo-file-upload:hover {
+    border-color: #1e40af;
+    background: #eff6ff;
+}
+
+.dark .fi-fo-file-upload {
+    background: #111827;
+    border-color: #374151;
+}
+
+.dark .fi-fo-file-upload:hover {
+    border-color: #60a5fa;
+    background: #1e3a8a;
+}
+
+/* Tags Input */
+.fi-fo-tags-input-tag {
+    background: #eff6ff;
+    color: #1e40af;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    font-weight: 500;
+}
+
+.dark .fi-fo-tags-input-tag {
+    background: #1e3a8a;
+    color: #dbeafe;
+}
+
+/* Rich Editor */
+.fi-fo-rich-editor {
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+}
+
+.fi-fo-rich-editor:focus-within {
+    border-color: #1e40af;
+    ring-color: #1e40af;
+}
+
+/* Date Picker */
+.fi-fo-date-time-picker {
+    border-radius: 0.5rem;
+}
+
+.fi-fo-date-time-picker-panel {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.dark .fi-fo-date-time-picker-panel {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.fi-fo-date-time-picker-day:hover {
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+.fi-fo-date-time-picker-day-selected {
+    background: #1e40af !important;
+    color: white !important;
+}
+
+/* Color Picker */
+.fi-fo-color-picker-swatch {
+    border-radius: 0.375rem;
+    border: 2px solid #e5e7eb;
+}
+
+.fi-fo-color-picker-swatch:hover {
+    border-color: #1e40af;
+}
+
+/* Repeater */
+.fi-fo-repeater-item {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.dark .fi-fo-repeater-item {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+/* Builder */
+.fi-fo-builder-block {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.dark .fi-fo-builder-block {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.fi-fo-builder-block-header {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.dark .fi-fo-builder-block-header {
+    background: #111827;
+    border-bottom-color: #374151;
+}
+
+/* Infolist - View Pages */
+.fi-in-entry {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.dark .fi-in-entry {
+    border-bottom-color: #374151;
+}
+
+.fi-in-entry-label {
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.fi-in-entry-content {
+    color: #111827;
+    font-weight: 500;
+}
+
+.dark .fi-in-entry-content {
+    color: #f9fafb;
+}
+
+/* Tooltips */
+.fi-tooltip {
+    background: #111827;
+    color: white;
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f9fafb;
+}
+
+.dark ::-webkit-scrollbar-track {
+    background: #111827;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+}
+
+/* Utility Classes */
+.text-primary {
+    color: #1e40af;
+}
+
+.dark .text-primary {
+    color: #60a5fa;
+}
+
+.bg-primary {
+    background-color: #1e40af;
+}
+
+.border-primary {
+    border-color: #1e40af;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .modern-page-header {
+        padding: 1.5rem;
+    }
+    
+    .modern-page-title {
+        font-size: 1.5rem;
+    }
+    
+    .fi-section,
+    .fi-card {
+        border-radius: 0.5rem;
+    }
+    
+    .fi-ta-header-cell,
+    .fi-ta-cell {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .fi-sidebar,
+    .fi-topbar,
+    .fi-ta-actions,
+    .modern-back-button,
+    .modern-delete-button {
+        display: none !important;
+    }
+    
+    .fi-section,
+    .fi-card {
+        box-shadow: none;
+        border: 1px solid #e5e7eb;
+    }
+}
+
+/* Accessibility Improvements */
+.fi-btn:focus-visible,
+.fi-input:focus-visible,
+.fi-select:focus-visible {
+    outline: 2px solid #1e40af;
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .fi-section,
+    .fi-card,
+    .fi-widget {
+        border-width: 2px;
+    }
+    
+    .fi-btn-primary {
+        border: 2px solid #1e40af;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================
+   Custom Page Layouts
+   ============================================ */
+
+.modern-list-page,
+.modern-create-page,
+.modern-edit-page,
+.modern-view-page {
+    background: #f9fafb;
+    min-height: 100vh;
+}
+
+.dark .modern-list-page,
+.dark .modern-create-page,
+.dark .modern-edit-page,
+.dark .modern-view-page {
+    background: #111827;
+}
+
+.modern-page-content {
+    padding: 2rem 0;
+}
+
+.modern-table-container,
+.modern-form-container,
+.modern-view-container {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.dark .modern-table-container,
+.dark .modern-form-container,
+.dark .modern-view-container {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+/* ============================================
+   Status-Specific Styling
+   ============================================ */
+
+/* Invoice/Order Status Colors */
+.fi-badge[data-status="draft"] {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.fi-badge[data-status="pending"] {
+    background: #fffbeb;
+    color: #d97706;
+}
+
+.fi-badge[data-status="approved"],
+.fi-badge[data-status="paid"],
+.fi-badge[data-status="completed"] {
+    background: #f0fdf4;
+    color: #059669;
+}
+
+.fi-badge[data-status="rejected"],
+.fi-badge[data-status="cancelled"],
+.fi-badge[data-status="overdue"] {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.fi-badge[data-status="processing"],
+.fi-badge[data-status="shipped"] {
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+/* Dark mode status badges */
+.dark .fi-badge[data-status="draft"] {
+    background: #374151;
+    color: #d1d5db;
+}
+
+.dark .fi-badge[data-status="pending"] {
+    background: #78350f;
+    color: #fbbf24;
+}
+
+.dark .fi-badge[data-status="approved"],
+.dark .fi-badge[data-status="paid"],
+.dark .fi-badge[data-status="completed"] {
+    background: #064e3b;
+    color: #34d399;
+}
+
+.dark .fi-badge[data-status="rejected"],
+.dark .fi-badge[data-status="cancelled"],
+.dark .fi-badge[data-status="overdue"] {
+    background: #7f1d1d;
+    color: #f87171;
+}
+
+.dark .fi-badge[data-status="processing"],
+.dark .fi-badge[data-status="shipped"] {
+    background: #1e3a8a;
+    color: #93c5fd;
+}
+
+
+/* ============================================
+   Authentication Pages - Custom Styling
+   ============================================ */
+
+/* Force white background on auth pages in light mode */
+.fi-simple-page {
+    background: #ffffff !important;
+}
+
+.dark .fi-simple-page {
+    background: #0f172a !important;
+}
+
+/* Remove Filament's default auth card styling */
+.fi-simple-page .fi-section-content-ctn {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+/* Ensure form inputs have proper styling */
+.fi-simple-page .fi-input {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+}
+
+.dark .fi-simple-page .fi-input {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #f9fafb !important;
+}
+
+/* Submit button styling */
+.fi-simple-page .fi-btn-primary {
+    background: #1e40af !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+.fi-simple-page .fi-btn-primary:hover {
+    background: #1e3a8a !important;
+}
+
+/* Checkbox styling */
+.fi-simple-page .fi-checkbox {
+    border-color: #e5e7eb !important;
+}
+
+.dark .fi-simple-page .fi-checkbox {
+    border-color: #374151 !important;
+}
+
+/* Link styling */
+.fi-simple-page a {
+    color: #1e40af !important;
+}
+
+.dark .fi-simple-page a {
+    color: #3b82f6 !important;
+}
+
+.fi-simple-page a:hover {
+    text-decoration: underline;
+}

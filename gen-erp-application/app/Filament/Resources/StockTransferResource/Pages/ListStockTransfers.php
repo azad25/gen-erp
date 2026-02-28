@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\StockTransferResource\Pages;
 
 use App\Filament\Resources\StockTransferResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListStockTransfers extends ListRecords
+class ListStockTransfers extends BaseListPage
 {
     protected static string $resource = StockTransferResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

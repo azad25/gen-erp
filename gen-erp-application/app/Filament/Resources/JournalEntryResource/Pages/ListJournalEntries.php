@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\JournalEntryResource\Pages;
 
 use App\Filament\Resources\JournalEntryResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListJournalEntries extends ListRecords
+class ListJournalEntries extends BaseListPage
 {
     protected static string $resource = JournalEntryResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

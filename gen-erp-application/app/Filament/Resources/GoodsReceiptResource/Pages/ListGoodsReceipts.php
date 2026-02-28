@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\GoodsReceiptResource\Pages;
 
 use App\Filament\Resources\GoodsReceiptResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Filament\Pages\BaseListPage;
 
-class ListGoodsReceipts extends ListRecords
+class ListGoodsReceipts extends BaseListPage
 {
     protected static string $resource = GoodsReceiptResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [\Filament\Actions\CreateAction::make()];
-    }
+    
 }

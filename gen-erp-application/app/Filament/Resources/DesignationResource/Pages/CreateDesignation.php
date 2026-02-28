@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\DesignationResource\Pages;
 
 use App\Filament\Resources\DesignationResource;
-use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Pages\BaseCreatePage;
 
-class CreateDesignation extends CreateRecord
+class CreateDesignation extends BaseCreatePage
 {
     protected static string $resource = DesignationResource::class;
 }

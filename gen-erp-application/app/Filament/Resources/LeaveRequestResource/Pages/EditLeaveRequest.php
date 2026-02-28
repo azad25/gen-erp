@@ -3,15 +3,9 @@
 namespace App\Filament\Resources\LeaveRequestResource\Pages;
 
 use App\Filament\Resources\LeaveRequestResource;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Pages\BaseEditPage;
 
-class EditLeaveRequest extends EditRecord
+class EditLeaveRequest extends BaseEditPage
 {
     protected static string $resource = LeaveRequestResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 }

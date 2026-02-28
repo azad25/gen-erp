@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Enums\AlertOperator;
+use App\Filament\Resources\BaseResource;
+use App\Filament\Support\FormStyles;
+use App\Filament\Support\TableStyles;
 use App\Enums\CompanyRole;
 use App\Filament\Resources\AlertRuleResource\Pages;
 use App\Models\AlertRule;
@@ -18,7 +21,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class AlertRuleResource extends Resource
+class AlertRuleResource extends BaseResource
 {
     protected static ?string $model = AlertRule::class;
 
@@ -104,7 +107,7 @@ class AlertRuleResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return static::modernTable($table)
             ->columns([
                 TextColumn::make('name')
                     ->label(__('Name'))
@@ -126,9 +129,7 @@ class AlertRuleResource extends Resource
                     ->dateTime('d M Y H:i')
                     ->sortable(),
             ])
-            ->actions([
-                EditAction::make(),
-            ]);
+            ->actions(static::getModernTableActions());
     }
 
     public static function getPages(): array
