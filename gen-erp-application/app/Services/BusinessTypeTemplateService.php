@@ -9,6 +9,7 @@ use App\Models\EntityAlias;
 use App\Models\WorkflowDefinition;
 use App\Models\WorkflowStatus;
 use App\Models\WorkflowTransition;
+use Database\Seeders\DefaultUnitsSeeder;
 
 /**
  * Applies business-type-specific defaults (entity aliases, settings, workflows) to a newly created company.
@@ -58,6 +59,7 @@ class BusinessTypeTemplateService
         $this->applyDefaultSettings($company);
         $this->applyDefaultWorkflows($company);
         $this->applyDefaultAlertRules($company);
+        (new DefaultUnitsSeeder)->seedForCompany($company);
     }
 
     /**
