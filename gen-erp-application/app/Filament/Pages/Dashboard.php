@@ -5,20 +5,18 @@ namespace App\Filament\Pages;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 /**
- * Modern dashboard with custom layout and widgets.
+ * Modern dashboard with Filament native widgets.
  */
 class Dashboard extends BaseDashboard
 {
     protected static ?string $navigationIcon = 'heroicon-o-home';
-
-    protected static string $view = 'filament.pages.dashboard';
 
     public function getWidgets(): array
     {
         return [
             \App\Filament\Widgets\ModernStatsOverview::class,
             \App\Filament\Widgets\RevenueChart::class,
-            \App\Filament\Widgets\RecentActivity::class,
+            \App\Filament\Widgets\InventoryMetrics::class,
         ];
     }
 
@@ -27,7 +25,17 @@ class Dashboard extends BaseDashboard
         return [
             'sm' => 1,
             'md' => 2,
-            'xl' => 4,
+            'xl' => 3,
         ];
+    }
+
+    public function getHeaderWidgets(): array
+    {
+        return [];
+    }
+
+    public function getFooterWidgets(): array
+    {
+        return [];
     }
 }

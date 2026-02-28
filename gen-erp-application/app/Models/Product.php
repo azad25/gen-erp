@@ -106,6 +106,14 @@ class Product extends Model
     }
 
     /**
+     * @return HasMany<StockLevel, $this>
+     */
+    public function stockLevels(): HasMany
+    {
+        return $this->hasMany(StockLevel::class);
+    }
+
+    /**
      * Only active products.
      *
      * @param  \Illuminate\Database\Eloquent\Builder<static>  $query

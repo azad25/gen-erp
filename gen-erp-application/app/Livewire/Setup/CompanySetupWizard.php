@@ -99,7 +99,7 @@ class CompanySetupWizard extends Component
         CompanyContext::setActive($company);
         $templateService->apply($company);
 
-        $this->redirect('/app');
+        $this->redirect('/');
     }
 
     /**

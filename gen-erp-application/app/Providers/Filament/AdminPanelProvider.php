@@ -12,6 +12,7 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Facades\FilamentColor;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -26,44 +27,76 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('app')
-            ->path('app')
+            ->path('admin')
             ->login(\App\Filament\Pages\Auth\Login::class)
             ->registration(\App\Filament\Pages\Auth\Register::class)
+            ->passwordReset()
+            ->emailVerification()
+            ->profile()
             ->colors([
-                'primary' => Color::Blue,
-                'gray' => Color::Gray,
-                'success' => Color::Emerald,
+                'primary' => [
+                    50 => '#f0fdfa',
+                    100 => '#ccfbf1',
+                    200 => '#99f6e4',
+                    300 => '#5eead4',
+                    400 => '#2dd4bf',
+                    500 => '#14b8a6',
+                    600 => '#0f766e',
+                    700 => '#0d5f5a',
+                    800 => '#115e59',
+                    900 => '#134e4a',
+                    950 => '#042f2e',
+                ],
+                'gray' => Color::Slate,
+                'success' => Color::Green,
                 'warning' => Color::Amber,
                 'danger' => Color::Red,
-                'info' => Color::Sky,
+                'info' => Color::Cyan,
             ])
             ->font('Inter')
             ->favicon(asset('images/favicon.png'))
             ->brandName('GenERP BD')
-            ->brandLogo(asset('images/logo.svg'))
+            ->brandLogo(fn () => view('components.home.logo', ['attributes' => new \Illuminate\View\ComponentAttributeBag(['class' => 'h-8 w-8'])]))
+            ->darkModeBrandLogo(fn () => view('components.home.logo', ['attributes' => new \Illuminate\View\ComponentAttributeBag(['class' => 'h-8 w-8'])]))
             ->brandLogoHeight('2rem')
-            ->darkMode()
+            ->darkMode(false)
             ->sidebarCollapsibleOnDesktop()
-            ->sidebarWidth('16rem')
-            ->collapsedSidebarWidth('5rem')
+            ->sidebarWidth('280px')
+            ->collapsedSidebarWidth('80px')
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->navigationGroups([
-                NavigationGroup::make(__('Dashboard')),
-                NavigationGroup::make(__('Sales')),
-                NavigationGroup::make(__('Purchases')),
-                NavigationGroup::make(__('Inventory')),
-                NavigationGroup::make(__('HR & Payroll')),
-                NavigationGroup::make(__('Accounts')),
-                NavigationGroup::make(__('Reports')),
-                NavigationGroup::make(__('Settings')),
+                NavigationGroup::make(__('Dashboard'))
+                    ->icon('heroicon-o-home')
+                    ->collapsed(false),
+                NavigationGroup::make(__('Sales'))
+                    ->icon('heroicon-o-shopping-cart')
+                    ->collapsed(false),
+                NavigationGroup::make(__('Purchases'))
+                    ->icon('heroicon-o-shopping-bag')
+                    ->collapsed(true),
+                NavigationGroup::make(__('Inventory'))
+                    ->icon('heroicon-o-cube')
+                    ->collapsed(true),
+                NavigationGroup::make(__('HR & Payroll'))
+                    ->icon('heroicon-o-users')
+                    ->collapsed(true),
+                NavigationGroup::make(__('Accounts'))
+                    ->icon('heroicon-o-banknotes')
+                    ->collapsed(true),
+                NavigationGroup::make(__('Reports'))
+                    ->icon('heroicon-o-chart-bar')
+                    ->collapsed(true),
+                NavigationGroup::make(__('Settings'))
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->collapsed(true),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                \App\Filament\Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
@@ -84,5 +117,30 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
                 EnsureActiveCompany::class,
             ]);
+    }
+
+    public function boot(): void
+    {
+        // Register custom brand colors using Filament's color system
+        FilamentColor::register([
+            'primary' => [
+                50 => '#f0fdfa',
+                100 => '#ccfbf1',
+                200 => '#99f6e4',
+                300 => '#5eead4',
+                400 => '#2dd4bf',
+                500 => '#14b8a6',
+                600 => '#0f766e',
+                700 => '#0d5f5a',
+                800 => '#115e59',
+                900 => '#134e4a',
+                950 => '#042f2e',
+            ],
+            'success' => Color::Green,
+            'warning' => Color::Amber,
+            'danger' => Color::Red,
+            'info' => Color::Cyan,
+            'gray' => Color::Slate,
+        ]);
     }
 }

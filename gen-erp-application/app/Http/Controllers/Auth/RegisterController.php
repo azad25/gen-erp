@@ -7,7 +7,6 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 /**
@@ -27,7 +26,7 @@ class RegisterController extends Controller
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'password' => $validated['password'], // User model casts 'password' => 'hashed' — auto-hashes
             'phone' => $validated['phone'] ?? null,
             'password_changed_at' => now(),
         ]);
@@ -37,3 +36,4 @@ class RegisterController extends Controller
         return redirect()->route('setup.company');
     }
 }
+

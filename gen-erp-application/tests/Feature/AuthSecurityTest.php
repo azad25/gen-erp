@@ -9,7 +9,7 @@ test('account locked after 10 failed login attempts', function (): void {
 
     $user = User::factory()->create([
         'email' => 'locked@example.com',
-        'password' => bcrypt('correct-password'),
+        'password' => 'correct-password',
     ]);
 
     // Attempt 10 failed logins — bypass throttle by resetting between batches
@@ -30,7 +30,7 @@ test('account locked after 10 failed login attempts', function (): void {
 test('locked account rejects correct password', function (): void {
     $user = User::factory()->create([
         'email' => 'locked2@example.com',
-        'password' => bcrypt('correct-password'),
+        'password' => 'correct-password',
         'locked_until' => now()->addMinutes(30),
         'failed_login_count' => 10,
     ]);
@@ -47,7 +47,7 @@ test('locked account rejects correct password', function (): void {
 test('failed login increments failed_login_count', function (): void {
     $user = User::factory()->create([
         'email' => 'counter@example.com',
-        'password' => bcrypt('correct-password'),
+        'password' => 'correct-password',
         'failed_login_count' => 0,
     ]);
 
@@ -59,3 +59,63 @@ test('failed login increments failed_login_count', function (): void {
     $user->refresh();
     expect($user->failed_login_count)->toBe(1);
 });
+
+// ── Registration → Login Roundtrip ──────────────────────────────
+
+test('registration saves user to database and logs them in', function (): void {
+    $response = $this->post('/register', [
+        'name' => 'Test User',
+        'email' => 'newuser@example.com',
+        'password' => 'MySecurePass123',
+        'password_confirmation' => 'MySecurePass123',
+        'phone' => '01712345678',
+    ]);
+
+    $response->assertRedirect(route('setup.company'));
+    $this->assertAuthenticated();
+
+    // User persisted in DB
+    $user = User::where('email', 'newuser@example.com')->first();
+    expect($user)->not->toBeNull();
+    expect($user->name)->toBe('Test User');
+    expect($user->phone)->toBe('01712345678');
+});
+
+test('login works with credentials from registration', function (): void {
+    // Register
+    $this->post('/register', [
+        'name' => 'Roundtrip User',
+        'email' => 'roundtrip@example.com',
+        'password' => 'SecurePass456',
+        'password_confirmation' => 'SecurePass456',
+    ]);
+
+    // Logout
+    $this->post('/logout');
+    $this->assertGuest();
+
+    // Login with same credentials
+    $response = $this->post('/login', [
+        'email' => 'roundtrip@example.com',
+        'password' => 'SecurePass456',
+    ]);
+
+    $response->assertRedirect('/');
+    $this->assertAuthenticated();
+});
+
+test('login fails with wrong password', function (): void {
+    $user = User::factory()->create([
+        'email' => 'wrongpass@example.com',
+        'password' => 'correct-password',
+    ]);
+
+    $response = $this->post('/login', [
+        'email' => 'wrongpass@example.com',
+        'password' => 'wrong-password',
+    ]);
+
+    $response->assertSessionHasErrors('email');
+    $this->assertGuest();
+});
+

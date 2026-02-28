@@ -63,7 +63,7 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended('/app');
+        return redirect()->intended('/');
     }
 
     public function logout(\Illuminate\Http\Request $request): RedirectResponse

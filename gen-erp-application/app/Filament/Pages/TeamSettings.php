@@ -61,7 +61,7 @@ class TeamSettings extends Page implements HasForms, HasTable
                 TextColumn::make('role')
                     ->label(__('Role'))
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => CompanyRole::tryFrom($state)?->label() ?? $state)
+                    ->formatStateUsing(fn ($state): string => $state instanceof \App\Enums\CompanyRole ? $state->label() : (CompanyRole::tryFrom($state)?->label() ?? $state))
                     ->sortable(),
                 TextColumn::make('joined_at')
                     ->label(__('Joined'))

@@ -4,8 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\Invoice;
 use Filament\Widgets\ChartWidget;
-use Flowframe\Trend\Trend;
-use Flowframe\Trend\TrendValue;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Modern revenue chart with gradient styling.
@@ -20,19 +19,34 @@ class RevenueChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = Trend::model(Invoice::class)
-            ->between(
-                start: now()->subMonths(6),
-                end: now(),
+        // Get revenue data for the last 6 months
+        $data = Invoice::where('status', 'paid')
+            ->where('created_at', '>=', now()->subMonths(6))
+            ->select(
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw('SUM(total_amount) as total')
             )
-            ->perMonth()
-            ->sum('total_amount');
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        // Generate all months in the range
+        $months = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $months->push(now()->subMonths($i)->format('Y-m'));
+        }
+
+        // Map data to months (fill missing months with 0)
+        $revenueByMonth = $months->mapWithKeys(function ($month) use ($data) {
+            $record = $data->firstWhere('month', $month);
+            return [$month => $record ? $record->total / 100 : 0];
+        });
 
         return [
             'datasets' => [
                 [
                     'label' => __('Revenue'),
-                    'data' => $data->map(fn (TrendValue $value) => $value->aggregate / 100),
+                    'data' => $revenueByMonth->values()->toArray(),
                     'backgroundColor' => 'rgba(147, 51, 234, 0.1)',
                     'borderColor' => 'rgba(147, 51, 234, 1)',
                     'borderWidth' => 2,
@@ -40,7 +54,7 @@ class RevenueChart extends ChartWidget
                     'tension' => 0.4,
                 ],
             ],
-            'labels' => $data->map(fn (TrendValue $value) => $value->date),
+            'labels' => $months->map(fn ($month) => date('M Y', strtotime($month.'-01')))->toArray(),
         ];
     }
 

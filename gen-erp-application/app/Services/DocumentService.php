@@ -223,22 +223,18 @@ class DocumentService
 
     /**
      * Get the storage quota for a company's plan (in bytes).
-     *
-     * TODO: Phase 8 — read from plans table via SubscriptionService instead of hardcoded tiers.
+     * Reads from the plans table via SubscriptionService.
      */
     public function getStorageQuota(int $companyId): int
     {
-        // When the subscription engine is built (Phase 8), this will call:
-        // return app(SubscriptionService::class)->getFeatureLimit($companyId, 'storage_bytes');
-        $company = \App\Models\Company::find($companyId);
-        $plan = $company?->plan ?? 'free';
+        $limit = app(SubscriptionService::class)->getLimit($companyId, 'storage_bytes');
 
-        // Handle BackedEnum (plan may be cast to an enum)
-        if ($plan instanceof \BackedEnum) {
-            $plan = $plan->value;
+        // -1 means unlimited, cap at 5GB for safety
+        if ($limit === -1) {
+            return self::STORAGE_QUOTAS['enterprise'];
         }
 
-        return self::STORAGE_QUOTAS[$plan] ?? self::STORAGE_QUOTAS['free'];
+        return $limit > 0 ? $limit : self::STORAGE_QUOTAS['free'];
     }
 
     /**

@@ -37,7 +37,7 @@ test('company setup wizard creates company successfully', function (): void {
         ->call('nextStep')
         ->assertSet('currentStep', 3)
         ->call('submit')
-        ->assertRedirect('/app');
+        ->assertRedirect('/');
 
     $this->assertDatabaseHas('companies', [
         'name' => 'Test Company',

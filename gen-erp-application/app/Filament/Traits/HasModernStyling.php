@@ -25,10 +25,7 @@ trait HasModernStyling
             ->persistSortInSession()
             ->deferLoading()
             ->extremePaginationLinks()
-            ->poll('30s')
-            ->extraAttributes([
-                'class' => 'modern-table animate-fade-in',
-            ]);
+            ->poll('30s');
     }
 
     /**

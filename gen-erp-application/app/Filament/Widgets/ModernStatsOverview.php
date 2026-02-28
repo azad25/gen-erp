@@ -11,11 +11,16 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Number;
 
 /**
- * Modern stats overview widget with gradient cards and icons.
+ * Modern stats overview widget with Geex-inspired minimalist cards.
  */
 class ModernStatsOverview extends BaseWidget
 {
     protected static ?int $sort = 1;
+
+    protected function getColumns(): int
+    {
+        return 3;
+    }
 
     protected function getStats(): array
     {
@@ -27,8 +32,7 @@ class ModernStatsOverview extends BaseWidget
 
         $totalCustomers = Customer::count();
 
-        $lowStockProducts = Product::whereColumn('current_stock', '<=', 'min_stock_level')
-            ->count();
+        $cardClasses = 'border-none rounded-3xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-0';
 
         return [
             Stat::make(__('Total Revenue'), '৳ '.Number::format($totalRevenue / 100, 2))
@@ -37,15 +41,16 @@ class ModernStatsOverview extends BaseWidget
                 ->chart([7, 3, 4, 5, 6, 3, 5, 3])
                 ->color('success')
                 ->extraAttributes([
-                    'class' => 'stats-card',
+                    'class' => $cardClasses,
                 ]),
 
             Stat::make(__('Pending Orders'), Number::format($pendingOrders))
                 ->description(__('Awaiting fulfillment'))
                 ->descriptionIcon('heroicon-m-shopping-cart')
+                ->chart([3, 2, 4, 3, 4, 6, 5])
                 ->color('warning')
                 ->extraAttributes([
-                    'class' => 'stats-card',
+                    'class' => $cardClasses,
                 ]),
 
             Stat::make(__('Total Customers'), Number::format($totalCustomers))
@@ -54,15 +59,7 @@ class ModernStatsOverview extends BaseWidget
                 ->chart([3, 5, 7, 9, 11, 13, 15])
                 ->color('info')
                 ->extraAttributes([
-                    'class' => 'stats-card',
-                ]),
-
-            Stat::make(__('Low Stock Items'), Number::format($lowStockProducts))
-                ->description(__('Products below minimum'))
-                ->descriptionIcon('heroicon-m-exclamation-triangle')
-                ->color('danger')
-                ->extraAttributes([
-                    'class' => 'stats-card',
+                    'class' => $cardClasses,
                 ]),
         ];
     }

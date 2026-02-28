@@ -20,8 +20,27 @@ class InventoryMetrics extends BaseWidget
     protected function getStats(): array
     {
         $totalProducts = Product::count();
-        $lowStockProducts = Product::whereColumn('current_stock', '<=', 'min_stock_level')->count();
-        $outOfStockProducts = Product::where('current_stock', '<=', 0)->count();
+        
+        $lowStockProducts = Product::where('track_inventory', true)
+            ->where('low_stock_threshold', '>', 0)
+            ->whereExists(function ($query) {
+                $query->selectRaw('1')
+                    ->from('stock_levels')
+                    ->whereColumn('stock_levels.product_id', 'products.id')
+                    ->groupBy('stock_levels.product_id')
+                    ->havingRaw('SUM(stock_levels.quantity - stock_levels.reserved_quantity) <= products.low_stock_threshold');
+            })
+            ->count();
+        
+        $outOfStockProducts = Product::where('track_inventory', true)
+            ->whereExists(function ($query) {
+                $query->selectRaw('1')
+                    ->from('stock_levels')
+                    ->whereColumn('stock_levels.product_id', 'products.id')
+                    ->groupBy('stock_levels.product_id')
+                    ->havingRaw('SUM(stock_levels.quantity - stock_levels.reserved_quantity) <= 0');
+            })
+            ->count();
         
         $thisMonth = now()->startOfMonth();
         $stockMovements = StockMovement::where('created_at', '>=', $thisMonth)->count();

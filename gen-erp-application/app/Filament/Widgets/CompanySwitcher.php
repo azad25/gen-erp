@@ -26,7 +26,7 @@ class CompanySwitcher extends Widget
      */
     public function getCompanies(): \Illuminate\Support\Collection
     {
-        return auth()->user()->companies()->where('is_active', true)->get();
+        return auth()->user()->companies()->wherePivot('is_active', true)->get();
     }
 
     /**
