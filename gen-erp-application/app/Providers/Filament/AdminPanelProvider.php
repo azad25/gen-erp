@@ -19,6 +19,8 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\View\PanelsRenderHook;
+use Filament\Support\Facades\FilamentView;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -34,31 +36,19 @@ class AdminPanelProvider extends PanelProvider
             ->emailVerification()
             ->profile()
             ->colors([
-                'primary' => [
-                    50 => '#f0fdfa',
-                    100 => '#ccfbf1',
-                    200 => '#99f6e4',
-                    300 => '#5eead4',
-                    400 => '#2dd4bf',
-                    500 => '#14b8a6',
-                    600 => '#0f766e',
-                    700 => '#0d5f5a',
-                    800 => '#115e59',
-                    900 => '#134e4a',
-                    950 => '#042f2e',
-                ],
-                'gray' => Color::Slate,
-                'success' => Color::Green,
-                'warning' => Color::Amber,
-                'danger' => Color::Red,
-                'info' => Color::Cyan,
+                'primary'   => Color::hex('#0F766E'), // Deep Teal
+                'secondary' => Color::hex('#115E59'), // Primary Dark
+                'info'      => Color::hex('#14B8A6'), // Primary Light
+                'success'   => Color::hex('#16A34A'), // Forest Green
+                'warning'   => Color::Amber,
+                'danger'    => Color::Rose,
+                'gray'      => Color::Slate,
             ])
-            ->font('Inter')
+            ->font('Inter', provider: \Filament\FontProviders\LocalFontProvider::class)
             ->favicon(asset('images/favicon.png'))
-            ->brandName('GenERP BD')
-            ->brandLogo(fn () => view('components.home.logo', ['attributes' => new \Illuminate\View\ComponentAttributeBag(['class' => 'h-8 w-8'])]))
-            ->darkModeBrandLogo(fn () => view('components.home.logo', ['attributes' => new \Illuminate\View\ComponentAttributeBag(['class' => 'h-8 w-8'])]))
-            ->brandLogoHeight('2rem')
+            ->brandLogo(fn () => view('filament.logo'))
+            ->defaultThemeMode(\Filament\Enums\ThemeMode::Light)
+            ->brandLogoHeight('3rem')
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('280px')
             ->collapsedSidebarWidth('80px')
@@ -99,7 +89,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                \App\Filament\Widgets\CompanySwitcher::class,
+                // Widgets handled in Dashboard
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -128,16 +118,28 @@ class AdminPanelProvider extends PanelProvider
                 200 => '#99f6e4',
                 300 => '#5eead4',
                 400 => '#2dd4bf',
-                500 => '#14b8a6',
-                600 => '#0f766e',
+                500 => '#14b8a6', // primary-light
+                600 => '#0f766e', // primary (Deep Teal)
                 700 => '#0d5f5a',
-                800 => '#115e59',
+                800 => '#115e59', // primary-dark
                 900 => '#134e4a',
                 950 => '#042f2e',
             ],
-            'success' => Color::Green,
+            'success' => [
+                50 => '#f0fdf4',
+                100 => '#dcfce7',
+                200 => '#bbf7d0',
+                300 => '#86efac',
+                400 => '#4ade80',
+                500 => '#22c55e',
+                600 => '#16a34a', // success (Forest Green)
+                700 => '#15803d',
+                800 => '#166534',
+                900 => '#14532d',
+                950 => '#052e16',
+            ],
             'warning' => Color::Amber,
-            'danger' => Color::Red,
+            'danger' => Color::Rose,
             'info' => Color::Cyan,
             'gray' => Color::Slate,
         ]);
@@ -162,5 +164,17 @@ class AdminPanelProvider extends PanelProvider
         \Filament\Pages\Actions\Action::configureUsing(function (\Filament\Pages\Actions\Action $action): void {
             $action->button();
         });
+
+        // Register Company Switcher in the Sidebar
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::SIDEBAR_NAV_START,
+            fn (): \Illuminate\Contracts\View\View => view('filament.widgets.company-switcher')
+        );
+
+        // Register Language Switcher in Topbar
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
+            fn (): \Illuminate\Contracts\View\View => view('filament.widgets.language-switcher')
+        );
     }
 }

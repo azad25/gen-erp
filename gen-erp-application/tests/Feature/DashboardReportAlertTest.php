@@ -116,6 +116,11 @@ test('Company A widgets are not visible to Company B', function (): void {
 
 test('report runs and returns correct columns for selected fields', function (): void {
     $company = Company::factory()->create();
+    $user = User::factory()->create();
+    CompanyUser::factory()->owner()->create([
+        'company_id' => $company->id,
+        'user_id' => $user->id,
+    ]);
     CompanyContext::setActive($company);
 
     $report = SavedReport::withoutGlobalScopes()->create([
@@ -128,44 +133,56 @@ test('report runs and returns correct columns for selected fields', function ():
     $service = app(ReportBuilderService::class);
     $result = $service->run($report);
 
-    expect($result)->toHaveKeys(['columns', 'rows', 'chart_data']);
+    expect($result)->toHaveKeys(['columns', 'rows', 'total']);
     expect($result['columns'])->toBe(['name', 'email', 'phone']);
 });
 
 test('filter by date range returns structured result', function (): void {
     $company = Company::factory()->create();
+    $user = User::factory()->create();
+    CompanyUser::factory()->owner()->create([
+        'company_id' => $company->id,
+        'user_id' => $user->id,
+    ]);
+    CompanyContext::setActive($company);
 
     $report = SavedReport::withoutGlobalScopes()->create([
         'company_id' => $company->id,
         'name' => 'Sales This Month',
         'entity_type' => 'sales',
-        'selected_fields' => ['invoice_number', 'total'],
+        'selected_fields' => ['invoice_number', 'total_amount'],
         'filters' => [['field' => 'created_at', 'operator' => 'between', 'value' => 'this_month']],
     ]);
 
     $service = app(ReportBuilderService::class);
     $result = $service->run($report);
 
-    expect($result['columns'])->toBe(['invoice_number', 'total']);
+    expect($result['columns'])->toBe(['invoice_number', 'total_amount']);
     expect($result['rows'])->toBeArray();
 });
 
 test('group by + aggregate returns correct structure', function (): void {
     $company = Company::factory()->create();
+    $user = User::factory()->create();
+    CompanyUser::factory()->owner()->create([
+        'company_id' => $company->id,
+        'user_id' => $user->id,
+    ]);
+    CompanyContext::setActive($company);
 
     $report = SavedReport::withoutGlobalScopes()->create([
         'company_id' => $company->id,
-        'name' => 'Sales By Category',
+        'name' => 'Sales By Product',
         'entity_type' => 'product',
-        'selected_fields' => ['category', 'price'],
-        'group_by' => 'category',
-        'aggregate' => ['field' => 'price', 'function' => 'sum'],
+        'selected_fields' => ['name', 'selling_price'],
+        'group_by' => 'name',
+        'aggregate' => ['field' => 'selling_price', 'function' => 'sum'],
     ]);
 
     $service = app(ReportBuilderService::class);
     $result = $service->run($report);
 
-    expect($result)->toHaveKeys(['columns', 'rows', 'chart_data']);
+    expect($result)->toHaveKeys(['columns', 'rows', 'total']);
 });
 
 test('report is scoped to company and cannot include other company data', function (): void {
@@ -188,6 +205,12 @@ test('report is scoped to company and cannot include other company data', functi
 
 test('export dispatches correctly', function (): void {
     $company = Company::factory()->create();
+    $user = User::factory()->create();
+    CompanyUser::factory()->owner()->create([
+        'company_id' => $company->id,
+        'user_id' => $user->id,
+    ]);
+    CompanyContext::setActive($company);
 
     $report = SavedReport::withoutGlobalScopes()->create([
         'company_id' => $company->id,

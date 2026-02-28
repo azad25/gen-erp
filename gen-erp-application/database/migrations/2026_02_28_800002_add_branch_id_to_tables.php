@@ -22,10 +22,12 @@ return new class extends Migration
         ];
 
         foreach ($tables as $table) {
-            Schema::table($table, function (Blueprint $blueprint): void {
-                $blueprint->foreignId('branch_id')->nullable()->after('company_id')->constrained('branches')->nullOnDelete();
-                $blueprint->index('branch_id');
-            });
+            if (Schema::hasTable($table)) {
+                Schema::table($table, function (Blueprint $blueprint): void {
+                    $blueprint->foreignId('branch_id')->nullable()->after('company_id')->constrained('branches')->nullOnDelete();
+                    $blueprint->index('branch_id');
+                });
+            }
         }
     }
 
@@ -45,9 +47,11 @@ return new class extends Migration
         ];
 
         foreach ($tables as $table) {
-            Schema::table($table, function (Blueprint $blueprint): void {
-                $blueprint->dropConstrainedForeignId('branch_id');
-            });
+            if (Schema::hasTable($table)) {
+                Schema::table($table, function (Blueprint $blueprint): void {
+                    $blueprint->dropConstrainedForeignId('branch_id');
+                });
+            }
         }
     }
 };

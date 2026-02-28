@@ -1,608 +1,288 @@
-@import 'tailwindcss';
+@import url('../../../../public/fonts/fonts.css');
+@import "tailwindcss";
+@config "./tailwind.config.js";
 
-/* ============================================
-   GenERP BD - Enterprise SaaS Admin Panel
-   Using Filament v5 Native Theming System
-   Brand Colors: #0F766E (Teal), #14B8A6 (Light Teal), #16A34A (Green)
-   ============================================ */
-
-/* ============================================
-   LOCAL FONTS
-   ============================================ */
-@font-face {
-    font-family: 'Inter';
-    src: url('/fonts/Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype-variations');
-    font-weight: 100 900;
-    font-style: normal;
-    font-display: swap;
+/* ── VARIABLES ── */
+:root {
+    --font-main: 'Noto Sans Bengali', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sidebar-bg: #0d1117;
+    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-text: #8b949e;
+    --sidebar-active-bg: rgba(34, 197, 94, 0.12);
+    --sidebar-active-text: #22c55e;
+    --sidebar-hover: rgba(255, 255, 255, 0.05);
+    --content-bg: #f5f7fa;
+    --card-bg: #ffffff;
+    --card-border: #e8ecf0;
+    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-@font-face {
-    font-family: 'Noto Sans Bengali';
-    src: url('/fonts/Noto_Sans_Bengali/NotoSansBengali-VariableFont_wdth,wght.ttf') format('truetype-variations');
-    font-weight: 100 900;
-    font-style: normal;
-    font-display: swap;
-}
-
-/* ============================================
-   TYPOGRAPHY
-   ============================================ */
-body {
-    font-family: 'Inter', 'Noto Sans Bengali', system-ui, sans-serif;
+/* ── BASE ── */
+body,
+html {
+    font-family: var(--font-main) !important;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
 
-[lang="bn"],
-.bangla-text {
-    font-family: 'Noto Sans Bengali', 'Inter', system-ui, sans-serif;
+/* ── SIDEBAR ── */
+aside.fi-sidebar {
+    background-color: var(--sidebar-bg) !important;
+    border-right: 1px solid var(--sidebar-border) !important;
 }
 
-/* ============================================
-   FORCE LIGHT MODE - DISABLE DARK MODE
-   ============================================ */
-html,
-body {
-    color-scheme: light !important;
+aside.fi-sidebar-header {
+    border-bottom: 1px solid var(--sidebar-border) !important;
+    background: transparent !important;
 }
 
-.dark {
-    color-scheme: light !important;
+aside.fi-sidebar::-webkit-scrollbar {
+    width: 0;
 }
 
-
-
-/* ============================================
-   MAIN LAYOUT - Clean Background
-   ============================================ */
-.fi-body {
-    background-color: #fafafa !important;
-}
-
-.fi-main {
-    background-color: #fafafa !important;
-}
-
-/* ============================================
-   SIDEBAR - Professional White Design
-   ============================================ */
-.fi-sidebar {
-    background-color: white !important;
-    border-right: 1px solid rgba(0, 0, 0, 0.05) !important;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02) !important;
-}
-
-.dark .fi-sidebar {
-    background-color: #1f2937 !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
-}
-
-.fi-sidebar-nav {
-    padding: 1rem 0.75rem !important;
-}
-
-/* Navigation Groups */
-.fi-sidebar-group {
-    margin-bottom: 1.5rem !important;
-}
-
-.fi-sidebar-group-label {
-    color: rgb(100 116 139) !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    font-size: 0.75rem !important;
-    letter-spacing: 0.05em !important;
-    padding: 0.5rem 1rem !important;
-    margin-bottom: 0.5rem !important;
-}
-
-.dark .fi-sidebar-group-label {
-    color: rgb(148 163 184) !important;
-}
-
-/* Navigation Items */
-.fi-sidebar-item {
-    margin-bottom: 0.25rem !important;
-}
-
-.fi-sidebar-item-button {
-    color: rgb(71 85 105) !important;
-    border-radius: 0.75rem !important;
-    padding: 0.75rem 1rem !important;
-    font-weight: 500 !important;
-    transition: all 0.2s ease !important;
-}
-
-.dark .fi-sidebar-item-button {
-    color: rgb(156 163 175) !important;
-}
-
-.fi-sidebar-item-button:hover {
-    background-color: rgba(15, 118, 110, 0.08) !important;
-    color: rgb(15, 118, 110) !important;
-    transform: translateX(4px) !important;
-}
-
-.dark .fi-sidebar-item-button:hover {
-    background-color: rgba(20, 184, 166, 0.15) !important;
-    color: rgb(20, 184, 166) !important;
-}
-
-.fi-sidebar-item-button[aria-current="page"],
-.fi-active>.fi-sidebar-item-button {
-    background: linear-gradient(135deg, rgb(15, 118, 110), rgb(20, 184, 166)) !important;
-    color: white !important;
-    font-weight: 600 !important;
-    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25) !important;
-}
-
-.fi-sidebar-item-icon {
-    color: rgb(100 116 139) !important;
-    transition: all 0.2s ease !important;
-}
-
-.dark .fi-sidebar-item-icon {
-    color: rgb(156 163 175) !important;
-}
-
-.fi-sidebar-item-button:hover .fi-sidebar-item-icon {
-    color: rgb(15, 118, 110) !important;
-    transform: scale(1.1) !important;
-}
-
-.dark .fi-sidebar-item-button:hover .fi-sidebar-item-icon {
-    color: rgb(20, 184, 166) !important;
-}
-
-.fi-sidebar-item-button[aria-current="page"] .fi-sidebar-item-icon,
-.fi-active>.fi-sidebar-item-button .fi-sidebar-item-icon {
-    color: white !important;
-}
-
-/* ============================================
-   TOPBAR - Clean Header
-   ============================================ */
-.fi-topbar {
-    background-color: white !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
-}
-
-.dark .fi-topbar {
-    background-color: #1f2937 !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-}
-
-.fi-topbar-item {
-    color: rgb(71 85 105) !important;
-}
-
-.dark .fi-topbar-item {
-    color: rgb(156 163 175) !important;
-}
-
-.fi-topbar-item:hover {
-    color: rgb(15, 118, 110) !important;
-}
-
-.dark .fi-topbar-item:hover {
-    color: rgb(20, 184, 166) !important;
-}
-
-/* ============================================
-   CARDS & SECTIONS - Modern SaaS Style
-   ============================================ */
-.fi-section,
-.fi-card {
-    background-color: white !important;
-    border: 1px solid rgba(0, 0, 0, 0.03) !important;
-    border-radius: 1.5rem !important;
-    /* Increased radius */
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.04) !important;
-    /* Softer, wider shadow */
-    transition: all 0.3s ease !important;
-}
-
-.fi-section:hover,
-.fi-card:hover {
-    box-shadow: 0 15px 50px -10px rgba(0, 0, 0, 0.06) !important;
-    transform: translateY(-2px) !important;
-}
-
-.fi-section-header-heading {
-    color: rgb(31 41 55) !important;
-    font-weight: 700 !important;
-    font-size: 1.25rem !important;
-}
-
-.fi-section-description {
-    color: rgb(100 116 139) !important;
-}
-
-/* ============================================
-   STATS WIDGETS - Eye-Catching Design
-   ============================================ */
-.fi-wi-stats-overview-stat {
-    background: white !important;
-    border: 1px solid rgba(0, 0, 0, 0.03) !important;
-    border-radius: 1.5rem !important;
-    padding: 1.5rem !important;
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.04) !important;
-    transition: all 0.3s ease !important;
+/* nav items */
+aside.fi-sidebar .fi-sidebar-item-button {
+    border-radius: 7px !important;
+    margin: 1px 8px !important;
+    transition: background 0.12s, color 0.12s !important;
     position: relative !important;
-    overflow: hidden !important;
 }
 
-.fi-wi-stats-overview-stat::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(180deg, rgb(15, 118, 110), rgb(20, 184, 166));
-    border-radius: 4px 0 0 4px;
+aside.fi-sidebar .fi-sidebar-item-button,
+aside.fi-sidebar .fi-sidebar-item-label {
+    color: var(--sidebar-text) !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
 }
 
-.fi-wi-stats-overview-stat:hover {
-    box-shadow: 0 15px 50px -10px rgba(15, 118, 110, 0.08) !important;
-    transform: translateY(-4px) !important;
+aside.fi-sidebar .fi-sidebar-item-icon {
+    color: #4d5562 !important;
 }
 
-.fi-wi-stats-overview-stat-value {
-    color: rgb(31 41 55) !important;
-    font-weight: 800 !important;
-    font-size: 2rem !important;
-    letter-spacing: -0.025em !important;
+/* Hover */
+aside.fi-sidebar .fi-sidebar-item-button:hover {
+    background: var(--sidebar-hover) !important;
 }
 
-.fi-wi-stats-overview-stat-label {
-    color: rgb(100 116 139) !important;
-    font-weight: 600 !important;
-    font-size: 0.875rem !important;
-    margin-bottom: 0.5rem !important;
+aside.fi-sidebar .fi-sidebar-item-button:hover .fi-sidebar-item-label {
+    color: #c9d1d9 !important;
 }
 
-.fi-wi-stats-overview-stat-description {
-    color: rgb(15 118 110) !important;
-    /* primary color */
-    font-weight: 600 !important;
-    font-size: 0.875rem !important;
-    background: rgba(15, 118, 110, 0.08) !important;
-    padding: 0.25rem 0.75rem !important;
-    border-radius: 9999px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    margin-top: 0.5rem !important;
+/* Active */
+aside.fi-sidebar .fi-sidebar-item-active>.fi-sidebar-item-button {
+    background: var(--sidebar-active-bg) !important;
 }
 
-.fi-wi-stats-overview-stat-icon {
-    color: rgb(20, 184, 166) !important;
+aside.fi-sidebar .fi-sidebar-item-active>.fi-sidebar-item-button .fi-sidebar-item-label,
+aside.fi-sidebar .fi-sidebar-item-active>.fi-sidebar-item-button .fi-sidebar-item-icon {
+    color: var(--sidebar-active-text) !important;
 }
 
-/* ============================================
-   CHARTS - Clean Design
-   ============================================ */
-.fi-wi-chart {
-    background-color: white !important;
-    border: 1px solid rgba(0, 0, 0, 0.03) !important;
-    border-radius: 1.5rem !important;
-    padding: 1.5rem !important;
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.04) !important;
+/* active left border strip */
+aside.fi-sidebar .fi-sidebar-item-active>.fi-sidebar-item-button::before {
+    content: '' !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 3px !important;
+    height: 18px !important;
+    background: var(--sidebar-active-text) !important;
+    border-radius: 0 2px 2px 0 !important;
 }
 
-/* ============================================
-   TABLES - Professional Data Display
-   ============================================ */
-.fi-ta {
-    background-color: white !important;
-    border: 1px solid rgba(0, 0, 0, 0.03) !important;
-    border-radius: 1.5rem !important;
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.04) !important;
-    overflow: hidden !important;
+/* group labels */
+aside.fi-sidebar .fi-sidebar-group-label {
+    font-family: var(--font-mono) !important;
+    font-size: 10px !important;
+    letter-spacing: 0.8px !important;
+    text-transform: uppercase !important;
+    color: rgba(139, 148, 158, 0.5) !important;
+    padding-inline-start: 18px !important;
 }
 
-.fi-ta-header-toolbar {
-    padding: 1.25rem !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.03) !important;
+/* sidebar footer */
+aside.fi-sidebar-footer {
+    border-top: 1px solid var(--sidebar-border) !important;
 }
 
-.fi-ta-header {
+/* ── TOPBAR ── */
+.fi-topbar {
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--card-border) !important;
+    box-shadow: none !important;
+    height: 64px !important;
+}
+
+/* Global Search */
+.fi-topbar .fi-global-search-input {
+    background: var(--content-bg) !important;
+    border: 1px solid var(--card-border) !important;
+    border-radius: 8px !important;
+    height: 36px !important;
+    font-size: 13px !important;
+    box-shadow: none !important;
+}
+
+/* Topbar Icon Buttons */
+.fi-topbar .fi-icon-btn {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--card-border) !important;
     background: white !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.12s !important;
+    color: var(--text-secondary, #64748b) !important;
 }
 
-.fi-ta-header-cell {
-    color: rgb(100 116 139) !important;
-    font-weight: 600 !important;
-    font-size: 0.75rem !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+.fi-topbar .fi-icon-btn:hover {
+    background: var(--content-bg) !important;
+    border-color: #d0d7de !important;
 }
 
-.fi-ta-row {
-    background-color: white !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.02) !important;
-    transition: all 0.2s ease !important;
+.fi-topbar .fi-icon-btn-icon {
+    width: 20px !important;
+    height: 20px !important;
 }
 
-.fi-ta-row:hover {
-    background-color: #F8FAFC !important;
+/* User Menu Button */
+.fi-topbar .fi-user-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 8px !important;
 }
 
-.fi-ta-cell {
-    color: rgb(31 41 55) !important;
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+/* ── CONTENT ── */
+.fi-main {
+    background: var(--content-bg) !important;
 }
 
-/* ============================================
-   BUTTONS - Brand Gradient Style
-   ============================================ */
-.fi-btn {
-    border-radius: 9999px !important;
-    /* Pill style */
-    font-weight: 600 !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    padding-left: 1.5rem !important;
-    padding-right: 1.5rem !important;
+.fi-main::-webkit-scrollbar {
+    width: 6px;
 }
 
-.fi-btn-primary {
-    background: linear-gradient(135deg, rgb(15, 118, 110), rgb(20, 184, 166)) !important;
-    color: white !important;
-    border: none !important;
-    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2) !important;
-}
-
-.fi-btn-primary:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 20px rgba(15, 118, 110, 0.3) !important;
-}
-
-.fi-btn-color-gray {
-    background: #F1F5F9 !important;
-    color: #475569 !important;
-    border: none !important;
-}
-
-.fi-btn-color-gray:hover {
-    background: #E2E8F0 !important;
-    color: #1E293B !important;
-}
-
-/* ============================================
-   FORMS - Clean Input Design
-   ============================================ */
-.fi-input,
-.fi-select,
-.fi-textarea {
-    background-color: #F8FAFC !important;
-    border: 1px solid transparent !important;
-    color: rgb(31 41 55) !important;
-    border-radius: 0.75rem !important;
-    transition: all 0.2s ease !important;
-    padding: 0.75rem 1rem !important;
-}
-
-.fi-input:hover,
-.fi-select:hover,
-.fi-textarea:hover {
-    background-color: #F1F5F9 !important;
-}
-
-.fi-input:focus,
-.fi-select:focus,
-.fi-textarea:focus {
-    background-color: white !important;
-    border-color: rgb(20, 184, 166) !important;
-    box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1) !important;
-    outline: none !important;
-}
-
-.fi-fo-field-wrp-label {
-    color: rgb(55 65 81) !important;
-    font-weight: 600 !important;
-}
-
-.fi-fo-field-wrp-hint {
-    color: rgb(100 116 139) !important;
-}
-
-/* ============================================
-   BADGES - Colorful Status Indicators
-   ============================================ */
-.fi-badge {
-    font-weight: 600 !important;
-    padding: 0.375rem 0.875rem !important;
-    border-radius: 9999px !important;
-    font-size: 0.75rem !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.025em !important;
-}
-
-.fi-badge-primary {
-    background-color: rgba(15, 118, 110, 0.1) !important;
-    color: rgb(15, 118, 110) !important;
-    border: 1px solid rgba(15, 118, 110, 0.2) !important;
-}
-
-.fi-badge-success {
-    background-color: rgba(22, 163, 74, 0.1) !important;
-    color: rgb(22, 163, 74) !important;
-    border: 1px solid rgba(22, 163, 74, 0.2) !important;
-}
-
-.fi-badge-warning {
-    background-color: rgba(202, 138, 4, 0.1) !important;
-    color: rgb(202, 138, 4) !important;
-    border: 1px solid rgba(202, 138, 4, 0.2) !important;
-}
-
-.fi-badge-danger {
-    background-color: rgba(185, 28, 28, 0.1) !important;
-    color: rgb(185, 28, 28) !important;
-    border: 1px solid rgba(185, 28, 28, 0.2) !important;
-}
-
-/* ============================================
-   MODALS - Clean Overlay Design
-   ============================================ */
-.fi-modal {
-    background-color: white !important;
-    color: rgb(31 41 55) !important;
-    border-radius: 1.25rem !important;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
-}
-
-.fi-modal-header {
-    background-color: rgb(243 244 246) !important;
-    border-bottom: 1px solid rgb(226 232 240) !important;
-}
-
-.fi-modal-heading {
-    color: rgb(31 41 55) !important;
-    font-weight: 700 !important;
-}
-
-/* ============================================
-   NOTIFICATIONS - Toast Style
-   ============================================ */
-.fi-no {
-    background-color: white !important;
-    border: 1px solid rgb(226 232 240) !important;
-    border-radius: 1rem !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
-}
-
-.fi-no-title {
-    color: rgb(31 41 55) !important;
-    font-weight: 700 !important;
-}
-
-.fi-no-body {
-    color: rgb(100 116 139) !important;
-}
-
-.fi-no-success {
-    border-left: 4px solid rgb(22, 163, 74) !important;
-}
-
-.fi-no-warning {
-    border-left: 4px solid rgb(202, 138, 4) !important;
-}
-
-.fi-no-danger {
-    border-left: 4px solid rgb(185, 28, 28) !important;
-}
-
-.fi-no-info {
-    border-left: 4px solid rgb(15, 118, 110) !important;
-}
-
-
-
-/* ============================================
-   PAGE HEADER & BREADCRUMBS
-   ============================================ */
-.fi-header {
-    background-color: white !important;
-    border-bottom: 1px solid rgb(226 232 240) !important;
-    border-radius: 1rem 1rem 0 0 !important;
-}
-
-.fi-header-heading {
-    color: rgb(31 41 55) !important;
-    font-weight: 800 !important;
-}
-
-.fi-header-subheading {
-    color: rgb(100 116 139) !important;
-}
-
-.fi-breadcrumbs-item:hover {
-    color: rgb(15, 118, 110) !important;
-}
-
-/* ============================================
-   ACTION BUTTONS & ICONS
-   ============================================ */
-.fi-ta-action-btn {
-    color: rgb(100 116 139) !important;
-    transition: all 0.15s ease !important;
-    border-radius: 0.5rem !important;
-}
-
-.fi-ta-action-btn:hover {
-    color: rgb(15, 118, 110) !important;
-    background-color: rgba(15, 118, 110, 0.08) !important;
-    transform: scale(1.1) !important;
-}
-
-/* ============================================
-   PAGINATION
-   ============================================ */
-.fi-pagination {
-    background-color: white !important;
-    border: 1px solid rgb(226 232 240) !important;
-    border-radius: 0.75rem !important;
-}
-
-.fi-pagination-item {
-    color: rgb(55 65 81) !important;
-    border-radius: 0.5rem !important;
-    transition: all 0.15s ease !important;
-}
-
-.fi-pagination-item:hover {
-    background-color: rgba(15, 118, 110, 0.08) !important;
-    color: rgb(15, 118, 110) !important;
-}
-
-.fi-pagination-item-active {
-    background: linear-gradient(135deg, rgb(15, 118, 110), rgb(20, 184, 166)) !important;
-    color: white !important;
-    font-weight: 700 !important;
-}
-
-/* ============================================
-   SCROLLBAR - macOS Style
-   ============================================ */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
+.fi-main::-webkit-scrollbar-track {
     background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
-    background: rgb(203 213 225);
-    border-radius: 4px;
+.fi-main::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 3px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: rgb(148 163 184);
+/* ── CARDS / SECTIONS ── */
+.fi-wi-stats-overview-stat,
+.fi-section,
+.fi-card,
+[class*="fi-ta-"] {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--card-border) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--card-shadow) !important;
 }
 
-/* ============================================
-   ACCESSIBILITY
-   ============================================ */
-.fi-btn:focus-visible,
-.fi-input:focus-visible,
-.fi-select:focus-visible {
-    outline: 2px solid rgb(15, 118, 110) !important;
-    outline-offset: 2px !important;
+/* ── TABLE ── */
+.fi-ta-header-cell {
+    font-family: var(--font-mono) !important;
+    font-size: 10px !important;
+    letter-spacing: 0.6px !important;
+    text-transform: uppercase !important;
+    background: #fafbfc !important;
+    color: #94a3b8 !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
+.fi-ta-cell {
+    font-size: 13px !important;
+    color: #64748b !important;
+}
+
+.fi-ta-cell:first-child {
+    font-family: var(--font-mono) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+}
+
+tbody tr:hover td {
+    background: #fafbfc;
+}
+
+/* ── STAT CARDS ── */
+.fi-wi-stats-overview-stat-value {
+    font-family: var(--font-mono) !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    letter-spacing: -1px !important;
+}
+
+.fi-wi-stats-overview-stat-label {
+    font-size: 11px !important;
+    letter-spacing: 0.3px !important;
+    text-transform: uppercase !important;
+    font-weight: 600 !important;
+}
+
+/* ── BUTTONS ── */
+.fi-btn-primary {
+    background: #22c55e !important;
+    border-color: #22c55e !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+}
+
+.fi-btn-primary:hover {
+    background: #16a34a !important;
+    border-color: #16a34a !important;
+}
+
+/* ── BADGES ── */
+.fi-badge {
+    border-radius: 5px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 3px 8px !important;
+}
+
+/* ── FORM INPUTS ── */
+.fi-input,
+.fi-select-input,
+.fi-textarea {
+    border-radius: 8px !important;
+    border-color: var(--card-border) !important;
+    font-size: 13.5px !important;
+    box-shadow: none !important;
+    transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+
+.fi-input:focus,
+.fi-select-input:focus,
+.fi-textarea:focus {
+    border-color: #22c55e !important;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12) !important;
+}
+
+/* ── TABS ── */
+.fi-tabs-tab {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border-radius: 7px !important;
+}
+
+.fi-tabs-tab[aria-selected="true"] {
+    color: #22c55e !important;
+}
+
+/* ── PAGE HEADINGS ── */
+.fi-page-header-heading {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.4px !important;
+}
+
+/* ── MODAL ── */
+.fi-modal-window {
+    border-radius: 14px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
 }

@@ -21,6 +21,9 @@ With **GenERP BD**, businesses get enterprise-grade features with completely dyn
 <p align="center">
   <img src="preview.png" alt="GenERP BD Preview" width="100%" />
 </p>
+<p align="center">
+  <img src="admin-panel-preview.png" alt="GenERP BD Preview" width="100%" />
+</p>
 
 ## ✨ Core Platform Capabilities
 

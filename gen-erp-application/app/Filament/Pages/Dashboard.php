@@ -5,7 +5,7 @@ namespace App\Filament\Pages;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 /**
- * Modern dashboard with Filament native widgets.
+ * Modern dashboard with custom GenERP BD layout.
  */
 class Dashboard extends BaseDashboard
 {
@@ -14,20 +14,12 @@ class Dashboard extends BaseDashboard
 
     public function getWidgets(): array
     {
-        return [
-            \App\Filament\Widgets\ModernStatsOverview::class,
-            \App\Filament\Widgets\RevenueChart::class,
-            \App\Filament\Widgets\InventoryMetrics::class,
-        ];
+        return [];
     }
 
     public function getColumns(): int | string | array
     {
-        return [
-            'sm' => 1,
-            'md' => 2,
-            'xl' => 3,
-        ];
+        return 4; // Because the design has 4 stats cards!
     }
 
     public function getHeaderWidgets(): array
