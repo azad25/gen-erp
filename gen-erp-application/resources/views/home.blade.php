@@ -1,1038 +1,61 @@
 <!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))" :class="{ 'dark': darkMode }">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __('home.title') }} - GenERP BD</title>
-    <meta name="description" content="{{ __('home.meta_description') }}">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ __('home.title') ?? 'GenERP BD - Intelligent Cloud ERP' }}</title>
     
     <link rel="stylesheet" href="{{ asset('fonts/fonts.css') }}">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            --primary: #1e40af;
-            --primary-light: #3b82f6;
-            --primary-dark: #1e3a8a;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            line-height: 1.6;
-            transition: background-color 0.3s, color 0.3s;
-            background: #ffffff;
-            color: var(--gray-900);
-        }
-        
-        body.bn {
-            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
-        }
-        
-        .dark body {
-            background: #0f172a;
-            color: #f8fafc;
-        }
-        
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-        
-        /* Navigation */
-        nav {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--gray-200);
-            transition: all 0.3s;
-        }
-        
-        .dark nav {
-            background: rgba(15, 23, 42, 0.95);
-            border-bottom-color: var(--gray-700);
-        }
-        
-        .nav-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 0;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-decoration: none;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-        
-        .nav-link {
-            color: var(--gray-600);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-        
-        .nav-link:hover {
-            color: var(--primary);
-        }
-        
-        .dark .nav-link {
-            color: var(--gray-400);
-        }
-        
-        .dark .nav-link:hover {
-            color: var(--primary-light);
-        }
-        
-        .nav-actions {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-        
-        /* Buttons */
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            border: none;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
-        
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
-        }
-        
-        .btn-secondary {
-            background: transparent;
-            color: var(--primary);
-            border: 1px solid var(--gray-300);
-        }
-        
-        .btn-secondary:hover {
-            background: var(--gray-50);
-            border-color: var(--primary);
-        }
-        
-        .dark .btn-secondary {
-            color: var(--primary-light);
-            border-color: var(--gray-700);
-        }
-        
-        .dark .btn-secondary:hover {
-            background: var(--gray-800);
-            border-color: var(--primary-light);
-        }
-        
-        /* Language & Theme Switcher */
-        .switcher {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-        
-        .lang-btn, .theme-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            background: var(--gray-100);
-            border: 1px solid var(--gray-200);
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-        }
-        
-        .dark .lang-btn, .dark .theme-btn {
-            background: var(--gray-800);
-            border-color: var(--gray-700);
-            color: var(--gray-100);
-        }
-        
-        .lang-btn:hover, .theme-btn:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-        
-        .lang-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-        
-        /* Hero Section */
-        .hero {
-            padding: 5rem 0 4rem;
-            text-align: center;
-        }
-        
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 2rem;
-            font-size: 0.9rem;
-            color: var(--primary);
-            margin-bottom: 2rem;
-            font-weight: 500;
-        }
-        
-        .dark .hero-badge {
-            background: rgba(30, 64, 175, 0.1);
-            border-color: rgba(30, 64, 175, 0.3);
-        }
-        
-        .hero-title {
-            font-size: 3.5rem;
-            font-weight: 800;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            color: var(--gray-900);
-        }
-        
-        .dark .hero-title {
-            color: #f9fafb;
-        }
-        
-        .hero-title .highlight {
-            color: var(--primary);
-            font-weight: 900;
-        }
-        
-        .hero-description {
-            font-size: 1.2rem;
-            color: var(--gray-600);
-            margin-bottom: 2.5rem;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
-            font-weight: 400;
-        }
-        
-        .dark .hero-description {
-            color: var(--gray-400);
-        }
-        
-        .hero-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-bottom: 4rem;
-        }
-        
-        /* Company Logos Carousel */
-        .companies-section {
-            padding: 3rem 0;
-            background: var(--gray-50);
-            border-top: 1px solid var(--gray-200);
-            border-bottom: 1px solid var(--gray-200);
-            overflow: hidden;
-        }
-        
-        .dark .companies-section {
-            background: var(--gray-800);
-            border-color: var(--gray-700);
-        }
-        
-        .companies-title {
-            text-align: center;
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: var(--gray-500);
-            margin-bottom: 2rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .dark .companies-title {
-            color: var(--gray-400);
-        }
-        
-        .logos-track {
-            display: flex;
-            gap: 4rem;
-            animation: scroll 30s linear infinite;
-        }
-        
-        .logos-track:hover {
-            animation-play-state: paused;
-        }
-        
-        @keyframes scroll {
-            0% {
-                transform: translateX(0);
-            }
-            100% {
-                transform: translateX(-50%);
-            }
-        }
-        
-        .company-logo {
-            flex-shrink: 0;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 2rem;
-            font-weight: 600;
-            color: var(--gray-400);
-            font-size: 1.2rem;
-            opacity: 0.7;
-            transition: opacity 0.3s;
-        }
-        
-        .company-logo:hover {
-            opacity: 1;
-        }
-        
-        .dark .company-logo {
-            color: var(--gray-500);
-        }
-        
-        /* Stats Section */
-        .stats-section {
-            padding: 4rem 0;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 2rem;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-label {
-            font-size: 1rem;
-            color: var(--gray-600);
-            font-weight: 400;
-        }
-        
-        .dark .stat-label {
-            color: var(--gray-400);
-        }
-        
-        /* Features Section */
-        .features {
-            padding: 6rem 0;
-            background: var(--gray-50);
-        }
-        
-        .dark .features {
-            background: var(--gray-800);
-        }
-        
-        .section-header {
-            text-align: center;
-            max-width: 700px;
-            margin: 0 auto 4rem;
-        }
-        
-        .section-badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 2rem;
-            font-size: 0.85rem;
-            color: var(--primary);
-            font-weight: 600;
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .dark .section-badge {
-            background: rgba(30, 64, 175, 0.1);
-            border-color: rgba(30, 64, 175, 0.3);
-        }
-        
-        .section-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            color: var(--gray-900);
-        }
-        
-        .dark .section-title {
-            color: #f9fafb;
-        }
-        
-        .section-description {
-            font-size: 1.1rem;
-            color: var(--gray-600);
-            font-weight: 400;
-        }
-        
-        .dark .section-description {
-            color: var(--gray-400);
-        }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-        }
-        
-        .feature-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 1rem;
-            border: 1px solid var(--gray-200);
-            transition: all 0.3s;
-        }
-        
-        .dark .feature-card {
-            background: #0f172a;
-            border-color: var(--gray-700);
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-            border-color: var(--primary);
-        }
-        
-        .feature-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 1rem;
-            background: #eff6ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-            color: var(--primary);
-            font-size: 1.5rem;
-        }
-        
-        .dark .feature-icon {
-            background: rgba(30, 64, 175, 0.1);
-        }
-        
-        .feature-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 0.75rem;
-            color: var(--gray-900);
-        }
-        
-        .dark .feature-title {
-            color: #f9fafb;
-        }
-        
-        .feature-description {
-            color: var(--gray-600);
-            font-weight: 400;
-            line-height: 1.6;
-        }
-        
-        .dark .feature-description {
-            color: var(--gray-400);
-        }
-        
-        /* Modules Section */
-        .modules {
-            padding: 6rem 0;
-        }
-        
-        .modules-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.5rem;
-        }
-        
-        .module-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            border: 1px solid var(--gray-200);
-            transition: all 0.3s;
-            text-align: center;
-        }
-        
-        .dark .module-card {
-            background: #0f172a;
-            border-color: var(--gray-700);
-        }
-        
-        .module-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
-            border-color: var(--primary);
-        }
-        
-        .module-icon {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-        
-        .module-name {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--gray-900);
-        }
-        
-        .dark .module-name {
-            color: #f9fafb;
-        }
-        
-        /* Product Showcase */
-        .showcase {
-            padding: 6rem 0;
-            background: var(--gray-50);
-        }
-        
-        .dark .showcase {
-            background: var(--gray-800);
-        }
-        
-        .showcase-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            align-items: center;
-            margin-bottom: 4rem;
-        }
-        
-        .showcase-content:nth-child(even) {
-            direction: rtl;
-        }
-        
-        .showcase-content:nth-child(even) > * {
-            direction: ltr;
-        }
-        
-        .showcase-text h3 {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            color: var(--gray-900);
-        }
-        
-        .dark .showcase-text h3 {
-            color: #f9fafb;
-        }
-        
-        .showcase-text p {
-            font-size: 1.1rem;
-            color: var(--gray-600);
-            margin-bottom: 1.5rem;
-            font-weight: 400;
-            line-height: 1.7;
-        }
-        
-        .dark .showcase-text p {
-            color: var(--gray-400);
-        }
-        
-        .showcase-features {
-            list-style: none;
-            padding: 0;
-        }
-        
-        .showcase-features li {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-            color: var(--gray-700);
-            font-weight: 400;
-        }
-        
-        .dark .showcase-features li {
-            color: var(--gray-300);
-        }
-        
-        .showcase-features li::before {
-            content: "✓";
-            color: var(--success);
-            font-weight: 700;
-            font-size: 1.2rem;
-        }
-        
-        .showcase-image {
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            border-radius: 1rem;
-            padding: 2rem;
-            border: 1px solid var(--gray-200);
-            min-height: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--gray-400);
-            font-size: 3rem;
-        }
-        
-        .dark .showcase-image {
-            background: linear-gradient(135deg, rgba(30, 64, 175, 0.1) 0%, rgba(30, 64, 175, 0.05) 100%);
-            border-color: var(--gray-700);
-        }
-        
-        /* Testimonials */
-        .testimonials {
-            padding: 6rem 0;
-        }
-        
-        .testimonials-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-        }
-        
-        .testimonial-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 1rem;
-            border: 1px solid var(--gray-200);
-        }
-        
-        .dark .testimonial-card {
-            background: #0f172a;
-            border-color: var(--gray-700);
-        }
-        
-        .testimonial-rating {
-            color: #f59e0b;
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
-        }
-        
-        .testimonial-text {
-            color: var(--gray-700);
-            margin-bottom: 1.5rem;
-            font-weight: 400;
-            line-height: 1.7;
-            font-style: italic;
-        }
-        
-        .dark .testimonial-text {
-            color: var(--gray-300);
-        }
-        
-        .testimonial-author {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .author-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.2rem;
-        }
-        
-        .author-info h4 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--gray-900);
-            margin-bottom: 0.25rem;
-        }
-        
-        .dark .author-info h4 {
-            color: #f9fafb;
-        }
-        
-        .author-info p {
-            font-size: 0.9rem;
-            color: var(--gray-500);
-            font-weight: 400;
-        }
-        
-        .dark .author-info p {
-            color: var(--gray-400);
-        }
-        
-        /* Pricing Section */
-        .pricing {
-            padding: 6rem 0;
-            background: var(--gray-50);
-        }
-        
-        .dark .pricing {
-            background: var(--gray-800);
-        }
-        
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-        
-        .pricing-card {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 1rem;
-            border: 1px solid var(--gray-200);
-            position: relative;
-            transition: all 0.3s;
-        }
-        
-        .dark .pricing-card {
-            background: #0f172a;
-            border-color: var(--gray-700);
-        }
-        
-        .pricing-card.featured {
-            border-color: var(--primary);
-            box-shadow: 0 12px 24px rgba(30, 64, 175, 0.15);
-            transform: scale(1.05);
-        }
-        
-        .pricing-badge {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--primary);
-            color: white;
-            padding: 0.4rem 1rem;
-            border-radius: 2rem;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        
-        .pricing-name {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--gray-900);
-        }
-        
-        .dark .pricing-name {
-            color: #f9fafb;
-        }
-        
-        .pricing-description {
-            color: var(--gray-600);
-            margin-bottom: 1.5rem;
-            font-weight: 400;
-        }
-        
-        .dark .pricing-description {
-            color: var(--gray-400);
-        }
-        
-        .pricing-price {
-            font-size: 3rem;
-            font-weight: 800;
-            color: var(--gray-900);
-            margin-bottom: 0.5rem;
-        }
-        
-        .dark .pricing-price {
-            color: #f9fafb;
-        }
-        
-        .pricing-price span {
-            font-size: 1.2rem;
-            font-weight: 400;
-            color: var(--gray-500);
-        }
-        
-        .pricing-period {
-            color: var(--gray-500);
-            margin-bottom: 2rem;
-            font-weight: 400;
-        }
-        
-        .dark .pricing-period {
-            color: var(--gray-400);
-        }
-        
-        .pricing-features {
-            list-style: none;
-            padding: 0;
-            margin-bottom: 2rem;
-        }
-        
-        .pricing-features li {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-            color: var(--gray-700);
-            font-weight: 400;
-        }
-        
-        .dark .pricing-features li {
-            color: var(--gray-300);
-        }
-        
-        .pricing-features li::before {
-            content: "✓";
-            color: var(--success);
-            font-weight: 700;
-        }
-        
-        /* CTA Section */
-        .cta {
-            padding: 6rem 0;
-            text-align: center;
-        }
-        
-        .cta-content {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .cta h2 {
-            font-size: 3rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            color: var(--gray-900);
-        }
-        
-        .dark .cta h2 {
-            color: #f9fafb;
-        }
-        
-        .cta p {
-            font-size: 1.2rem;
-            color: var(--gray-600);
-            margin-bottom: 2.5rem;
-            font-weight: 400;
-        }
-        
-        .dark .cta p {
-            color: var(--gray-400);
-        }
-        
-        .cta-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
-        
-        /* Footer */
-        footer {
-            background: var(--gray-900);
-            color: var(--gray-400);
-            padding: 4rem 0 2rem;
-        }
-        
-        .dark footer {
-            background: #000000;
-        }
-        
-        .footer-content {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 3rem;
-            margin-bottom: 3rem;
-        }
-        
-        .footer-brand h3 {
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-        
-        .footer-brand p {
-            font-weight: 400;
-            line-height: 1.7;
-        }
-        
-        .footer-section h4 {
-            color: white;
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-        
-        .footer-links {
-            list-style: none;
-            padding: 0;
-        }
-        
-        .footer-links li {
-            margin-bottom: 0.75rem;
-        }
-        
-        .footer-links a {
-            color: var(--gray-400);
-            text-decoration: none;
-            transition: color 0.3s;
-            font-weight: 400;
-        }
-        
-        .footer-links a:hover {
-            color: white;
-        }
-        
-        .footer-bottom {
-            border-top: 1px solid var(--gray-700);
-            padding-top: 2rem;
-            text-align: center;
-            font-weight: 400;
-        }
-        
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .features-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .modules-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            
-            .showcase-content {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-            
-            .pricing-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .pricing-card.featured {
-                transform: scale(1);
-            }
-            
-            .footer-content {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-            
-            .hero-title {
-                font-size: 2.5rem;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .modules-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .testimonials-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .footer-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .cta h2 {
-                font-size: 2rem;
-            }
-        }
-    </style>
-    
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-home.css />
 </head>
-<body class="{{ app()->getLocale() }}">
+<body class="antialiased bg-base-bg text-base-text {{ app()->getLocale() === 'bn' ? 'font-bn' : 'font-sans' }}">
+
+    <!-- Organic Ambient Background Blobs -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute -top-[10%] -left-[10%] w-[500px] h-[500px] rounded-full bg-primary/10 blur-[90px] animated-blob"></div>
+        <div class="absolute top-[20%] -right-[10%] w-[600px] h-[600px] rounded-full bg-success/10 blur-[100px] animated-blob" style="animation-delay: -5s"></div>
+    </div>
+
     <!-- Navigation -->
-    <nav>
-        <div class="container">
-            <div class="nav-content">
-                <a href="/" class="logo">
-                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                        <rect width="40" height="40" rx="8" fill="currentColor"/>
-                        <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <span>GenERP</span>
+    <nav class="fixed w-full z-50 glass-panel border-b border-neutral-100 transition-all duration-300" 
+         x-data="{ scrolled: false }" 
+         @scroll.window="scrolled = (window.pageYOffset > 20)"
+         :class="{ 'py-4 shadow-sm': scrolled, 'py-6': !scrolled }">
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                
+                <a href="/" class="flex items-center gap-3 group">
+                    <x-home.logo class="w-10 h-10 drop-shadow-md group-hover:scale-105 transition-transform" />
+                    <span class="text-xl font-extrabold text-base-text tracking-tight">GenERP BD</span>
                 </a>
-                
-                <div class="nav-links">
-                    <a href="#features" class="nav-link">{{ __('home.nav.features') }}</a>
-                    <a href="#modules" class="nav-link">{{ __('home.nav.modules') }}</a>
-                    <a href="#pricing" class="nav-link">{{ __('home.nav.pricing') }}</a>
-                    <a href="#testimonials" class="nav-link">{{ __('home.nav.testimonials') }}</a>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#features" class="text-base-text/70 hover:text-primary font-bold transition-colors">{{ __('home.nav.features') }}</a>
+                    <a href="#modules" class="text-base-text/70 hover:text-primary font-bold transition-colors">{{ __('home.nav.modules') }}</a>
+                    <a href="#pricing" class="text-base-text/70 hover:text-primary font-bold transition-colors">{{ __('home.nav.pricing') }}</a>
+                    <a href="#testimonials" class="text-base-text/70 hover:text-primary font-bold transition-colors">{{ __('home.nav.testimonials') }}</a>
                 </div>
-                
-                <div class="nav-actions">
-                    <div class="switcher">
-                        <a href="{{ route('locale.set', 'bn') }}" class="lang-btn {{ app()->getLocale() === 'bn' ? 'active' : '' }}">বাংলা</a>
-                        <a href="{{ route('locale.set', 'en') }}" class="lang-btn {{ app()->getLocale() === 'en' ? 'active' : '' }}">English</a>
-                        <button @click="darkMode = !darkMode" class="theme-btn">
-                            <span x-show="!darkMode">🌙</span>
-                            <span x-show="darkMode">☀️</span>
-                        </button>
+
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex items-center bg-neutral-100 rounded-lg p-1">
+                        <a href="{{ route('locale.set', 'bn') }}" class="px-3 py-1 rounded-md text-sm font-bold transition-all {{ app()->getLocale() === 'bn' ? 'bg-white text-primary shadow-sm' : 'text-neutral-500 hover:text-base-text' }}">BN</a>
+                        <a href="{{ route('locale.set', 'en') }}" class="px-3 py-1 rounded-md text-sm font-bold transition-all {{ app()->getLocale() === 'en' ? 'bg-white text-primary shadow-sm' : 'text-neutral-500 hover:text-base-text' }}">EN</a>
                     </div>
-                    
+
                     @auth
-                        <a href="{{ route('filament.app.pages.dashboard') }}" class="btn btn-primary">{{ __('home.nav.dashboard') }}</a>
+                        <a href="{{ route('filament.app.pages.dashboard') }}" class="hidden md:inline-flex items-center justify-center px-6 py-2.5 border border-transparent text-sm font-bold rounded-xl text-white bg-primary hover:bg-primary-dark shadow-sm hover:shadow-md transition-all">
+                            {{ __('home.nav.dashboard') }}
+                        </a>
                     @else
-                        <a href="{{ route('filament.app.auth.login') }}" class="btn btn-secondary">{{ __('home.nav.sign_in') }}</a>
-                        <a href="{{ route('filament.app.auth.register') }}" class="btn btn-primary">{{ __('home.nav.start_trial') }}</a>
+                        <a href="{{ route('login') }}" class="text-base-text/80 hover:text-primary font-bold px-4">{{ __('home.nav.sign_in') }}</a>
+                        <a href="{{ route('register') }}" class="hidden md:inline-flex items-center justify-center px-6 py-2.5 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-premium shadow-lg shadow-primary/25 hover:scale-105 transition-all">
+                            {{ __('home.nav.start_trial') }}
+                        </a>
                     @endauth
                 </div>
             </div>
@@ -1040,267 +63,390 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <div class="hero-badge">
-                <span>✨</span>
-                <span>{{ __('home.hero.badge') }}</span>
-            </div>
-            
-            <h1 class="hero-title">
-                {{ __('home.hero.title_part1') }}<br>
-                <span class="highlight">{{ __('home.hero.title_part2') }}</span>
-            </h1>
-            
-            <p class="hero-description">
-                {{ __('home.hero.description') }}
-            </p>
-            
-            <div class="hero-actions">
-                <a href="{{ route('filament.app.auth.register') }}" class="btn btn-primary">
-                    {{ __('home.hero.cta_primary') }}
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                    </svg>
-                </a>
-                <a href="#features" class="btn btn-secondary">
-                    {{ __('home.hero.cta_secondary') }}
-                </a>
-            </div>
-        </div>
-    </section>
+    <div class="relative pt-32 pb-20 sm:pt-40 sm:pb-24 lg:pb-32 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div class="lg:grid lg:grid-cols-12 lg:gap-16 items-center">
+                
+                <div class="lg:col-span-6 text-center lg:text-left mb-16 lg:mb-0" data-aos="fade-right">
+                    <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/10 text-primary font-bold text-sm mb-8 border border-primary/20">
+                        <span class="flex h-2 w-2 relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-light opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                        </span>
+                        {{ __('home.hero.badge') }}
+                    </div>
+                    
+                    <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-base-text mb-6 leading-[1.1]">
+                        {{ __('home.hero.title_part1') }} <br/>
+                        <span class="text-gradient">{{ __('home.hero.title_part2') }}</span>
+                    </h1>
+                    
+                    <p class="text-lg text-base-text/80 mb-8 max-w-2xl mx-auto lg:mx-0 font-medium">
+                        {{ __('home.hero.description') }}
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <a href="{{ route('register') }}" class="inline-flex items-center justify-center px-8 py-4 text-base font-extrabold rounded-xl text-white bg-gradient-premium shadow-xl shadow-primary/25 transition-all hover:-translate-y-1">
+                            {{ __('home.hero.cta_primary') }}
+                            <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </a>
+                        <a href="#features" class="inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-xl text-base-text bg-white border border-neutral-100 shadow-sm transition-all hover:-translate-y-1">
+                            {{ __('home.hero.cta_secondary') }}
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="lg:col-span-6 relative perspective-1000" data-aos="fade-left" data-aos-delay="200">
+                    <x-home.hero-svg />
 
-    <!-- Company Logos Carousel -->
-    <section class="companies-section">
-        <div class="container">
-            <p class="companies-title">{{ __('home.companies.title') }}</p>
-        </div>
-        <div class="logos-track">
-            @foreach(__('home.companies.logos') as $logo)
-                <div class="company-logo">{{ $logo }}</div>
-            @endforeach
-            @foreach(__('home.companies.logos') as $logo)
-                <div class="company-logo">{{ $logo }}</div>
-            @endforeach
-        </div>
-    </section>
+                    <div class="absolute -right-8 top-[15%] glass-panel rounded-2xl p-4 shadow-xl z-20 float-animation border-l-4 border-success">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center text-success">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-neutral-500 uppercase tracking-wide">Monthly Revenue</p>
+                                <p class="text-lg font-extrabold text-base-text">৳ 2.4M <span class="text-sm text-success">+14%</span></p>
+                            </div>
+                        </div>
+                    </div>
 
-    <!-- Stats Section -->
-    <section class="stats-section">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value">500+</div>
-                    <div class="stat-label">{{ __('home.stats.companies') }}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">99.9%</div>
-                    <div class="stat-label">{{ __('home.stats.uptime') }}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">24/7</div>
-                    <div class="stat-label">{{ __('home.stats.support') }}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">50+</div>
-                    <div class="stat-label">{{ __('home.stats.integrations') }}</div>
+                    <div class="absolute -left-12 bottom-[20%] glass-panel rounded-2xl p-4 shadow-xl z-20 float-animation-delayed border border-neutral-100">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-neutral-500 uppercase tracking-wide">Mushak 6.3</p>
+                                <p class="text-lg font-extrabold text-success">Generated ✓</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 
+    <!-- Trusted Companies Marquee -->
+    <div class="py-12 bg-white border-y border-neutral-100 overflow-hidden relative group">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 text-center relative z-20">
+            <p class="text-sm font-bold text-neutral-500 uppercase tracking-widest">{{ __('home.companies.title') }}</p>
+        </div>
+        
+        <!-- Fading Edges for smooth scroll disappearing effect -->
+        <div class="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+        
+        <div class="flex w-max animate-marquee whitespace-nowrap items-center pt-2 pb-4">
+            @for($i=0; $i<4; $i++)
+                <!-- Partner Logo 1 -->
+                <div class="flex items-center gap-3 px-12 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+                    <svg class="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2zm0 6l5.5 11h-11L12 8z"/></svg>
+                    <span class="text-2xl font-extrabold text-neutral-400 hover:text-neutral-800 transition-colors tracking-tight">ApexCloud</span>
+                </div>
+                <!-- Partner Logo 2 -->
+                <div class="flex items-center gap-3 px-12 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+                    <svg class="w-8 h-8 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v8m-4-4h8"/></svg>
+                    <span class="text-2xl font-black text-neutral-400 hover:text-neutral-800 transition-colors tracking-tighter">Nexus<span class="text-success opacity-50 hover:opacity-100">Flow</span></span>
+                </div>
+                <!-- Partner Logo 3 -->
+                <div class="flex items-center gap-3 px-12 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+                    <svg class="w-8 h-8 text-primary-light" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="12" r="4" fill="white"/></svg>
+                    <span class="text-2xl font-bold text-neutral-400 hover:text-neutral-800 transition-colors">BoxMatrix</span>
+                </div>
+                <!-- Partner Logo 4 -->
+                <div class="flex items-center gap-3 px-12 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+                    <svg class="w-8 h-8 text-warning" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <span class="text-2xl font-extrabold text-neutral-400 hover:text-neutral-800 transition-colors tracking-wide uppercase">Lumina</span>
+                </div>
+                <!-- Partner Logo 5 -->
+                <div class="flex items-center gap-3 px-12 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+                    <svg class="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1v-7s-1 1-4 1-5-2-8-2-4 1-4 1v7z"/><path d="M4 22v-7"/></svg>
+                    <span class="text-2xl font-bold text-neutral-400 hover:text-neutral-800 transition-colors">Wave<span class="font-normal italic">Data</span></span>
+                </div>
+            @endfor
+        </div>
+    </div>
 
-    <!-- Features Section -->
-    <section class="features" id="features">
-        <div class="container">
-            <div class="section-header">
-                <div class="section-badge">{{ __('home.features.badge') }}</div>
-                <h2 class="section-title">{{ __('home.features.title') }}</h2>
-                <p class="section-description">{{ __('home.features.description') }}</p>
+    <div class="py-16 bg-primary text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CgkJPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsIDI1NSwgMjU1LCAwLjE1KSIvPgo8L3N2Zz4=')]"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center divide-x divide-primary-light/30">
+                <div data-aos="fade-up" data-aos-delay="100">
+                    <p class="text-4xl font-extrabold mb-2">500+</p>
+                    <p class="text-neutral-100/80 font-medium">{{ __('home.stats.companies') }}</p>
+                </div>
+                <div data-aos="fade-up" data-aos-delay="200">
+                    <p class="text-4xl font-extrabold mb-2 text-primary-light">99.9%</p>
+                    <p class="text-neutral-100/80 font-medium">{{ __('home.stats.uptime') }}</p>
+                </div>
+                <div data-aos="fade-up" data-aos-delay="300">
+                    <p class="text-4xl font-extrabold mb-2">24/7</p>
+                    <p class="text-neutral-100/80 font-medium">{{ __('home.stats.support') }}</p>
+                </div>
+                <div data-aos="fade-up" data-aos-delay="400">
+                    <p class="text-4xl font-extrabold mb-2">50+</p>
+                    <p class="text-neutral-100/80 font-medium">{{ __('home.stats.integrations') }}</p>
+                </div>
             </div>
-            
-            <div class="features-grid">
-                @foreach(__('home.features.items') as $feature)
-                <div class="feature-card">
-                    <div class="feature-icon">{{ $feature['icon'] }}</div>
-                    <h3 class="feature-title">{{ $feature['title'] }}</h3>
-                    <p class="feature-description">{{ $feature['description'] }}</p>
+        </div>
+    </div>
+
+    <div id="features" class="py-24 bg-base-bg relative border-b border-neutral-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
+                <h2 class="text-primary font-bold tracking-widest uppercase text-sm mb-3">{{ __('home.features.badge') }}</h2>
+                <p class="text-4xl font-extrabold text-base-text mb-4">{{ __('home.features.title') }}</p>
+                <p class="text-xl text-base-text/80 font-medium">{{ __('home.features.description') }}</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                @foreach(__('home.features.items') as $index => $feature)
+                <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-neutral-100 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-2 group" data-aos="fade-up" data-aos-delay="{{ $index * 100 }}">
+                    <div class="w-16 h-16 rounded-2xl bg-neutral-100 flex items-center justify-center text-3xl mb-6 shadow-sm border border-white group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all">
+                        {{ $feature['icon'] }}
+                    </div>
+                    <h3 class="text-xl font-bold text-base-text mb-3">{{ $feature['title'] }}</h3>
+                    <p class="text-base-text/70 font-medium leading-relaxed">{{ $feature['description'] }}</p>
                 </div>
                 @endforeach
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Modules Section -->
-    <section class="modules" id="modules">
-        <div class="container">
-            <div class="section-header">
-                <div class="section-badge">{{ __('home.modules.badge') }}</div>
-                <h2 class="section-title">{{ __('home.modules.title') }}</h2>
-                <p class="section-description">{{ __('home.modules.description') }}</p>
+    <!-- Product Modules Cards -->
+    <div id="modules" class="py-24 bg-white relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
+                <h2 class="text-success font-bold tracking-widest uppercase text-sm mb-3">{{ __('home.modules.badge') }}</h2>
+                <p class="text-4xl font-extrabold text-base-text mb-4">{{ __('home.modules.title') }}</p>
+                <p class="text-xl text-base-text/80 font-medium">{{ __('home.modules.description') }}</p>
             </div>
-            
-            <div class="modules-grid">
-                @foreach(__('home.modules.items') as $module)
-                <div class="module-card">
-                    <div class="module-icon">{{ $module['icon'] }}</div>
-                    <div class="module-name">{{ $module['name'] }}</div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                @foreach(__('home.modules.items') as $index => $module)
+                <div class="bg-base-bg border border-neutral-100 hover:border-success/40 rounded-3xl p-6 text-center hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group" data-aos="zoom-in" data-aos-delay="{{ $index * 50 }}">
+                    <div class="text-4xl mb-4 group-hover:scale-125 transition-transform duration-300">{{ $module['icon'] }}</div>
+                    <h4 class="font-bold text-base-text">{{ $module['name'] }}</h4>
                 </div>
                 @endforeach
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Product Showcase -->
-    <section class="showcase">
-        <div class="container">
-            <div class="section-header">
-                <div class="section-badge">{{ __('home.showcase.badge') }}</div>
-                <h2 class="section-title">{{ __('home.showcase.title') }}</h2>
-                <p class="section-description">{{ __('home.showcase.description') }}</p>
-            </div>
-            
-            @foreach(__('home.showcase.items') as $item)
-            <div class="showcase-content">
-                <div class="showcase-text">
-                    <h3>{{ $item['title'] }}</h3>
-                    <p>{{ $item['description'] }}</p>
-                    <ul class="showcase-features">
+    <!-- Parallax Showcase Sections -->
+    <div class="py-32 bg-base-bg border-y border-neutral-100 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            @foreach(__('home.showcase.items') as $index => $item)
+            <div class="lg:grid lg:grid-cols-2 lg:gap-16 items-center mb-32 last:mb-0 {{ $index % 2 !== 0 ? 'lg:grid-flow-col-dense' : '' }}">
+                
+                <div class="{{ $index % 2 !== 0 ? 'lg:col-start-2' : '' }}" data-aos="{{ $index % 2 === 0 ? 'fade-right' : 'fade-left' }}">
+                    <div class="text-4xl mb-4 text-primary bg-primary/10 w-20 h-20 flex items-center justify-center rounded-full leading-none">{{ $item['icon'] }}</div>
+                    <h2 class="text-3xl font-extrabold text-base-text mb-6">{{ $item['title'] }}</h2>
+                    <p class="text-lg text-base-text/80 mb-8 font-medium leading-relaxed">{{ $item['description'] }}</p>
+                    
+                    <ul class="space-y-4 font-bold text-base-text/70">
                         @foreach($item['features'] as $feature)
-                        <li>{{ $feature }}</li>
+                        <li class="flex items-center gap-3">
+                            <div class="bg-success/10 text-success rounded-full p-1 shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <span class="text-base-text">{{ $feature }}</span>
+                        </li>
                         @endforeach
                     </ul>
                 </div>
-                <div class="showcase-image">
-                    {{ $item['icon'] }}
+
+                <div class="mt-16 lg:mt-0 glass-panel border border-white rounded-[2rem] p-6 shadow-xl relative {{ $index % 2 !== 0 ? 'lg:col-start-1' : '' }}" data-aos="zoom-in">
+                    <div class="absolute -top-6 -right-6 w-32 h-32 {{ $index % 2 === 0 ? 'bg-primary' : 'bg-success' }} rounded-full blur-[60px] opacity-20 z-0"></div>
+                    <div class="relative z-10 rounded-2xl overflow-hidden border border-neutral-100 bg-white aspect-video flex items-center justify-center">
+                        <svg viewBox="0 0 400 250" class="w-full text-neutral-100" fill="none">
+                            <rect width="400" height="40" fill="#F3F4F6"></rect>
+                            <rect x="20" y="60" width="360" height="170" rx="12" fill="#FAFAFA"></rect>
+                            <rect x="40" y="80" width="100" height="15" rx="8" fill="#0F766E" opacity="0.6"></rect>
+                            <rect x="40" y="110" width="320" height="100" rx="8" fill="#D1D5DB" opacity="0.4"></rect>
+                            <circle cx="90" cy="160" r="30" fill="#16A34A" opacity="0.5"></circle>
+                            <rect x="140" y="140" width="180" height="10" rx="5" fill="#14B8A6"></rect>
+                            <rect x="140" y="160" width="140" height="10" rx="5" fill="#CA8A04" opacity="0.5"></rect>
+                        </svg>
+                    </div>
                 </div>
+
             </div>
             @endforeach
         </div>
-    </section>
+    </div>
 
-    <!-- Testimonials -->
-    <section class="testimonials" id="testimonials">
-        <div class="container">
-            <div class="section-header">
-                <div class="section-badge">{{ __('home.testimonials.badge') }}</div>
-                <h2 class="section-title">{{ __('home.testimonials.title') }}</h2>
-                <p class="section-description">{{ __('home.testimonials.description') }}</p>
+    <!-- Testimonials / Customer Reviews -->
+    <div id="testimonials" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
+                <h2 class="text-primary font-bold tracking-widest uppercase text-sm mb-3">{{ __('home.testimonials.badge') }}</h2>
+                <p class="text-4xl font-extrabold text-base-text mb-4">{{ __('home.testimonials.title') }}</p>
+                <p class="text-xl text-base-text/80 font-medium">{{ __('home.testimonials.description') }}</p>
             </div>
-            
-            <div class="testimonials-grid">
-                @foreach(__('home.testimonials.items') as $testimonial)
-                <div class="testimonial-card">
-                    <div class="testimonial-rating">★★★★★</div>
-                    <p class="testimonial-text">"{{ $testimonial['text'] }}"</p>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">{{ $testimonial['avatar'] }}</div>
-                        <div class="author-info">
-                            <h4>{{ $testimonial['name'] }}</h4>
-                            <p>{{ $testimonial['role'] }}</p>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                @foreach(__('home.testimonials.items') as $index => $review)
+                <div class="bg-base-bg p-8 rounded-[2rem] border border-neutral-100 relative group hover:shadow-xl transition-all duration-300" data-aos="fade-up" data-aos-delay="{{ $index * 150 }}">
+                    <div class="text-warning flex gap-1 mb-6 text-xl">
+                        ★★★★★
+                    </div>
+                    <p class="text-base-text font-medium text-lg leading-relaxed mb-8">"{{ $review['text'] }}"</p>
+                    <div class="flex items-center gap-4 mt-auto">
+                        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl border border-primary/20">
+                            {{ $review['avatar'] }}
+                        </div>
+                        <div>
+                            <p class="font-bold text-base-text">{{ $review['name'] }}</p>
+                            <p class="text-sm font-medium text-base-text/60">{{ $review['role'] }}</p>
                         </div>
                     </div>
                 </div>
                 @endforeach
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Pricing -->
-    <section class="pricing" id="pricing">
-        <div class="container">
-            <div class="section-header">
-                <div class="section-badge">{{ __('home.pricing.badge') }}</div>
-                <h2 class="section-title">{{ __('home.pricing.title') }}</h2>
-                <p class="section-description">{{ __('home.pricing.description') }}</p>
+    <!-- Pricing Packages -->
+    <div id="pricing" class="py-24 bg-[#111827] relative overflow-hidden">
+        <div class="absolute inset-0">
+             <div class="absolute top-[20%] left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-primary rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
+             <div class="absolute bottom-[0%] right-[10%] w-[500px] h-[500px] bg-success rounded-full blur-[150px] opacity-10 pointer-events-none"></div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
+                <h2 class="text-primary-light font-bold tracking-widest uppercase text-sm mb-3">{{ __('home.pricing.badge') }}</h2>
+                <p class="text-4xl font-extrabold text-white mb-4">{{ __('home.pricing.title') }}</p>
+                <p class="text-xl text-neutral-100/70 font-medium">{{ __('home.pricing.description') }}</p>
             </div>
-            
-            <div class="pricing-grid">
-                @foreach(__('home.pricing.plans') as $plan)
-                <div class="pricing-card {{ $plan['featured'] ? 'featured' : '' }}">
+
+            <div class="grid md:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
+                @foreach(__('home.pricing.plans') as $index => $plan)
+                <div class="relative bg-[#1F2937]/80 backdrop-blur-xl border {{ $plan['featured'] ? 'border-primary shadow-2xl shadow-primary/20 scale-105 z-20' : 'border-neutral-500/30 z-10' }} rounded-[2rem] p-8" data-aos="zoom-in" data-aos-delay="{{ $index * 100 }}">
+                    
                     @if($plan['featured'])
-                    <div class="pricing-badge">{{ __('home.pricing.popular') }}</div>
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-premium text-white px-5 py-1.5 rounded-full text-sm font-bold shadow-lg">
+                        {{ __('home.pricing.popular') }}
+                    </div>
                     @endif
-                    <h3 class="pricing-name">{{ $plan['name'] }}</h3>
-                    <p class="pricing-description">{{ $plan['description'] }}</p>
-                    <div class="pricing-price">{{ $plan['price'] }}<span>{{ $plan['currency'] }}</span></div>
-                    <p class="pricing-period">{{ $plan['period'] }}</p>
-                    <ul class="pricing-features">
+
+                    <h3 class="text-2xl font-bold text-white mb-2">{{ $plan['name'] }}</h3>
+                    <p class="text-neutral-100/70 font-medium mb-8">{{ $plan['description'] }}</p>
+                    
+                    <div class="mb-8">
+                        @if($plan['price'] === 'Custom' || $plan['price'] === 'কাস্টম')
+                            <span class="text-5xl font-extrabold text-white">{{ $plan['price'] }}</span>
+                        @else
+                            <span class="text-5xl font-extrabold text-white">{{ $plan['price'] }}</span><span class="text-neutral-100/70 font-bold text-xl">{{ $plan['currency'] }}</span>
+                        @endif
+                        <p class="text-neutral-100/50 text-sm mt-2 font-medium">{{ $plan['period'] }}</p>
+                    </div>
+
+                    <ul class="space-y-4 mb-8">
                         @foreach($plan['features'] as $feature)
-                        <li>{{ $feature }}</li>
+                        <li class="flex items-start gap-3">
+                            <div class="mt-1">
+                                <svg class="w-5 h-5 {{ $plan['featured'] ? 'text-primary-light' : 'text-neutral-100/50' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <span class="text-neutral-100/80 font-medium">{{ $feature }}</span>
+                        </li>
                         @endforeach
                     </ul>
-                    <a href="{{ route('filament.app.auth.register') }}" class="btn {{ $plan['featured'] ? 'btn-primary' : 'btn-secondary' }}" style="width: 100%; justify-content: center;">
+
+                    <a href="{{ route('register') }}" class="block w-full text-center py-4 rounded-xl font-bold text-lg transition-all {{ $plan['featured'] ? 'bg-primary text-white hover:bg-primary-dark shadow-lg shadow-primary/25' : 'bg-neutral-500/20 text-white hover:bg-neutral-500/40' }}">
                         {{ __('home.pricing.get_started') }}
                     </a>
                 </div>
                 @endforeach
             </div>
         </div>
-    </section>
+    </div>
+
 
     <!-- CTA Section -->
-    <section class="cta">
-        <div class="container">
-            <div class="cta-content">
-                <h2>{{ __('home.cta.title') }}</h2>
-                <p>{{ __('home.cta.description') }}</p>
-                <div class="cta-actions">
-                    <a href="{{ route('filament.app.auth.register') }}" class="btn btn-primary">
-                        {{ __('home.cta.button') }}
-                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                        </svg>
-                    </a>
-                    <a href="{{ route('filament.app.auth.login') }}" class="btn btn-secondary">
-                        {{ __('home.cta.sign_in') }}
-                    </a>
-                </div>
+    <div class="relative py-24 bg-white border-b border-neutral-100">
+        <div class="max-w-5xl mx-auto px-4 relative z-10 text-center" data-aos="zoom-in">
+            <h2 class="text-4xl sm:text-5xl font-extrabold text-base-text mb-6">{{ __('home.cta.title') }}</h2>
+            <p class="text-xl text-base-text/80 mb-10 font-medium max-w-3xl mx-auto">{{ __('home.cta.description') }}</p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{{ route('register') }}" class="inline-flex items-center justify-center px-10 py-5 text-lg font-bold rounded-2xl text-white bg-gradient-premium shadow-xl shadow-primary/25 transition-all hover:scale-105">
+                    {{ __('home.cta.button') }}
+                </a>
+                <a href="{{ route('login') }}" class="inline-flex items-center justify-center px-10 py-5 text-lg font-bold rounded-2xl text-base-text bg-base-bg border border-neutral-100 hover:bg-neutral-100 transition-all">
+                    {{ __('home.cta.sign_in') }}
+                </a>
             </div>
         </div>
-    </section>
+    </div>
 
     <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <h3>GenERP</h3>
-                    <p>{{ __('home.footer.tagline') }}</p>
+    <footer class="bg-base-text pt-20 pb-10 border-t-8 border-primary">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-12 mb-16">
+                
+                <div class="md:col-span-2 pr-8">
+                    <a href="/" class="flex items-center gap-3 mb-6">
+                        <x-home.logo class="w-10 h-10" />
+                        <span class="text-2xl font-extrabold text-white tracking-tight">GenERP BD</span>
+                    </a>
+                    <p class="text-neutral-100/70 text-base font-medium leading-relaxed mb-6">{{ __('home.footer.tagline') }}</p>
+                    <div class="flex space-x-4">
+                        <div class="w-10 h-10 rounded-full bg-neutral-500/20 flex items-center justify-center text-neutral-100/70 hover:bg-primary hover:text-white transition-all cursor-pointer">
+                            <span>in</span>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-neutral-500/20 flex items-center justify-center text-neutral-100/70 hover:bg-primary hover:text-white transition-all cursor-pointer">
+                            <span>fb</span>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="footer-section">
-                    <h4>{{ __('home.footer.product.title') }}</h4>
-                    <ul class="footer-links">
+                <div>
+                    <h3 class="text-white font-bold text-lg mb-6">{{ __('home.footer.product.title') }}</h3>
+                    <ul class="space-y-4 text-neutral-100/70 font-medium list-none p-0">
                         @foreach(__('home.footer.product.links') as $link)
-                        <li><a href="#">{{ $link }}</a></li>
+                            <li><a href="#" class="hover:text-primary-light transition-colors">{{ $link }}</a></li>
                         @endforeach
                     </ul>
                 </div>
                 
-                <div class="footer-section">
-                    <h4>{{ __('home.footer.company.title') }}</h4>
-                    <ul class="footer-links">
+                <div>
+                    <h3 class="text-white font-bold text-lg mb-6">{{ __('home.footer.company.title') }}</h3>
+                    <ul class="space-y-4 text-neutral-100/70 font-medium list-none p-0">
                         @foreach(__('home.footer.company.links') as $link)
-                        <li><a href="#">{{ $link }}</a></li>
+                            <li><a href="#" class="hover:text-primary-light transition-colors">{{ $link }}</a></li>
                         @endforeach
                     </ul>
                 </div>
                 
-                <div class="footer-section">
-                    <h4>{{ __('home.footer.support.title') }}</h4>
-                    <ul class="footer-links">
+                <div>
+                    <h3 class="text-white font-bold text-lg mb-6">{{ __('home.footer.support.title') }}</h3>
+                    <ul class="space-y-4 text-neutral-100/70 font-medium list-none p-0">
                         @foreach(__('home.footer.support.links') as $link)
-                        <li><a href="#">{{ $link }}</a></li>
+                            <li><a href="#" class="hover:text-primary-light transition-colors">{{ $link }}</a></li>
                         @endforeach
                     </ul>
                 </div>
             </div>
             
-            <div class="footer-bottom">
-                <p>{{ __('home.footer.copyright', ['year' => date('Y')]) }}</p>
+            <div class="pt-8 border-t border-neutral-500/20 flex flex-col md:flex-row justify-between items-center gap-4 text-neutral-100/60 font-medium">
+                <div>{{ __('home.footer.copyright', ['year' => date('Y')]) }}</div>
+                <div class="flex gap-6 text-sm">
+                    <a href="#" class="hover:text-neutral-100/90">Privacy Policy</a>
+                    <a href="#" class="hover:text-neutral-100/90">Terms of Service</a>
+                </div>
             </div>
         </div>
     </footer>
+
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            AOS.init({ once: true, offset: 50, duration: 800, easing: 'ease-out-cubic' });
+        });
+    </script>
 </body>
 </html>
