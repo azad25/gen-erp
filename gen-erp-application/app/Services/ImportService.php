@@ -37,11 +37,105 @@ class ImportService
     }
 
     /**
-     * Get path to download template Excel for an entity type.
+     * Get path to download template for an entity type.
+     * Returns CSV template by default, can generate Excel/TXT on request.
      */
-    public function getTemplate(string $entityType): string
+    public function getTemplate(string $entityType, string $format = 'csv'): string
     {
-        return storage_path("app/import-templates/{$entityType}.csv");
+        $templates = [
+            'csv' => storage_path("app/import-templates/{$entityType}.csv"),
+            'xlsx' => storage_path("app/import-templates/{$entityType}.xlsx"),
+            'txt' => storage_path("app/import-templates/{$entityType}.txt"),
+        ];
+
+        return $templates[$format] ?? $templates['csv'];
+    }
+
+    /**
+     * Generate import template file if it doesn't exist.
+     */
+    public function ensureTemplateExists(string $entityType, string $format = 'csv'): void
+    {
+        $templatePath = $this->getTemplate($entityType, $format);
+
+        if (file_exists($templatePath)) {
+            return;
+        }
+
+        $headers = $this->getEntityHeaders($entityType);
+        $this->generateTemplateFile($templatePath, $headers, $format);
+    }
+
+    /**
+     * Get column headers for an entity type.
+     */
+    private function getEntityHeaders(string $entityType): array
+    {
+        return match ($entityType) {
+            'products' => ['name', 'sku', 'selling_price', 'cost_price', 'product_type', 'unit'],
+            'customers' => ['name', 'phone', 'email', 'address'],
+            'suppliers' => ['name', 'phone', 'email', 'address'],
+            'employees' => ['name', 'employee_id', 'designation', 'phone', 'email'],
+            'opening_stock' => ['product_sku', 'quantity', 'warehouse_name'],
+            default => [],
+        };
+    }
+
+    /**
+     * Generate template file with headers.
+     */
+    private function generateTemplateFile(string $path, array $headers, string $format): void
+    {
+        $directory = dirname($path);
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        match ($format) {
+            'csv' => $this->generateCsvTemplate($path, $headers),
+            'xlsx' => $this->generateExcelTemplate($path, $headers),
+            'txt' => $this->generateTxtTemplate($path, $headers),
+            default => throw new \RuntimeException("Unsupported template format: {$format}"),
+        };
+    }
+
+    /**
+     * Generate CSV template.
+     */
+    private function generateCsvTemplate(string $path, array $headers): void
+    {
+        $fp = fopen($path, 'w');
+        fputcsv($fp, $headers);
+        fclose($fp);
+    }
+
+    /**
+     * Generate Excel template.
+     */
+    private function generateExcelTemplate(string $path, array $headers): void
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Write headers
+        foreach ($headers as $col => $header) {
+            $sheet->setCellValueByColumnAndRow($col + 1, 1, $header);
+        }
+
+        // Style header row
+        $headerRange = 'A1:' . \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers)) . '1';
+        $sheet->getStyle($headerRange)->getFont()->setBold(true);
+
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save($path);
+    }
+
+    /**
+     * Generate TXT template (pipe-separated).
+     */
+    private function generateTxtTemplate(string $path, array $headers): void
+    {
+        file_put_contents($path, implode('|', $headers) . "\n");
     }
 
     /**

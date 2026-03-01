@@ -5,18 +5,28 @@ namespace Database\Seeders\SampleData;
 use App\Enums\CompanyRole;
 use App\Enums\InvoiceStatus;
 use App\Enums\ProductType;
+use App\Enums\SalesOrderStatus;
+use App\Enums\PurchaseOrderStatus;
+use App\Enums\StockMovementType;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\CompanyUser;
 use App\Models\Customer;
 use App\Models\Department;
 use App\Models\Designation;
+use App\Models\Document;
+use App\Models\DocumentFolder;
 use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderItem;
+use App\Models\SalesOrder;
+use App\Models\SalesOrderItem;
+use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\TaxGroup;
 use App\Models\User;
@@ -30,130 +40,293 @@ use Illuminate\Support\Str;
  */
 class ShifaPharmacySeeder
 {
+    protected ?\Illuminate\Console\Command $command = null;
+
+    public function setCommand(\Illuminate\Console\Command $command): void
+    {
+        $this->command = $command;
+    }
+
     public function run(Company $company, User $owner): void
     {
         CompanyContext::setActive($company);
 
-        // ── Team ────────────────────────────────────────────
-        $pharmacist = User::firstOrCreate(
-            ['email' => 'pharmacist@shifa.test'],
-            ['name' => 'Dr. Aminul Islam', 'password' => Hash::make('Password@123'), 'email_verified_at' => now()],
-        );
-        CompanyUser::firstOrCreate(
-            ['company_id' => $company->id, 'user_id' => $pharmacist->id],
-            ['role' => CompanyRole::SALES->value, 'is_active' => true, 'joined_at' => now()],
-        );
+        $this->command?->info('💊 Seeding Shifa Pharmacy with MASSIVE data...');
 
-        // ── Warehouse ───────────────────────────────────────
-        $warehouse = Warehouse::firstOrCreate(
-            ['company_id' => $company->id, 'code' => 'MED-01'],
-            ['company_id' => $company->id, 'name' => 'Medicine Store', 'code' => 'MED-01', 'address' => 'Dhanmondi, Dhaka', 'is_active' => true],
-        );
+        // ── Team (10 users) ────────────────────────────────────
+        $this->seedUsers($company, 10);
 
-        // ── Categories ──────────────────────────────────────
+        // ── Warehouses (2 warehouses) ───────────────────────────
+        $warehouses = $this->seedWarehouses($company, 2);
+
+        // ── Categories (10 categories) ──────────────────────────────
+        $categories = $this->seedCategories($company, 10);
+
+        // ── Products (100 medicines) ─────────────────────────
+        $products = $this->seedProducts($company, $categories, 100);
+
+        // ── Customers (50 customers) ───────────────────────────────
+        $customers = $this->seedCustomers($company, 50);
+
+        // ── Suppliers (10 suppliers) ─────────────────────────────
+        $suppliers = $this->seedSuppliers($company, 10);
+
+        // ── Sales Orders (30 orders) ─────────────────────────────
+        $this->seedSalesOrders($company, $customers, $products, $warehouses[0], 30);
+
+        // ── Purchase Orders (20 orders) ───────────────────────────
+        $this->seedPurchaseOrders($company, $suppliers, $products, $warehouses[0], 20);
+
+        // ── Invoices (60 invoices) ───────────────────────────────
+        $this->seedInvoices($company, $customers, $products, $warehouses[0], 60);
+
+        // ── Stock Movements (200 movements) ────────────────────
+        $this->seedStockMovements($company, $products, $warehouses, 200);
+
+        // ── Expenses (20 expenses) ───────────────────────────────
+        $this->seedExpenses($company, 20, $owner->id);
+
+        // ── Documents (50 files) ───────────────────────────────
+        $this->seedDocuments($company, 50, $owner->id);
+
+        // ── HR (15 employees) ────────────────────────────────
+        $this->seedHR($company, 15);
+    }
+
+    private function seedUsers(Company $company, int $count = 10): array
+    {
+        $roles = [CompanyRole::SALES, CompanyRole::WAREHOUSE];
+        $users = [];
+        for ($i = 1; $i <= $count; $i++) {
+            $role = $roles[array_rand($roles)];
+            $user = User::firstOrCreate(
+                ['email' => "pharma{$i}@shifa.test"],
+                [
+                    'name' => "Pharmacist {$i}",
+                    'password' => Hash::make('Password@123'),
+                    'email_verified_at' => now(),
+                    'phone' => '016'.str_pad($i, 8, '0', STR_PAD_LEFT),
+                ],
+            );
+            CompanyUser::firstOrCreate(
+                ['company_id' => $company->id, 'user_id' => $user->id],
+                ['role' => $role->value, 'is_active' => true, 'joined_at' => now()],
+            );
+            $users[] = $user;
+        }
+        return $users;
+    }
+
+    private function seedWarehouses(Company $company, int $count = 2): array
+    {
+        $warehouses = [];
+        for ($i = 0; $i < $count; $i++) {
+            $warehouses[] = Warehouse::firstOrCreate(
+                ['company_id' => $company->id, 'code' => 'MED-'.str_pad($i + 1, 2, '0', STR_PAD_LEFT)],
+                [
+                    'company_id' => $company->id,
+                    'name' => "Medicine Store ".($i + 1),
+                    'code' => 'MED-'.str_pad($i + 1, 2, '0', STR_PAD_LEFT),
+                    'address' => 'Dhanmondi, Dhaka',
+                    'is_active' => true,
+                ],
+            );
+        }
+        return $warehouses;
+    }
+
+    private function seedCategories(Company $company, int $count = 10): array
+    {
+        $names = ['Medicines', 'OTC Drugs', 'Health Supplements', 'Personal Care', 'Medical Devices', 'Baby Care', 'Equipment', 'Lab Supplies', 'Ayurvedic', 'Homeopathy'];
         $categories = [];
-        foreach (['Medicines', 'OTC Drugs', 'Health Supplements', 'Personal Care', 'Medical Devices', 'Baby Care'] as $name) {
+        for ($i = 0; $i < $count; $i++) {
+            $name = $names[$i] ?? "Category {$i}";
             $categories[$name] = ProductCategory::firstOrCreate(
                 ['company_id' => $company->id, 'name' => $name],
                 ['company_id' => $company->id, 'name' => $name, 'slug' => Str::slug($name)],
             );
         }
+        return $categories;
+    }
 
-        // ── Products (20 medicines) ─────────────────────────
+    private function seedProducts(Company $company, array $categories, int $count = 100): array
+    {
         $vatGroup = TaxGroup::where('company_id', $company->id)->where('name', 'Zero Rated')->first();
         $vatStd = TaxGroup::where('company_id', $company->id)->where('name', 'VAT 15%')->first();
-
-        $medicines = [
-            ['name' => 'Napa Extra 500mg (10 tab)', 'sku' => 'MED-001', 'cat' => 'Medicines', 'cost' => 1800, 'sell' => 2500, 'tax' => 'zero'],
-            ['name' => 'Seclo 20mg (10 cap)', 'sku' => 'MED-002', 'cat' => 'Medicines', 'cost' => 5000, 'sell' => 6500, 'tax' => 'zero'],
-            ['name' => 'Amoxycillin 500mg (10 cap)', 'sku' => 'MED-003', 'cat' => 'Medicines', 'cost' => 4000, 'sell' => 5500, 'tax' => 'zero'],
-            ['name' => 'Losectil 20mg (14 cap)', 'sku' => 'MED-004', 'cat' => 'Medicines', 'cost' => 8000, 'sell' => 10500, 'tax' => 'zero'],
-            ['name' => 'Montelukast 10mg (30 tab)', 'sku' => 'MED-005', 'cat' => 'Medicines', 'cost' => 15000, 'sell' => 20000, 'tax' => 'zero'],
-            ['name' => 'Panadol Cold & Flu (12 tab)', 'sku' => 'OTC-001', 'cat' => 'OTC Drugs', 'cost' => 3000, 'sell' => 4500, 'tax' => 'zero'],
-            ['name' => 'Savlon Antiseptic 100ml', 'sku' => 'OTC-002', 'cat' => 'OTC Drugs', 'cost' => 7000, 'sell' => 9500, 'tax' => 'zero'],
-            ['name' => 'Oral Saline (25 sachets)', 'sku' => 'OTC-003', 'cat' => 'OTC Drugs', 'cost' => 5000, 'sell' => 6250, 'tax' => 'zero'],
-            ['name' => 'Vitamin D3 1000IU (30 cap)', 'sku' => 'SUP-001', 'cat' => 'Health Supplements', 'cost' => 20000, 'sell' => 28000, 'tax' => 'std'],
-            ['name' => 'Calcium + Vit D (60 tab)', 'sku' => 'SUP-002', 'cat' => 'Health Supplements', 'cost' => 30000, 'sell' => 40000, 'tax' => 'std'],
-            ['name' => 'Iron + Folic Acid (30 tab)', 'sku' => 'SUP-003', 'cat' => 'Health Supplements', 'cost' => 12000, 'sell' => 16000, 'tax' => 'std'],
-            ['name' => 'Digital Thermometer', 'sku' => 'DEV-001', 'cat' => 'Medical Devices', 'cost' => 15000, 'sell' => 25000, 'tax' => 'std'],
-            ['name' => 'Blood Pressure Monitor', 'sku' => 'DEV-002', 'cat' => 'Medical Devices', 'cost' => 150000, 'sell' => 200000, 'tax' => 'std'],
-            ['name' => 'Surgical Mask (50 pcs)', 'sku' => 'DEV-003', 'cat' => 'Medical Devices', 'cost' => 15000, 'sell' => 20000, 'tax' => 'std'],
-            ['name' => 'Hand Sanitizer 500ml', 'sku' => 'PC-001', 'cat' => 'Personal Care', 'cost' => 10000, 'sell' => 14000, 'tax' => 'std'],
-            ['name' => 'Baby Diaper (Medium, 30 pcs)', 'sku' => 'BAB-001', 'cat' => 'Baby Care', 'cost' => 40000, 'sell' => 55000, 'tax' => 'std'],
-            ['name' => 'Baby Lotion 200ml', 'sku' => 'BAB-002', 'cat' => 'Baby Care', 'cost' => 15000, 'sell' => 22000, 'tax' => 'std'],
-        ];
+        $categoryNames = array_keys($categories);
 
         $products = [];
-        foreach ($medicines as $item) {
-            $category = $categories[$item['cat']] ?? null;
-            $tax = $item['tax'] === 'zero' ? $vatGroup : $vatStd;
+        for ($i = 1; $i <= $count; $i++) {
+            $catName = $categoryNames[array_rand($categoryNames)];
+            $category = $categories[$catName];
+            $isZeroRated = rand(0, 1) === 0;
+            $tax = $isZeroRated ? $vatGroup : $vatStd;
             $products[] = Product::firstOrCreate(
-                ['company_id' => $company->id, 'sku' => $item['sku']],
+                ['company_id' => $company->id, 'sku' => "MED-".str_pad($i, 5, '0', STR_PAD_LEFT)],
                 [
                     'company_id' => $company->id,
-                    'name' => $item['name'],
-                    'sku' => $item['sku'],
-                    'slug' => Str::slug($item['name']),
-                    'category_id' => $category?->id,
+                    'name' => "Medicine {$i}",
+                    'sku' => "MED-".str_pad($i, 5, '0', STR_PAD_LEFT),
+                    'slug' => Str::slug("Medicine {$i}"),
+                    'category_id' => $category->id,
                     'tax_group_id' => $tax?->id,
                     'product_type' => ProductType::PRODUCT,
-                    'cost_price' => $item['cost'],
-                    'selling_price' => $item['sell'],
+                    'cost_price' => rand(1000, 5000000),
+                    'selling_price' => rand(2000, 10000000),
                     'unit' => 'pcs',
                     'track_inventory' => true,
-                    'low_stock_threshold' => 10,
+                    'low_stock_threshold' => rand(5, 20),
                     'is_active' => true,
                 ],
             );
         }
+        return $products;
+    }
 
-        // ── Customers ───────────────────────────────────────
-        $customerData = [
-            ['name' => 'Dr. Mahmudul Hasan', 'phone' => '01611111111', 'district' => 'Dhaka'],
-            ['name' => 'Rupa Begum', 'phone' => '01622222222', 'district' => 'Dhaka'],
-            ['name' => 'Ziaul Haque', 'phone' => '01633333333', 'district' => 'Gazipur'],
-            ['name' => 'Nasreen Pharmacy', 'phone' => '01644444444', 'district' => 'Narsingdi'],
-            ['name' => 'Community Health Centre', 'phone' => '01655555555', 'district' => 'Dhaka'],
-            ['name' => 'Rashed Kabir', 'phone' => '01666666666', 'district' => 'Munshiganj'],
-            ['name' => 'Marzia Akter', 'phone' => '01677777777', 'district' => 'Dhaka'],
-            ['name' => 'Habibur Rahman', 'phone' => '01688888888', 'district' => 'Chandpur'],
-            ['name' => 'Shamima Khatun', 'phone' => '01699999999', 'district' => 'Dhaka'],
-            ['name' => 'Faruk Ahmed', 'phone' => '01311111111', 'district' => 'Kishoreganj'],
-        ];
-
+    private function seedCustomers(Company $company, int $count = 50): array
+    {
         $customers = [];
-        foreach ($customerData as $data) {
+        for ($i = 1; $i <= $count; $i++) {
             $customers[] = Customer::firstOrCreate(
-                ['company_id' => $company->id, 'phone' => $data['phone']],
-                array_merge($data, ['company_id' => $company->id, 'credit_limit' => 2000000]),
+                ['company_id' => $company->id, 'phone' => '016'.str_pad($i, 8, '0', STR_PAD_LEFT)],
+                [
+                    'company_id' => $company->id,
+                    'name' => "Customer {$i}",
+                    'phone' => '016'.str_pad($i, 8, '0', STR_PAD_LEFT),
+                    'email' => "customer{$i}@shifa.test",
+                    'credit_limit' => rand(500000, 20000000),
+                ],
             );
         }
+        return $customers;
+    }
 
-        // ── Suppliers ───────────────────────────────────────
-        $supplierData = [
-            ['name' => 'Beximco Pharmaceuticals', 'phone' => '01511111111', 'vat_bin' => 'BEX123456789'],
-            ['name' => 'Square Pharmaceuticals', 'phone' => '01522222222', 'vat_bin' => 'SQR123456789'],
-            ['name' => 'Incepta Pharmaceuticals', 'phone' => '01533333333', 'vat_bin' => 'INC123456789'],
-            ['name' => 'Renata Limited', 'phone' => '01544444444', 'vat_bin' => 'REN123456789'],
-            ['name' => 'Opsonin Pharma', 'phone' => '01555555555', 'vat_bin' => 'OPS123456789'],
-        ];
-
-        foreach ($supplierData as $data) {
-            Supplier::firstOrCreate(
-                ['company_id' => $company->id, 'name' => $data['name']],
-                array_merge($data, ['company_id' => $company->id, 'address' => 'Dhaka, Bangladesh']),
+    private function seedSuppliers(Company $company, int $count = 10): array
+    {
+        $suppliers = [];
+        for ($i = 1; $i <= $count; $i++) {
+            $suppliers[] = Supplier::firstOrCreate(
+                ['company_id' => $company->id, 'name' => "Supplier {$i}"],
+                [
+                    'company_id' => $company->id,
+                    'name' => "Supplier {$i}",
+                    'phone' => '015'.str_pad($i, 8, '0', STR_PAD_LEFT),
+                    'email' => "supplier{$i}@shifa.test",
+                    'address' => 'Dhaka, Bangladesh',
+                    'vat_bin' => 'BIN'.str_pad($i, 11, '0', STR_PAD_LEFT),
+                ],
             );
         }
+        return $suppliers;
+    }
 
-        // ── Invoices (12 prescriptions) ─────────────────────
-        for ($i = 0; $i < 12; $i++) {
+    private function seedSalesOrders(Company $company, array $customers, array $products, Warehouse $warehouse, int $count = 30): void
+    {
+        for ($i = 1; $i <= $count; $i++) {
+            $customer = $customers[array_rand($customers)];
+            $status = collect([SalesOrderStatus::DRAFT, SalesOrderStatus::CONFIRMED, SalesOrderStatus::DELIVERED])->random();
+            $orderDate = now()->subDays(rand(1, 60));
+
+            $lineItems = [];
+            $itemCount = rand(2, 4);
+            $subtotal = 0;
+
+            for ($j = 0; $j < $itemCount; $j++) {
+                $product = $products[array_rand($products)];
+                $qty = rand(1, 5);
+                $price = $product->selling_price;
+                $lineTotal = $qty * $price;
+                $subtotal += $lineTotal;
+
+                $lineItems[] = [
+                    'description' => $product->name,
+                    'quantity' => $qty,
+                    'unit' => $product->unit ?? 'pcs',
+                    'unit_price' => $price,
+                    'discount_amount' => 0,
+                    'tax_rate' => 0,
+                    'tax_amount' => 0,
+                    'line_total' => $lineTotal,
+                ];
+            }
+
+            $salesOrder = SalesOrder::create([
+                'company_id' => $company->id,
+                'customer_id' => $customer->id,
+                'warehouse_id' => $warehouse->id,
+                'status' => $status,
+                'order_date' => $orderDate,
+                'subtotal' => $subtotal,
+                'discount_amount' => 0,
+                'tax_amount' => 0,
+                'total_amount' => $subtotal,
+            ]);
+
+            foreach ($lineItems as $item) {
+                SalesOrderItem::create(array_merge($item, ['sales_order_id' => $salesOrder->id, 'product_id' => $products[array_rand($products)]->id]));
+            }
+        }
+    }
+
+    private function seedPurchaseOrders(Company $company, array $suppliers, array $products, Warehouse $warehouse, int $count = 20): void
+    {
+        for ($i = 1; $i <= $count; $i++) {
+            $supplier = $suppliers[array_rand($suppliers)];
+            $status = collect([PurchaseOrderStatus::DRAFT, PurchaseOrderStatus::SENT, PurchaseOrderStatus::RECEIVED])->random();
+            $orderDate = now()->subDays(rand(1, 60));
+
+            $lineItems = [];
+            $itemCount = rand(2, 4);
+            $subtotal = 0;
+
+            for ($j = 0; $j < $itemCount; $j++) {
+                $product = $products[array_rand($products)];
+                $qty = rand(10, 50);
+                $price = $product->cost_price;
+                $lineTotal = $qty * $price;
+                $subtotal += $lineTotal;
+
+                $lineItems[] = [
+                    'description' => $product->name,
+                    'quantity_ordered' => $qty,
+                    'quantity_received' => $status === PurchaseOrderStatus::RECEIVED ? $qty : 0,
+                    'unit' => $product->unit ?? 'pcs',
+                    'unit_cost' => $price,
+                    'discount_amount' => 0,
+                    'tax_rate' => 0,
+                    'tax_amount' => 0,
+                    'line_total' => $lineTotal,
+                ];
+            }
+
+            $purchaseOrder = PurchaseOrder::create([
+                'company_id' => $company->id,
+                'supplier_id' => $supplier->id,
+                'warehouse_id' => $warehouse->id,
+                'status' => $status,
+                'order_date' => $orderDate,
+                'subtotal' => $subtotal,
+                'discount_amount' => 0,
+                'tax_amount' => 0,
+                'total_amount' => $subtotal,
+            ]);
+
+            foreach ($lineItems as $item) {
+                PurchaseOrderItem::create(array_merge($item, ['purchase_order_id' => $purchaseOrder->id, 'product_id' => $products[array_rand($products)]->id]));
+            }
+        }
+    }
+
+    private function seedInvoices(Company $company, array $customers, array $products, Warehouse $warehouse, int $count = 60): void
+    {
+        for ($i = 1; $i <= $count; $i++) {
             $customer = $customers[array_rand($customers)];
             $invoiceDate = now()->subDays(rand(1, 45));
             $status = collect([InvoiceStatus::PAID, InvoiceStatus::PAID, InvoiceStatus::SENT])->random();
 
             $lineItems = [];
-            $subtotal = 0;
             $itemCount = rand(2, 4);
+            $subtotal = 0;
 
             for ($j = 0; $j < $itemCount; $j++) {
                 $product = $products[array_rand($products)];
@@ -195,62 +368,122 @@ class ShifaPharmacySeeder
                 InvoiceItem::create(array_merge($item, ['invoice_id' => $invoice->id]));
             }
         }
+    }
 
-        // ── HR ──────────────────────────────────────────────
-        $dispensary = Department::firstOrCreate(
-            ['company_id' => $company->id, 'name' => 'Dispensary'],
-            ['company_id' => $company->id, 'name' => 'Dispensary'],
-        );
-        $pharmaDesig = Designation::firstOrCreate(
-            ['company_id' => $company->id, 'name' => 'Pharmacist'],
-            ['company_id' => $company->id, 'name' => 'Pharmacist'],
-        );
-        $assistDesig = Designation::firstOrCreate(
-            ['company_id' => $company->id, 'name' => 'Sales Assistant'],
-            ['company_id' => $company->id, 'name' => 'Sales Assistant'],
-        );
-
-        $employees = [
-            ['first_name' => 'Aminul', 'last_name' => 'Islam', 'desig' => $pharmaDesig, 'basic' => 3500000],
-            ['first_name' => 'Shirin', 'last_name' => 'Akter', 'desig' => $assistDesig, 'basic' => 1500000],
-            ['first_name' => 'Nasir', 'last_name' => 'Uddin', 'desig' => $assistDesig, 'basic' => 1400000],
+    private function seedStockMovements(Company $company, array $products, array $warehouses, int $count = 200): void
+    {
+        $movementTypes = [
+            StockMovementType::PURCHASE_RECEIPT,
+            StockMovementType::SALE,
+            StockMovementType::ADJUSTMENT_IN,
+            StockMovementType::ADJUSTMENT_OUT,
         ];
+        for ($i = 1; $i <= $count; $i++) {
+            $product = $products[array_rand($products)];
+            $warehouse = $warehouses[array_rand($warehouses)];
+            $type = $movementTypes[array_rand($movementTypes)];
+            $movementDate = now()->subDays(rand(1, 90));
+            $quantity = rand(-50, 50);
+            $quantityBefore = rand(0, 500);
+            $quantityAfter = $quantityBefore + $quantity;
 
-        foreach ($employees as $emp) {
-            Employee::firstOrCreate(
-                ['company_id' => $company->id, 'first_name' => $emp['first_name'], 'last_name' => $emp['last_name']],
+            StockMovement::create([
+                'company_id' => $company->id,
+                'product_id' => $product->id,
+                'warehouse_id' => $warehouse->id,
+                'movement_type' => $type,
+                'quantity' => $quantity,
+                'quantity_before' => $quantityBefore,
+                'quantity_after' => $quantityAfter,
+                'unit_cost' => rand(1000, 100000),
+                'movement_date' => $movementDate,
+                'created_at' => $movementDate,
+            ]);
+        }
+    }
+
+    private function seedExpenses(Company $company, int $count = 20, int $userId): void
+    {
+        $expenseTypes = ['Rent', 'Utilities', 'Salaries', 'Transport', 'Marketing', 'Supplies', 'Maintenance'];
+        for ($i = 1; $i <= $count; $i++) {
+            $type = $expenseTypes[array_rand($expenseTypes)];
+            $amount = rand(50000, 5000000);
+            Expense::firstOrCreate(
+                ['company_id' => $company->id, 'description' => "{$type} - {$i}"],
                 [
                     'company_id' => $company->id,
-                    'first_name' => $emp['first_name'],
-                    'last_name' => $emp['last_name'],
-                    'email' => strtolower($emp['first_name']).'@shifa.test',
-                    'phone' => '016'.rand(10000000, 99999999),
-                    'department_id' => $dispensary->id,
-                    'designation_id' => $emp['desig']->id,
-                    'joining_date' => now()->subMonths(rand(6, 36)),
-                    'basic_salary' => $emp['basic'],
-                    'status' => 'active',
+                    'description' => "{$type} - {$i}",
+                    'amount' => $amount,
+                    'tax_amount' => 0,
+                    'total_amount' => $amount,
+                    'expense_date' => now()->subDays(rand(1, 60)),
+                    'status' => 'approved',
+                    'created_by' => $userId,
                 ],
             );
         }
+    }
 
-        // ── Expenses ────────────────────────────────────────
-        $expenses = [
-            ['description' => 'Shop Rent - Feb 2026', 'amount' => 5000000, 'expense_date' => now()->subDays(5)],
-            ['description' => 'Electricity Bill', 'amount' => 600000, 'expense_date' => now()->subDays(10)],
-            ['description' => 'Drug License Renewal', 'amount' => 250000, 'expense_date' => now()->subDays(30)],
-            ['description' => 'Refrigerator Maintenance', 'amount' => 150000, 'expense_date' => now()->subDays(15)],
-            ['description' => 'DGDA Registration Fee', 'amount' => 100000, 'expense_date' => now()->subDays(60)],
-        ];
+    private function seedDocuments(Company $company, int $count = 50, int $userId): void
+    {
+        $folder = DocumentFolder::firstOrCreate(
+            ['company_id' => $company->id, 'name' => 'General'],
+            ['company_id' => $company->id, 'name' => 'General'],
+        );
 
-        foreach ($expenses as $data) {
-            Expense::firstOrCreate(
-                ['company_id' => $company->id, 'description' => $data['description']],
-                array_merge($data, [
+        for ($i = 1; $i <= $count; $i++) {
+            Document::firstOrCreate(
+                ['company_id' => $company->id, 'name' => "Document {$i}"],
+                [
                     'company_id' => $company->id,
-                    'total_amount' => $data['amount'],
-                    'status' => 'approved',
-                ]),
+                    'folder_id' => $folder->id,
+                    'name' => "Document {$i}",
+                    'disk_path' => "private/{$company->id}/documents/doc{$i}.txt",
+                    'mime_type' => 'text/plain',
+                    'size_bytes' => rand(1000, 100000),
+                    'uploaded_by' => $userId,
+                    'uploaded_at' => now()->subDays(rand(1, 30)),
+                ],
+            );
+        }
+    }
+
+    private function seedHR(Company $company, int $count = 15): void
+    {
+        $departments = ['Dispensary', 'Administration', 'Finance'];
+        $designations = ['Pharmacist', 'Manager', 'Assistant'];
+
+        foreach ($departments as $deptName) {
+            Department::firstOrCreate(
+                ['company_id' => $company->id, 'name' => $deptName],
+                ['company_id' => $company->id, 'name' => $deptName],
+            );
+        }
+
+        foreach ($designations as $desigName) {
+            Designation::firstOrCreate(
+                ['company_id' => $company->id, 'name' => $desigName],
+                ['company_id' => $company->id, 'name' => $desigName],
+            );
+        }
+
+        for ($i = 1; $i <= $count; $i++) {
+            $dept = Department::where('company_id', $company->id)->inRandomOrder()->first();
+            $desig = Designation::where('company_id', $company->id)->inRandomOrder()->first();
+            Employee::firstOrCreate(
+                ['company_id' => $company->id, 'first_name' => "Employee {$i}", 'last_name' => "Last {$i}"],
+                [
+                    'company_id' => $company->id,
+                    'first_name' => "Employee {$i}",
+                    'last_name' => "Last {$i}",
+                    'email' => "employee{$i}@shifa.test",
+                    'phone' => '016'.rand(10000000, 99999999),
+                    'department_id' => $dept->id,
+                    'designation_id' => $desig->id,
+                    'joining_date' => now()->subMonths(rand(6, 36)),
+                    'basic_salary' => rand(1500000, 5000000),
+                    'status' => 'active',
+                ],
             );
         }
     }

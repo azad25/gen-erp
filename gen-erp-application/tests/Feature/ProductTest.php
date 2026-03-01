@@ -67,6 +67,7 @@ test('product with custom fields saves and retrieves custom field values correct
 
 test('ProductService delete throws when product has open orders', function (): void {
     $company = Company::factory()->create();
+    $warehouse = \App\Models\Warehouse::factory()->create(['company_id' => $company->id]);
     CompanyContext::setActive($company);
 
     $service = app(ProductService::class);
@@ -76,8 +77,43 @@ test('ProductService delete throws when product has open orders', function (): v
         'selling_price' => 500,
     ]);
 
-    // Open orders check is stubbed (returns false) — so delete should succeed for now
-    // When Phase 3B adds orders, this test will be updated to mock hasOpenOrders = true
+    // Create an open sales order with this product
+    $salesOrder = \App\Models\SalesOrder::withoutGlobalScopes()->create([
+        'company_id' => $company->id,
+        'customer_id' => \App\Models\Customer::factory()->create(['company_id' => $company->id])->id,
+        'warehouse_id' => $warehouse->id,
+        'status' => 'draft',
+        'order_date' => now(),
+        'subtotal' => 500,
+        'total_amount' => 500,
+    ]);
+
+    \App\Models\SalesOrderItem::withoutGlobalScopes()->create([
+        'sales_order_id' => $salesOrder->id,
+        'product_id' => $product->id,
+        'description' => 'Test product',
+        'quantity' => 1,
+        'unit' => 'pcs',
+        'unit_price' => 500,
+        'line_total' => 500,
+    ]);
+
+    // Should throw exception when trying to delete
+    expect(fn () => $service->delete($product))->toThrow(\RuntimeException::class);
+});
+
+test('ProductService can delete product when no open orders', function (): void {
+    $company = Company::factory()->create();
+    CompanyContext::setActive($company);
+
+    $service = app(ProductService::class);
+    $product = $service->create($company, [
+        'name' => 'Widget',
+        'product_type' => 'product',
+        'selling_price' => 500,
+    ]);
+
+    // Product can be deleted when there are no open orders
     expect(fn () => $service->delete($product))->not->toThrow(\RuntimeException::class);
     expect(Product::withoutGlobalScopes()->withTrashed()->find($product->id)->trashed())->toBeTrue();
 });

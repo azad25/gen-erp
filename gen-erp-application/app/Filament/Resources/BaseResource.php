@@ -30,19 +30,23 @@ abstract class BaseResource extends Resource
             ActionGroup::make([
                 ViewAction::make()
                     ->icon('heroicon-m-eye')
-                    ->color('info'),
+                    ->color('info')
+                    ->tooltip(__('View')),
                 EditAction::make()
                     ->icon('heroicon-m-pencil-square')
-                    ->color('warning'),
+                    ->color('warning')
+                    ->tooltip(__('Edit')),
                 DeleteAction::make()
                     ->icon('heroicon-m-trash')
-                    ->color('danger'),
+                    ->color('danger')
+                    ->tooltip(__('Delete')),
             ])
             ->icon('heroicon-m-ellipsis-vertical')
             ->size('sm')
             ->color('gray')
             ->button()
-            ->label(__('Actions')),
+            ->label(__('Actions'))
+            ->tooltip(__('More actions')),
         ];
     }
 

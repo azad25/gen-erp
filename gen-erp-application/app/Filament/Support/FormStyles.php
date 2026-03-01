@@ -19,6 +19,7 @@ class FormStyles
             ->schema($schema)
             ->columns(2)
             ->collapsible()
+            ->description('')
             ->extraAttributes([
                 'class' => 'modern-form-section',
             ]);
@@ -33,6 +34,7 @@ class FormStyles
             ->schema($schema)
             ->columns(3)
             ->compact()
+            ->description('')
             ->extraAttributes([
                 'class' => 'modern-form-section-compact',
             ]);

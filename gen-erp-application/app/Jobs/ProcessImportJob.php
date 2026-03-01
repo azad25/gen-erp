@@ -13,6 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 /** Processes a bulk CSV import job in the background. */
 class ProcessImportJob implements ShouldQueue, ShouldBeUnique
@@ -52,7 +53,17 @@ class ProcessImportJob implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        $rows = $this->parseCsv(storage_path("app/{$job->file_path}"));
+        $filePath = storage_path("app/{$job->file_path}");
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+
+        // Detect file format and parse accordingly
+        $rows = match ($extension) {
+            'csv' => $this->parseCsv($filePath),
+            'xlsx', 'xls' => $this->parseExcel($filePath),
+            'txt' => $this->parseTxt($filePath),
+            'docx' => $this->parseDocx($filePath),
+            default => throw new \RuntimeException("Unsupported file format: {$extension}"),
+        };
 
         if (empty($rows)) {
             $importService->markCompleted($job);
@@ -139,6 +150,119 @@ class ProcessImportJob implements ShouldQueue, ShouldBeUnique
         return $rows;
     }
 
+    /**
+     * Parse Excel file (xlsx/xls) into array of associative rows.
+     *
+     * @return array<int, array<string, string>>
+     */
+    private function parseExcel(string $filePath): array
+    {
+        $spreadsheet = IOFactory::load($filePath);
+        $worksheet = $spreadsheet->getActiveSheet();
+        $rows = [];
+
+        foreach ($worksheet->toArray() as $rowIndex => $row) {
+            if ($rowIndex === 0) {
+                continue; // Skip header row
+            }
+
+            $rows[] = array_map(fn ($value) => is_string($value) ? $value : (string) $value, $row);
+        }
+
+        // Get headers from first row
+        $headers = $worksheet->toArray()[0] ?? [];
+        $headers = array_map(fn ($h) => strtolower(trim($h)), $headers);
+
+        // Combine headers with rows
+        $result = [];
+        foreach ($rows as $row) {
+            if (count($row) === count($headers)) {
+                $result[] = array_combine($headers, $row);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Parse TXT file into array of associative rows.
+     * Assumes pipe (|) or tab-separated values.
+     *
+     * @return array<int, array<string, string>>
+     */
+    private function parseTxt(string $filePath): array
+    {
+        $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (empty($lines)) {
+            return [];
+        }
+
+        // Detect delimiter
+        $firstLine = $lines[0];
+        $delimiter = str_contains($firstLine, '|') ? '|' : "\t";
+
+        $headers = array_map('strtolower', array_map('trim', explode($delimiter, $firstLine)));
+        $rows = [];
+
+        foreach (array_slice($lines, 1) as $line) {
+            $data = array_map('trim', explode($delimiter, $line));
+            if (count($data) === count($headers)) {
+                $rows[] = array_combine($headers, $data);
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Parse DOCX file into array of associative rows.
+     * Extracts tables from DOCX and parses them.
+     *
+     * @return array<int, array<string, string>>
+     */
+    private function parseDocx(string $filePath): array
+    {
+        $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
+        $sections = $phpWord->getSections();
+        $rows = [];
+
+        foreach ($sections as $section) {
+            $tables = $section->getElements();
+            foreach ($tables as $element) {
+                if ($element instanceof \PhpOffice\PhpWord\Element\Table) {
+                    $tableRows = $element->getRows();
+                    if (empty($tableRows)) {
+                        continue;
+                    }
+
+                    // Get headers from first row
+                    $headerCells = $tableRows[0]->getCells();
+                    $headers = [];
+                    foreach ($headerCells as $cell) {
+                        $headers[] = strtolower(trim($cell->getText()));
+                    }
+
+                    // Process data rows
+                    foreach (array_slice($tableRows, 1) as $row) {
+                        $cells = $row->getCells();
+                        $rowData = [];
+                        foreach ($cells as $cell) {
+                            $rowData[] = trim($cell->getText());
+                        }
+
+                        if (count($rowData) === count($headers)) {
+                            $rows[] = array_combine($headers, $rowData);
+                        }
+                    }
+
+                    break; // Only process first table
+                }
+            }
+        }
+
+        return $rows;
+    }
+
     /** Process a single row based on entity type. */
     private function processRow(string $entityType, array $row, int $companyId): void
     {
@@ -160,10 +284,13 @@ class ProcessImportJob implements ShouldQueue, ShouldBeUnique
             'cost_price' => 'nullable|numeric|min:0',
         ])->validate();
 
+        $slug = \Illuminate\Support\Str::slug($validated['name']);
+
         \App\Models\Product::withoutGlobalScopes()->updateOrCreate(
             ['company_id' => $companyId, 'sku' => $validated['sku']],
             [
                 'name' => $validated['name'],
+                'slug' => $slug,
                 'selling_price' => (int) (($validated['selling_price'] ?? 0) * 100),
                 'cost_price' => (int) (($validated['cost_price'] ?? 0) * 100),
                 'company_id' => $companyId,

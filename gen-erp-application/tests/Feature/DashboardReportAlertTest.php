@@ -72,6 +72,8 @@ test('TotalSalesWidget returns correct data structure scoped to company', functi
     $company = Company::factory()->create();
     $user = User::factory()->create();
 
+    CompanyContext::setActive($company);
+
     $service = app(DashboardService::class);
     $widget = $service->createWidget($user, $company, WidgetType::TOTAL_SALES);
     $resolved = $service->resolveWidget($widget);

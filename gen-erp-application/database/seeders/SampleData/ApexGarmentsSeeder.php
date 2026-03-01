@@ -5,18 +5,28 @@ namespace Database\Seeders\SampleData;
 use App\Enums\CompanyRole;
 use App\Enums\InvoiceStatus;
 use App\Enums\ProductType;
+use App\Enums\SalesOrderStatus;
+use App\Enums\PurchaseOrderStatus;
+use App\Enums\StockMovementType;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\CompanyUser;
 use App\Models\Customer;
 use App\Models\Department;
 use App\Models\Designation;
+use App\Models\Document;
+use App\Models\DocumentFolder;
 use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderItem;
+use App\Models\SalesOrder;
+use App\Models\SalesOrderItem;
+use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\TaxGroup;
 use App\Models\User;
@@ -30,151 +40,305 @@ use Illuminate\Support\Str;
  */
 class ApexGarmentsSeeder
 {
+    protected ?\Illuminate\Console\Command $command = null;
+
+    public function setCommand(\Illuminate\Console\Command $command): void
+    {
+        $this->command = $command;
+    }
+
     public function run(Company $company, User $owner): void
     {
         CompanyContext::setActive($company);
 
-        // ── Team Members ────────────────────────────────────
-        $productionMgr = User::firstOrCreate(
-            ['email' => 'production@apex.test'],
-            ['name' => 'Rafiq Production Manager', 'password' => Hash::make('Password@123'), 'email_verified_at' => now()],
-        );
-        CompanyUser::firstOrCreate(
-            ['company_id' => $company->id, 'user_id' => $productionMgr->id],
-            ['role' => CompanyRole::WAREHOUSE->value, 'is_active' => true, 'joined_at' => now()],
-        );
+        $this->command?->info('🏭 Seeding Apex Garments with MASSIVE data...');
 
-        $exportMgr = User::firstOrCreate(
-            ['email' => 'export@apex.test'],
-            ['name' => 'Sultana Export Manager', 'password' => Hash::make('Password@123'), 'email_verified_at' => now()],
-        );
-        CompanyUser::firstOrCreate(
-            ['company_id' => $company->id, 'user_id' => $exportMgr->id],
-            ['role' => CompanyRole::SALES->value, 'is_active' => true, 'joined_at' => now()],
-        );
+        // ── Team (15 users) ────────────────────────────────────
+        $this->seedUsers($company, 15);
 
-        // ── Warehouses ──────────────────────────────────────
-        $rawWh = Warehouse::firstOrCreate(
-            ['company_id' => $company->id, 'code' => 'RAW-01'],
-            ['company_id' => $company->id, 'name' => 'Raw Materials Store', 'code' => 'RAW-01', 'address' => 'Ashulia, Savar', 'is_active' => true],
-        );
-        $finishedWh = Warehouse::firstOrCreate(
-            ['company_id' => $company->id, 'code' => 'FIN-01'],
-            ['company_id' => $company->id, 'name' => 'Finished Goods Warehouse', 'code' => 'FIN-01', 'address' => 'Ashulia, Savar', 'is_active' => true],
-        );
+        // ── Warehouses (3 warehouses) ───────────────────────────
+        $warehouses = $this->seedWarehouses($company, 3);
 
-        // ── Categories ──────────────────────────────────────
+        // ── Categories (8 categories) ──────────────────────────────
+        $categories = $this->seedCategories($company, 8);
+
+        // ── Products (150 items) ─────────────────────────
+        $products = $this->seedProducts($company, $categories, 150);
+
+        // ── Customers (30 international buyers) ───────────────────────────────
+        $customers = $this->seedCustomers($company, 30);
+
+        // ── Suppliers (15 suppliers) ─────────────────────────────
+        $suppliers = $this->seedSuppliers($company, 15);
+
+        // ── Sales Orders (25 export orders) ─────────────────────────────
+        $this->seedSalesOrders($company, $customers, $products, $warehouses[0], 25);
+
+        // ── Purchase Orders (20 orders) ───────────────────────────
+        $this->seedPurchaseOrders($company, $suppliers, $products, $warehouses[0], 20);
+
+        // ── Invoices (40 export invoices) ───────────────────────────────
+        $this->seedInvoices($company, $customers, $products, $warehouses[0], 40);
+
+        // ── Stock Movements (150 movements) ────────────────────
+        $this->seedStockMovements($company, $products, $warehouses, 150);
+
+        // ── Expenses (15 expenses) ───────────────────────────────
+        $this->seedExpenses($company, 15, $owner->id);
+
+        // ── Documents (40 files) ───────────────────────────────
+        $this->seedDocuments($company, 40, $owner->id);
+
+        // ── HR (20 employees) ────────────────────────────────
+        $this->seedHR($company, 20);
+    }
+
+    private function seedUsers(Company $company, int $count = 15): array
+    {
+        $roles = [CompanyRole::SALES, CompanyRole::WAREHOUSE];
+        $users = [];
+        for ($i = 1; $i <= $count; $i++) {
+            $role = $roles[array_rand($roles)];
+            $user = User::firstOrCreate(
+                ['email' => "apex{$i}@apex.test"],
+                [
+                    'name' => "Apex Staff {$i}",
+                    'password' => Hash::make('Password@123'),
+                    'email_verified_at' => now(),
+                    'phone' => '017'.str_pad($i, 8, '0', STR_PAD_LEFT),
+                ],
+            );
+            CompanyUser::firstOrCreate(
+                ['company_id' => $company->id, 'user_id' => $user->id],
+                ['role' => $role->value, 'is_active' => true, 'joined_at' => now()],
+            );
+            $users[] = $user;
+        }
+        return $users;
+    }
+
+    private function seedWarehouses(Company $company, int $count = 3): array
+    {
+        $names = ['Raw Materials Store', 'Finished Goods Warehouse', 'Packaging Store'];
+        $codes = ['RAW-01', 'FIN-01', 'PKG-01'];
+        $warehouses = [];
+        for ($i = 0; $i < $count; $i++) {
+            $warehouses[] = Warehouse::firstOrCreate(
+                ['company_id' => $company->id, 'code' => $codes[$i]],
+                [
+                    'company_id' => $company->id,
+                    'name' => $names[$i],
+                    'code' => $codes[$i],
+                    'address' => 'Ashulia, Savar',
+                    'is_active' => true,
+                ],
+            );
+        }
+        return $warehouses;
+    }
+
+    private function seedCategories(Company $company, int $count = 8): array
+    {
+        $names = ['Raw Materials', 'Finished Garments', 'Accessories', 'Packaging', 'Fabric', 'Thread', 'Labels', 'Trimmings'];
         $categories = [];
-        foreach (['Raw Materials', 'Finished Garments', 'Accessories', 'Packaging'] as $name) {
+        for ($i = 0; $i < $count; $i++) {
+            $name = $names[$i] ?? "Category {$i}";
             $categories[$name] = ProductCategory::firstOrCreate(
                 ['company_id' => $company->id, 'name' => $name],
                 ['company_id' => $company->id, 'name' => $name, 'slug' => Str::slug($name)],
             );
         }
+        return $categories;
+    }
 
-        // ── Products ────────────────────────────────────────
+    private function seedProducts(Company $company, array $categories, int $count = 150): array
+    {
         $zeroRated = TaxGroup::where('company_id', $company->id)->where('name', 'Zero Rated')->first();
         $vatStd = TaxGroup::where('company_id', $company->id)->where('name', 'VAT 15%')->first();
-
-        $productItems = [
-            // Raw materials
-            ['name' => 'Cotton Fabric 60" (per yard)', 'sku' => 'RAW-001', 'cat' => 'Raw Materials', 'cost' => 25000, 'sell' => 30000, 'tax' => 'zero'],
-            ['name' => 'Polyester Fabric 58" (per yard)', 'sku' => 'RAW-002', 'cat' => 'Raw Materials', 'cost' => 18000, 'sell' => 22000, 'tax' => 'zero'],
-            ['name' => 'Denim Fabric 62" (per yard)', 'sku' => 'RAW-003', 'cat' => 'Raw Materials', 'cost' => 35000, 'sell' => 42000, 'tax' => 'zero'],
-            ['name' => 'Sewing Thread (5000m spool)', 'sku' => 'RAW-004', 'cat' => 'Raw Materials', 'cost' => 4000, 'sell' => 6000, 'tax' => 'zero'],
-            ['name' => 'Buttons (1000 pcs)', 'sku' => 'ACC-001', 'cat' => 'Accessories', 'cost' => 5000, 'sell' => 7500, 'tax' => 'zero'],
-            ['name' => 'Zippers 7" (100 pcs)', 'sku' => 'ACC-002', 'cat' => 'Accessories', 'cost' => 15000, 'sell' => 20000, 'tax' => 'zero'],
-            ['name' => 'Labels (1000 pcs)', 'sku' => 'ACC-003', 'cat' => 'Accessories', 'cost' => 8000, 'sell' => 12000, 'tax' => 'zero'],
-            ['name' => 'Poly Bags (500 pcs)', 'sku' => 'PKG-001', 'cat' => 'Packaging', 'cost' => 3000, 'sell' => 5000, 'tax' => 'std'],
-            ['name' => 'Carton Box (25 pcs)', 'sku' => 'PKG-002', 'cat' => 'Packaging', 'cost' => 12500, 'sell' => 17500, 'tax' => 'std'],
-
-            // Finished goods (export — zero rated)
-            ['name' => 'Men\'s Basic T-Shirt (FOB)', 'sku' => 'FIN-001', 'cat' => 'Finished Garments', 'cost' => 15000, 'sell' => 25000, 'tax' => 'zero'],
-            ['name' => 'Men\'s Polo Shirt (FOB)', 'sku' => 'FIN-002', 'cat' => 'Finished Garments', 'cost' => 22000, 'sell' => 38000, 'tax' => 'zero'],
-            ['name' => 'Women\'s Denim Jeans (FOB)', 'sku' => 'FIN-003', 'cat' => 'Finished Garments', 'cost' => 35000, 'sell' => 55000, 'tax' => 'zero'],
-            ['name' => 'Kids Hoodie (FOB)', 'sku' => 'FIN-004', 'cat' => 'Finished Garments', 'cost' => 20000, 'sell' => 32000, 'tax' => 'zero'],
-            ['name' => 'Men\'s Formal Shirt (FOB)', 'sku' => 'FIN-005', 'cat' => 'Finished Garments', 'cost' => 28000, 'sell' => 45000, 'tax' => 'zero'],
-        ];
+        $categoryNames = array_keys($categories);
 
         $products = [];
-        foreach ($productItems as $item) {
-            $category = $categories[$item['cat']] ?? null;
-            $tax = $item['tax'] === 'zero' ? $zeroRated : $vatStd;
+        for ($i = 1; $i <= $count; $i++) {
+            $catName = $categoryNames[array_rand($categoryNames)];
+            $category = $categories[$catName];
+            $isZeroRated = in_array($catName, ['Finished Garments', 'Raw Materials', 'Fabric']);
+            $tax = $isZeroRated ? $zeroRated : $vatStd;
             $products[] = Product::firstOrCreate(
-                ['company_id' => $company->id, 'sku' => $item['sku']],
+                ['company_id' => $company->id, 'sku' => "APX-".str_pad($i, 5, '0', STR_PAD_LEFT)],
                 [
                     'company_id' => $company->id,
-                    'name' => $item['name'],
-                    'sku' => $item['sku'],
-                    'slug' => Str::slug($item['name']),
-                    'category_id' => $category?->id,
+                    'name' => "Product {$i}",
+                    'sku' => "APX-".str_pad($i, 5, '0', STR_PAD_LEFT),
+                    'slug' => Str::slug("Product {$i}"),
+                    'category_id' => $category->id,
                     'tax_group_id' => $tax?->id,
                     'product_type' => ProductType::PRODUCT,
-                    'cost_price' => $item['cost'],
-                    'selling_price' => $item['sell'],
-                    'unit' => str_contains($item['sku'], 'RAW') ? 'yard' : 'pcs',
+                    'cost_price' => rand(10000, 5000000),
+                    'selling_price' => rand(20000, 10000000),
+                    'unit' => 'pcs',
                     'track_inventory' => true,
-                    'low_stock_threshold' => 100,
+                    'low_stock_threshold' => rand(50, 200),
                     'is_active' => true,
                 ],
             );
         }
+        return $products;
+    }
 
-        // ── Customers (international buyers) ────────────────
-        $customerData = [
-            ['name' => 'H&M Bulk Procurement', 'phone' => '01711000001', 'district' => 'Dhaka'],
-            ['name' => 'Primark Sourcing', 'phone' => '01711000002', 'district' => 'Dhaka'],
-            ['name' => 'Walmart Asia Pacific', 'phone' => '01711000003', 'district' => 'Dhaka'],
-            ['name' => 'Zara Inditex BD', 'phone' => '01711000004', 'district' => 'Dhaka'],
-            ['name' => 'Target Corp BD Office', 'phone' => '01711000005', 'district' => 'Dhaka'],
-            ['name' => 'Next PLC Bangladesh', 'phone' => '01711000006', 'district' => 'Dhaka'],
-            ['name' => 'Decathlon BD Liaison', 'phone' => '01711000007', 'district' => 'Dhaka'],
-        ];
-
+    private function seedCustomers(Company $company, int $count = 30): array
+    {
         $customers = [];
-        foreach ($customerData as $data) {
+        for ($i = 1; $i <= $count; $i++) {
             $customers[] = Customer::firstOrCreate(
-                ['company_id' => $company->id, 'phone' => $data['phone']],
-                array_merge($data, ['company_id' => $company->id, 'credit_limit' => 50000000]),
+                ['company_id' => $company->id, 'phone' => '+1'.str_pad($i, 10, '0', STR_PAD_LEFT)],
+                [
+                    'company_id' => $company->id,
+                    'name' => "International Buyer {$i}",
+                    'phone' => '+1'.str_pad($i, 10, '0', STR_PAD_LEFT),
+                    'email' => "buyer{$i}@apex.test",
+                    'address' => 'USA/Europe',
+                    'credit_limit' => rand(50000000, 500000000),
+                ],
             );
         }
+        return $customers;
+    }
 
-        // ── Suppliers ───────────────────────────────────────
-        $supplierData = [
-            ['name' => 'Noman Group Textiles', 'phone' => '01711100001', 'vat_bin' => 'NOM123456789'],
-            ['name' => 'DBL Textiles', 'phone' => '01711100002', 'vat_bin' => 'DBL123456789'],
-            ['name' => 'Epyllion Group', 'phone' => '01711100003', 'vat_bin' => 'EPY123456789'],
-            ['name' => 'SQ Textiles', 'phone' => '01711100004', 'vat_bin' => 'SQT123456789'],
-        ];
-
-        foreach ($supplierData as $data) {
-            Supplier::firstOrCreate(
-                ['company_id' => $company->id, 'name' => $data['name']],
-                array_merge($data, ['company_id' => $company->id, 'address' => 'Gazipur/Narayanganj, Bangladesh']),
+    private function seedSuppliers(Company $company, int $count = 15): array
+    {
+        $suppliers = [];
+        for ($i = 1; $i <= $count; $i++) {
+            $suppliers[] = Supplier::firstOrCreate(
+                ['company_id' => $company->id, 'name' => "Supplier {$i}"],
+                [
+                    'company_id' => $company->id,
+                    'name' => "Supplier {$i}",
+                    'phone' => '018'.str_pad($i, 8, '0', STR_PAD_LEFT),
+                    'email' => "supplier{$i}@apex.test",
+                    'address' => 'Dhaka, Bangladesh',
+                    'vat_bin' => 'BIN'.str_pad($i, 11, '0', STR_PAD_LEFT),
+                ],
             );
         }
+        return $suppliers;
+    }
 
-        // ── Export Invoices (8 large orders) ────────────────
-        $finishedProducts = array_values(array_filter($products, fn ($p) => str_starts_with($p->sku, 'FIN-')));
-
-        for ($i = 0; $i < 8; $i++) {
+    private function seedSalesOrders(Company $company, array $customers, array $products, Warehouse $warehouse, int $count = 25): void
+    {
+        for ($i = 1; $i <= $count; $i++) {
             $customer = $customers[array_rand($customers)];
-            $invoiceDate = now()->subDays(rand(5, 90));
-            $status = collect([InvoiceStatus::PAID, InvoiceStatus::SENT, InvoiceStatus::SENT])->random();
+            $status = collect([SalesOrderStatus::DRAFT, SalesOrderStatus::CONFIRMED, SalesOrderStatus::DELIVERED])->random();
+            $orderDate = now()->subDays(rand(1, 60));
 
             $lineItems = [];
+            $itemCount = rand(3, 6);
             $subtotal = 0;
-            $itemCount = rand(1, 3);
 
             for ($j = 0; $j < $itemCount; $j++) {
-                $product = $finishedProducts[array_rand($finishedProducts)];
-                $qty = rand(500, 5000);
+                $product = $products[array_rand($products)];
+                $qty = rand(100, 1000);
                 $price = $product->selling_price;
                 $lineTotal = $qty * $price;
                 $subtotal += $lineTotal;
 
                 $lineItems[] = [
-                    'product_id' => $product->id,
+                    'description' => $product->name,
+                    'quantity' => $qty,
+                    'unit' => $product->unit ?? 'pcs',
+                    'unit_price' => $price,
+                    'discount_amount' => 0,
+                    'tax_rate' => 0,
+                    'tax_amount' => 0,
+                    'line_total' => $lineTotal,
+                ];
+            }
+
+            $salesOrder = SalesOrder::create([
+                'company_id' => $company->id,
+                'customer_id' => $customer->id,
+                'warehouse_id' => $warehouse->id,
+                'status' => $status,
+                'order_date' => $orderDate,
+                'subtotal' => $subtotal,
+                'discount_amount' => 0,
+                'tax_amount' => 0,
+                'total_amount' => $subtotal,
+            ]);
+
+            foreach ($lineItems as $item) {
+                SalesOrderItem::create(array_merge($item, ['sales_order_id' => $salesOrder->id, 'product_id' => $products[array_rand($products)]->id]));
+            }
+        }
+    }
+
+    private function seedPurchaseOrders(Company $company, array $suppliers, array $products, Warehouse $warehouse, int $count = 20): void
+    {
+        for ($i = 1; $i <= $count; $i++) {
+            $supplier = $suppliers[array_rand($suppliers)];
+            $status = collect([PurchaseOrderStatus::DRAFT, PurchaseOrderStatus::SENT, PurchaseOrderStatus::RECEIVED])->random();
+            $orderDate = now()->subDays(rand(1, 60));
+
+            $lineItems = [];
+            $itemCount = rand(2, 4);
+            $subtotal = 0;
+
+            for ($j = 0; $j < $itemCount; $j++) {
+                $product = $products[array_rand($products)];
+                $qty = rand(100, 500);
+                $price = $product->cost_price;
+                $lineTotal = $qty * $price;
+                $subtotal += $lineTotal;
+
+                $lineItems[] = [
+                    'description' => $product->name,
+                    'quantity_ordered' => $qty,
+                    'quantity_received' => $status === PurchaseOrderStatus::RECEIVED ? $qty : 0,
+                    'unit' => $product->unit ?? 'pcs',
+                    'unit_cost' => $price,
+                    'discount_amount' => 0,
+                    'tax_rate' => 0,
+                    'tax_amount' => 0,
+                    'line_total' => $lineTotal,
+                ];
+            }
+
+            $purchaseOrder = PurchaseOrder::create([
+                'company_id' => $company->id,
+                'supplier_id' => $supplier->id,
+                'warehouse_id' => $warehouse->id,
+                'status' => $status,
+                'order_date' => $orderDate,
+                'subtotal' => $subtotal,
+                'discount_amount' => 0,
+                'tax_amount' => 0,
+                'total_amount' => $subtotal,
+            ]);
+
+            foreach ($lineItems as $item) {
+                PurchaseOrderItem::create(array_merge($item, ['purchase_order_id' => $purchaseOrder->id, 'product_id' => $products[array_rand($products)]->id]));
+            }
+        }
+    }
+
+    private function seedInvoices(Company $company, array $customers, array $products, Warehouse $warehouse, int $count = 40): void
+    {
+        for ($i = 1; $i <= $count; $i++) {
+            $customer = $customers[array_rand($customers)];
+            $invoiceDate = now()->subDays(rand(1, 45));
+            $status = collect([InvoiceStatus::PAID, InvoiceStatus::PAID, InvoiceStatus::SENT])->random();
+
+            $lineItems = [];
+            $itemCount = rand(3, 5);
+            $subtotal = 0;
+
+            for ($j = 0; $j < $itemCount; $j++) {
+                $product = $products[array_rand($products)];
+                $qty = rand(100, 500);
+                $price = $product->selling_price;
+                $lineTotal = $qty * $price;
+                $subtotal += $lineTotal;
+
+                $lineItems[] = [
                     'description' => $product->name,
                     'quantity' => $qty,
                     'unit' => $product->unit ?? 'pcs',
@@ -187,86 +351,141 @@ class ApexGarmentsSeeder
             }
 
             $totalAmount = $subtotal;
-            $amountPaid = $status === InvoiceStatus::PAID ? $totalAmount : (int) ($totalAmount * 0.3);
+            $amountPaid = $status === InvoiceStatus::PAID ? $totalAmount : 0;
 
             $invoice = Invoice::create([
                 'company_id' => $company->id,
                 'customer_id' => $customer->id,
-                'warehouse_id' => $finishedWh->id,
+                'warehouse_id' => $warehouse->id,
                 'invoice_date' => $invoiceDate,
-                'due_date' => $invoiceDate->copy()->addDays(60),
+                'due_date' => $invoiceDate->copy()->addDays(30),
                 'status' => $status,
                 'subtotal' => $subtotal,
                 'tax_amount' => 0,
                 'total_amount' => $totalAmount,
                 'amount_paid' => $amountPaid,
-                'notes' => 'Export Order — FOB Chittagong',
             ]);
 
             foreach ($lineItems as $item) {
                 InvoiceItem::create(array_merge($item, ['invoice_id' => $invoice->id]));
             }
         }
+    }
 
-        // ── HR (Manufacturing workforce) ────────────────────
-        $production = Department::firstOrCreate(
-            ['company_id' => $company->id, 'name' => 'Production'],
-            ['company_id' => $company->id, 'name' => 'Production'],
-        );
-        $quality = Department::firstOrCreate(
-            ['company_id' => $company->id, 'name' => 'Quality Control'],
-            ['company_id' => $company->id, 'name' => 'Quality Control'],
-        );
-        $export = Department::firstOrCreate(
-            ['company_id' => $company->id, 'name' => 'Export & Merchandising'],
-            ['company_id' => $company->id, 'name' => 'Export & Merchandising'],
-        );
-        $compliance = Department::firstOrCreate(
-            ['company_id' => $company->id, 'name' => 'Compliance'],
-            ['company_id' => $company->id, 'name' => 'Compliance'],
-        );
-
-        $gm = Designation::firstOrCreate(
-            ['company_id' => $company->id, 'name' => 'General Manager'],
-            ['company_id' => $company->id, 'name' => 'General Manager'],
-        );
-        $agm = Designation::firstOrCreate(
-            ['company_id' => $company->id, 'name' => 'AGM'],
-            ['company_id' => $company->id, 'name' => 'AGM'],
-        );
-        $operator = Designation::firstOrCreate(
-            ['company_id' => $company->id, 'name' => 'Machine Operator'],
-            ['company_id' => $company->id, 'name' => 'Machine Operator'],
-        );
-        $inspector = Designation::firstOrCreate(
-            ['company_id' => $company->id, 'name' => 'QC Inspector'],
-            ['company_id' => $company->id, 'name' => 'QC Inspector'],
-        );
-
-        $employees = [
-            ['first_name' => 'Rafiq', 'last_name' => 'Ahmed', 'dept' => $production, 'desig' => $gm, 'basic' => 6000000],
-            ['first_name' => 'Sultana', 'last_name' => 'Razia', 'dept' => $export, 'desig' => $agm, 'basic' => 5000000],
-            ['first_name' => 'Momin', 'last_name' => 'Khan', 'dept' => $production, 'desig' => $operator, 'basic' => 1800000],
-            ['first_name' => 'Bilkis', 'last_name' => 'Begum', 'dept' => $production, 'desig' => $operator, 'basic' => 1800000],
-            ['first_name' => 'Jalal', 'last_name' => 'Uddin', 'dept' => $quality, 'desig' => $inspector, 'basic' => 2200000],
-            ['first_name' => 'Nargis', 'last_name' => 'Akter', 'dept' => $quality, 'desig' => $inspector, 'basic' => 2100000],
-            ['first_name' => 'Aziz', 'last_name' => 'Rahman', 'dept' => $compliance, 'desig' => $agm, 'basic' => 4500000],
-            ['first_name' => 'Kamrul', 'last_name' => 'Hasan', 'dept' => $export, 'desig' => $agm, 'basic' => 4000000],
+    private function seedStockMovements(Company $company, array $products, array $warehouses, int $count = 150): void
+    {
+        $movementTypes = [
+            StockMovementType::PURCHASE_RECEIPT,
+            StockMovementType::SALE,
+            StockMovementType::ADJUSTMENT_IN,
+            StockMovementType::ADJUSTMENT_OUT,
+            StockMovementType::TRANSFER_IN,
+            StockMovementType::TRANSFER_OUT,
         ];
+        for ($i = 1; $i <= $count; $i++) {
+            $product = $products[array_rand($products)];
+            $warehouse = $warehouses[array_rand($warehouses)];
+            $type = $movementTypes[array_rand($movementTypes)];
+            $movementDate = now()->subDays(rand(1, 90));
+            $quantity = rand(-200, 200);
+            $quantityBefore = rand(0, 1000);
+            $quantityAfter = $quantityBefore + $quantity;
 
-        foreach ($employees as $emp) {
-            Employee::firstOrCreate(
-                ['company_id' => $company->id, 'first_name' => $emp['first_name'], 'last_name' => $emp['last_name']],
+            StockMovement::create([
+                'company_id' => $company->id,
+                'product_id' => $product->id,
+                'warehouse_id' => $warehouse->id,
+                'movement_type' => $type,
+                'quantity' => $quantity,
+                'quantity_before' => $quantityBefore,
+                'quantity_after' => $quantityAfter,
+                'unit_cost' => rand(10000, 5000000),
+                'movement_date' => $movementDate,
+                'created_at' => $movementDate,
+            ]);
+        }
+    }
+
+    private function seedExpenses(Company $company, int $count = 15, int $userId): void
+    {
+        $expenseTypes = ['Rent', 'Utilities', 'Salaries', 'Transport', 'Marketing', 'Supplies', 'Maintenance'];
+        for ($i = 1; $i <= $count; $i++) {
+            $type = $expenseTypes[array_rand($expenseTypes)];
+            $amount = rand(100000, 10000000);
+            Expense::firstOrCreate(
+                ['company_id' => $company->id, 'description' => "{$type} - {$i}"],
                 [
                     'company_id' => $company->id,
-                    'first_name' => $emp['first_name'],
-                    'last_name' => $emp['last_name'],
-                    'email' => strtolower($emp['first_name']).'@apex.test',
+                    'description' => "{$type} - {$i}",
+                    'amount' => $amount,
+                    'tax_amount' => 0,
+                    'total_amount' => $amount,
+                    'expense_date' => now()->subDays(rand(1, 60)),
+                    'status' => 'approved',
+                    'created_by' => $userId,
+                ],
+            );
+        }
+    }
+
+    private function seedDocuments(Company $company, int $count = 40, int $userId): void
+    {
+        $folder = DocumentFolder::firstOrCreate(
+            ['company_id' => $company->id, 'name' => 'General'],
+            ['company_id' => $company->id, 'name' => 'General'],
+        );
+
+        for ($i = 1; $i <= $count; $i++) {
+            Document::firstOrCreate(
+                ['company_id' => $company->id, 'name' => "Document {$i}"],
+                [
+                    'company_id' => $company->id,
+                    'folder_id' => $folder->id,
+                    'name' => "Document {$i}",
+                    'disk_path' => "private/{$company->id}/documents/doc{$i}.txt",
+                    'mime_type' => 'text/plain',
+                    'size_bytes' => rand(1000, 100000),
+                    'uploaded_by' => $userId,
+                    'uploaded_at' => now()->subDays(rand(1, 30)),
+                ],
+            );
+        }
+    }
+
+    private function seedHR(Company $company, int $count = 20): void
+    {
+        $departments = ['Production', 'Quality Control', 'Administration', 'Finance'];
+        $designations = ['Manager', 'Supervisor', 'Operator', 'Staff'];
+
+        foreach ($departments as $deptName) {
+            Department::firstOrCreate(
+                ['company_id' => $company->id, 'name' => $deptName],
+                ['company_id' => $company->id, 'name' => $deptName],
+            );
+        }
+
+        foreach ($designations as $desigName) {
+            Designation::firstOrCreate(
+                ['company_id' => $company->id, 'name' => $desigName],
+                ['company_id' => $company->id, 'name' => $desigName],
+            );
+        }
+
+        for ($i = 1; $i <= $count; $i++) {
+            $dept = Department::where('company_id', $company->id)->inRandomOrder()->first();
+            $desig = Designation::where('company_id', $company->id)->inRandomOrder()->first();
+            Employee::firstOrCreate(
+                ['company_id' => $company->id, 'first_name' => "Employee {$i}", 'last_name' => "Last {$i}"],
+                [
+                    'company_id' => $company->id,
+                    'first_name' => "Employee {$i}",
+                    'last_name' => "Last {$i}",
+                    'email' => "employee{$i}@apex.test",
                     'phone' => '017'.rand(10000000, 99999999),
-                    'department_id' => $emp['dept']->id,
-                    'designation_id' => $emp['desig']->id,
+                    'department_id' => $dept->id,
+                    'designation_id' => $desig->id,
                     'joining_date' => now()->subMonths(rand(6, 48)),
-                    'basic_salary' => $emp['basic'],
+                    'basic_salary' => rand(1200000, 6000000),
                     'status' => 'active',
                 ],
             );

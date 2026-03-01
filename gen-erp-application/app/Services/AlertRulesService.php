@@ -114,7 +114,35 @@ class AlertRulesService
             'last_triggered_at' => now(),
         ]);
 
-        // TODO: Phase 3+ — dispatch actual notifications (in_app, email, sms)
+        // Dispatch notifications to configured channels
+        $event = \App\Enums\NotificationEvent::tryFrom('alert_triggered');
+        $company = \App\Models\Company::withoutGlobalScopes()->find($companyId);
+        
+        if ($event && $company) {
+            $variables = [
+                'rule_id' => $rule->id,
+                'entity_type' => $rule->entity_type,
+                'entity_id' => $entity->getKey(),
+                'trigger_value' => $triggerValue,
+            ];
+            
+            // Get users with the target roles
+            $roles = $rule->target_roles ?? [];
+            $targetUserIds = [];
+            if (!empty($roles)) {
+                $companyUsers = \App\Models\CompanyUser::withoutGlobalScopes()
+                    ->where('company_id', $companyId)
+                    ->whereIn('role', $roles)
+                    ->where('is_active', true)
+                    ->get();
+                $targetUserIds = $companyUsers->pluck('user_id')->toArray();
+            }
+            
+            if (!empty($targetUserIds)) {
+                app(NotificationService::class)->send($event, $company, $variables, $targetUserIds);
+            }
+        }
+
         Log::info('Alert rule triggered', [
             'rule_id' => $rule->id,
             'entity_type' => $rule->entity_type,

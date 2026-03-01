@@ -99,8 +99,8 @@ class LoginController extends Controller
                 'locked_until' => now()->addMinutes(30),
             ]);
 
-            // TODO: Phase 2 — Send lockout notification email via queued job
-            // Mail::to($user)->queue(new AccountLockedMail($user));
+            // Send lockout notification email via queued job
+            dispatch(new \App\Jobs\SendLockoutNotificationJob($user));
         }
     }
 }

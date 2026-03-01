@@ -100,8 +100,6 @@ class ProductService
      */
     public function delete(Product $product): void
     {
-        // TODO: Phase 3B — check $product->salesOrderItems()->open()->exists()
-        // For now, guard against future integration by checking a stub
         if ($this->hasOpenOrders($product)) {
             throw new RuntimeException(
                 __('Cannot delete a product that is part of an open order.')
@@ -113,12 +111,20 @@ class ProductService
 
     /**
      * Check if a product is referenced in open orders.
-     * Returns false until order modules exist (Phase 3B+).
      */
     private function hasOpenOrders(Product $product): bool
     {
-        // TODO: Phase 3B — implement real check
-        return false;
+        // Check for open sales orders containing this product
+        $hasOpenSalesOrders = $product->salesOrderItems()
+            ->whereHas('salesOrder', fn ($q) => $q->where('status', '!=', 'fulfilled'))
+            ->exists();
+
+        // Check for open purchase orders if applicable
+        $hasOpenPurchaseOrders = $product->purchaseOrderItems()
+            ->whereHas('purchaseOrder', fn ($q) => $q->where('status', '!=', 'received'))
+            ->exists();
+
+        return $hasOpenSalesOrders || $hasOpenPurchaseOrders;
     }
 
     /**

@@ -45,8 +45,19 @@ class ImportProductsJob implements ShouldBeUnique, ShouldQueue
             'failed' => $result['failed'],
         ]);
 
-        // TODO: Phase 3+ — send in-app notification to $this->userId with result summary
-        // Notification::make()->title("Import complete: {$result['created']} created, {$result['failed']} failed")->sendToDatabase(User::find($this->userId));
+        // Send in-app notification to user with result summary
+        $user = \App\Models\User::find($this->userId);
+        $company = $this->company;
+        if ($user && $company) {
+            $event = \App\Enums\NotificationEvent::tryFrom('import_complete');
+            if ($event) {
+                $variables = [
+                    'created' => $result['created'],
+                    'failed' => $result['failed'],
+                ];
+                app(NotificationService::class)->send($event, $company, $variables, [$this->userId]);
+            }
+        }
     }
 
     public function failed(\Throwable $exception): void

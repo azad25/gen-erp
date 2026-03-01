@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CompanySwitchController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InvitationController;
 use Illuminate\Support\Facades\Route;
@@ -36,8 +37,16 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/app/switch-company/{companyId}', [CompanySwitchController::class, 'switch'])
         ->name('company.switch');
 
-    // Document download (signed URL)
-    Route::get('/documents/{document}/download', \App\Http\Controllers\DocumentDownloadController::class)
-        ->name('documents.download')
-        ->middleware('signed');
+    // Document routes (signed URLs for security)
+    Route::prefix('documents')->group(function () {
+        Route::get('/{document}/download', [DocumentController::class, 'download'])
+            ->name('documents.download')
+            ->middleware('signed');
+        Route::get('/{document}/thumbnail', [DocumentController::class, 'thumbnail'])
+            ->name('documents.thumbnail')
+            ->middleware('signed');
+        Route::get('/{document}/preview', [DocumentController::class, 'preview'])
+            ->name('documents.preview')
+            ->middleware('signed');
+    });
 });

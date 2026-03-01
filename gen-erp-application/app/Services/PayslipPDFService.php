@@ -41,7 +41,7 @@ class PayslipPDFService
             'net_salary' => $entry->net_salary,
         ];
 
-        // TODO: Phase 6 — render Blade view to PDF using barryvdh/laravel-dompdf
+        // Generate PDF using DomPDF
         $filename = "payslip_{$entry->employee_id}_{$entry->period_year}_{$entry->period_month}.pdf";
         $path = storage_path("app/private/{$entry->company_id}/payslips/{$filename}");
 
@@ -49,8 +49,8 @@ class PayslipPDFService
             mkdir(dirname($path), 0755, true);
         }
 
-        // Placeholder — actual PDF rendering deferred to when dompdf is available
-        file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT));
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.payslip', $data);
+        $pdf->save($path);
 
         return $path;
     }
@@ -67,8 +67,16 @@ class PayslipPDFService
             $paths[] = $this->generate($entry);
         }
 
-        // TODO: Phase 6 — create ZIP of all PDFs
+        // Create ZIP of all PDFs
         $zipPath = storage_path("app/private/{$run->company_id}/payslips/payroll_run_{$run->id}.zip");
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE) === true) {
+            foreach ($paths as $path) {
+                $zip->addFile($path, basename($path));
+            }
+            $zip->close();
+        }
 
         return $zipPath;
     }

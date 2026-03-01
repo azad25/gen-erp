@@ -48,7 +48,9 @@ class DevSampleDataSeeder extends Seeder
             $devAdmin,
             vatBin: '123456789012',
         );
-        (new RuposhiRetailSeeder())->run($ruposhi, $devAdmin);
+        $ruposhiSeeder = new RuposhiRetailSeeder();
+        $ruposhiSeeder->setCommand($this->command);
+        $ruposhiSeeder->run($ruposhi, $devAdmin);
 
         // ── 4. Shifa Pharmacy ──────────────────────────────
 
@@ -59,7 +61,9 @@ class DevSampleDataSeeder extends Seeder
             $devAdmin,
             vatBin: '234567890123',
         );
-        (new ShifaPharmacySeeder())->run($shifa, $devAdmin);
+        $shifaSeeder = new ShifaPharmacySeeder();
+        $shifaSeeder->setCommand($this->command);
+        $shifaSeeder->run($shifa, $devAdmin);
 
         // ── 5. Apex Garments ───────────────────────────────
 
@@ -70,7 +74,9 @@ class DevSampleDataSeeder extends Seeder
             $devAdmin,
             vatBin: '345678901234',
         );
-        (new ApexGarmentsSeeder())->run($apex, $devAdmin);
+        $apexSeeder = new ApexGarmentsSeeder();
+        $apexSeeder->setCommand($this->command);
+        $apexSeeder->run($apex, $devAdmin);
     }
 
     /**

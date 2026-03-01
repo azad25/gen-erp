@@ -358,4 +358,195 @@ class DocumentService
 
         return $meta;
     }
+
+    /**
+     * Generate a thumbnail for an image.
+     */
+    public function generateThumbnail(Document $document, int $maxWidth = 300, int $maxHeight = 300): ?string
+    {
+        if (! $document->isImage()) {
+            return null;
+        }
+
+        $contents = $this->getContents($document);
+        if (! $contents) {
+            return null;
+        }
+
+        $image = @imagecreatefromstring($contents);
+        if (! $image) {
+            return null;
+        }
+
+        $width = imagesx($image);
+        $height = imagesy($image);
+
+        // Calculate new dimensions
+        $ratio = min($maxWidth / $width, $maxHeight / $height);
+        $newWidth = (int) ($width * $ratio);
+        $newHeight = (int) ($height * $ratio);
+
+        $thumbnail = imagecreatetruecolor($newWidth, $newHeight);
+        imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+        $ext = $document->extension();
+        $thumbPath = "thumbnails/{$document->id}_thumb.{$ext}";
+        $fullThumbPath = storage_path("app/private/{$thumbPath}");
+
+        // Create thumbnail directory if needed
+        if (! is_dir(dirname($fullThumbPath))) {
+            mkdir(dirname($fullThumbPath), 0755, true);
+        }
+
+        match ($ext) {
+            'jpeg', 'jpg' => imagejpeg($thumbnail, $fullThumbPath, 90),
+            'png' => imagepng($thumbnail, $fullThumbPath),
+            'webp' => imagewebp($thumbnail, $fullThumbPath, 90),
+            default => false,
+        };
+
+        imagedestroy($image);
+        imagedestroy($thumbnail);
+
+        return $thumbPath;
+    }
+
+    /**
+     * Get thumbnail URL for a document.
+     */
+    public function getThumbnailUrl(Document $document): ?string
+    {
+        if (! $document->isImage()) {
+            return null;
+        }
+
+        $thumbPath = "thumbnails/{$document->id}_thumb." . $document->extension();
+        $fullThumbPath = storage_path("app/private/{$thumbPath}");
+
+        if (! file_exists($fullThumbPath)) {
+            // Generate thumbnail if it doesn't exist
+            $generatedPath = $this->generateThumbnail($document);
+            if (! $generatedPath) {
+                return null;
+            }
+        }
+
+        return URL::temporarySignedRoute(
+            'documents.thumbnail',
+            now()->addMinutes(60),
+            ['document' => $document->id]
+        );
+    }
+
+    /**
+     * Get preview URL for a document.
+     */
+    public function getPreviewUrl(Document $document): ?string
+    {
+        if (! $document->isPreviewable()) {
+            return null;
+        }
+
+        return URL::temporarySignedRoute(
+            'documents.preview',
+            now()->addMinutes(30),
+            ['document' => $document->id]
+        );
+    }
+
+    /**
+     * Bulk upload multiple files.
+     *
+     * @param  array<int, UploadedFile>  $files
+     * @return array{uploaded: int, failed: int, errors: array<int, array{file: string, error: string}>}
+     */
+    public function bulkUpload(
+        array $files,
+        int $companyId,
+        int $uploadedBy,
+        ?int $folderId = null,
+        ?string $entityType = null,
+        ?int $entityId = null,
+    ): array {
+        $uploaded = 0;
+        $failed = 0;
+        $errors = [];
+
+        foreach ($files as $index => $file) {
+            try {
+                $this->upload($file, $companyId, $uploadedBy, $folderId, $entityType, $entityId);
+                $uploaded++;
+            } catch (\Throwable $e) {
+                $failed++;
+                $errors[] = [
+                    'file' => $file->getClientOriginalName(),
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return compact('uploaded', 'failed', 'errors');
+    }
+
+    /**
+     * Bulk delete multiple documents.
+     *
+     * @param  array<int, int>  $documentIds
+     * @return array{deleted: int, failed: int, errors: array<int, array{id: int, error: string}>}
+     */
+    public function bulkDelete(array $documentIds, bool $removeFiles = false): array
+    {
+        $deleted = 0;
+        $failed = 0;
+        $errors = [];
+
+        foreach ($documentIds as $id) {
+            try {
+                $document = Document::withoutGlobalScopes()->find($id);
+                if (! $document) {
+                    $failed++;
+                    $errors[] = ['id' => $id, 'error' => 'Document not found'];
+                    continue;
+                }
+                $this->delete($document, $removeFiles);
+                $deleted++;
+            } catch (\Throwable $e) {
+                $failed++;
+                $errors[] = ['id' => $id, 'error' => $e->getMessage()];
+            }
+        }
+
+        return compact('deleted', 'failed', 'errors');
+    }
+
+    /**
+     * Bulk move documents to a different folder.
+     *
+     * @param  array<int, int>  $documentIds
+     * @return array{moved: int, failed: int, errors: array<int, array{id: int, error: string}>}
+     */
+    public function bulkMove(array $documentIds, ?int $folderId): array
+    {
+        $moved = 0;
+        $failed = 0;
+        $errors = [];
+
+        foreach ($documentIds as $id) {
+            try {
+                $document = Document::withoutGlobalScopes()->find($id);
+                if (! $document) {
+                    $failed++;
+                    $errors[] = ['id' => $id, 'error' => 'Document not found'];
+                    continue;
+                }
+                $this->move($document, $folderId);
+                $moved++;
+            } catch (\Throwable $e) {
+                $failed++;
+                $errors[] = ['id' => $id, 'error' => $e->getMessage()];
+            }
+        }
+
+        return compact('moved', 'failed', 'errors');
+    }
 }

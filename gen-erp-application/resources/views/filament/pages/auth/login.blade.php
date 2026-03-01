@@ -89,13 +89,13 @@
         .auth-logo svg {
             width: 40px;
             height: 40px;
-            color: #1e40af;
+            color: #0F766E;
         }
-        
+
         .auth-logo-text {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #1e40af;
+            color: #0F766E;
         }
         
         .auth-title {
@@ -149,8 +149,8 @@
         }
         
         .social-btn:hover {
-            border-color: #1e40af !important;
-            box-shadow: 0 2px 8px rgba(30, 64, 175, 0.1);
+            border-color: #0F766E !important;
+            box-shadow: 0 2px 8px rgba(15,118,110,0.15);
             transform: translateY(-1px);
         }
         
@@ -181,7 +181,7 @@
         
         /* Right Side - Illustration */
         .auth-illustration-side {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #0F766E 0%, #14B8A6 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -271,13 +271,13 @@
         }
         
         .auth-footer a {
-            color: #1e40af;
+            color: #0F766E;
             font-weight: 600;
             text-decoration: none;
         }
-        
+
         .dark .auth-footer a {
-            color: #3b82f6;
+            color: #14B8A6;
         }
         
         .auth-footer a:hover {

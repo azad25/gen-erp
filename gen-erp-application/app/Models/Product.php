@@ -114,6 +114,22 @@ class Product extends Model
     }
 
     /**
+     * @return HasMany<SalesOrderItem, $this>
+     */
+    public function salesOrderItems(): HasMany
+    {
+        return $this->hasMany(SalesOrderItem::class);
+    }
+
+    /**
+     * @return HasMany<PurchaseOrderItem, $this>
+     */
+    public function purchaseOrderItems(): HasMany
+    {
+        return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    /**
      * Only active products.
      *
      * @param  \Illuminate\Database\Eloquent\Builder<static>  $query

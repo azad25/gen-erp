@@ -333,10 +333,36 @@ class WorkflowService
      */
     private function handleNotifyRoles(array $action, WorkflowInstance $instance): void
     {
-        // TODO: Phase 3 — dispatch notifications to role holders
+        $roles = $action['roles'] ?? [];
+        if (empty($roles)) {
+            return;
+        }
+
+        $companyId = $instance->company_id;
+        $users = \App\Models\CompanyUser::withoutGlobalScopes()
+            ->where('company_id', $companyId)
+            ->whereIn('role', $roles)
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($users as $companyUser) {
+            $event = \App\Enums\NotificationEvent::tryFrom('workflow_notification');
+            $company = \App\Models\Company::withoutGlobalScopes()->find($companyId);
+            
+            if ($event && $company) {
+                $variables = [
+                    'workflow_instance_id' => $instance->id,
+                    'document_type' => $instance->document_type,
+                    'document_id' => $instance->document_id,
+                ];
+                app(NotificationService::class)->send($event, $company, $variables, [$companyUser->user_id]);
+            }
+        }
+
         Log::info('Auto-action notify_roles triggered', [
             'instance_id' => $instance->id,
-            'roles' => $action['roles'] ?? [],
+            'roles' => $roles,
+            'users_notified' => $users->count(),
         ]);
     }
 
@@ -345,12 +371,53 @@ class WorkflowService
      */
     private function handleSetField(array $action, WorkflowInstance $instance): void
     {
-        // TODO: Phase 3 — update a field on the document model
+        $field = $action['field'] ?? null;
+        $value = $action['value'] ?? null;
+
+        if (!$field || $value === null) {
+            return;
+        }
+
+        // Get the document model
+        $document = $this->getDocumentModel($instance->document_type, $instance->document_id);
+        if (!$document) {
+            Log::warning('Auto-action set_field: document not found', [
+                'instance_id' => $instance->id,
+                'document_type' => $instance->document_type,
+                'document_id' => $instance->document_id,
+            ]);
+            return;
+        }
+
+        // Update the field
+        $document->update([$field => $value]);
+
         Log::info('Auto-action set_field triggered', [
             'instance_id' => $instance->id,
-            'field' => $action['field'] ?? null,
-            'value' => $action['value'] ?? null,
+            'field' => $field,
+            'value' => $value,
         ]);
+    }
+
+    /**
+     * Get document model instance based on type and ID.
+     */
+    private function getDocumentModel(string $documentType, int $documentId): ?\Illuminate\Database\Eloquent\Model
+    {
+        $modelMap = [
+            'sales_order' => \App\Models\SalesOrder::class,
+            'purchase_order' => \App\Models\PurchaseOrder::class,
+            'invoice' => \App\Models\Invoice::class,
+            'expense' => \App\Models\Expense::class,
+            'goods_receipt' => \App\Models\GoodsReceipt::class,
+        ];
+
+        $modelClass = $modelMap[$documentType] ?? null;
+        if (!$modelClass) {
+            return null;
+        }
+
+        return $modelClass::withoutGlobalScopes()->find($documentId);
     }
 
     /**

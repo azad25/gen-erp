@@ -172,7 +172,11 @@ class ContactService
      */
     public function deleteSupplier(Supplier $supplier): void
     {
-        // TODO: Phase 4 — check for open purchase orders
+        if ($this->hasOpenPurchaseOrders($supplier)) {
+            throw new RuntimeException(
+                __('Cannot delete a supplier with open purchase orders.')
+            );
+        }
         $supplier->delete();
     }
 
@@ -285,7 +289,15 @@ class ContactService
 
     private function hasOpenInvoices(Customer $customer): bool
     {
-        // TODO: Phase 4 — implement real check against invoices
-        return false;
+        return $customer->invoices()
+            ->where('status', '!=', 'paid')
+            ->exists();
+    }
+
+    private function hasOpenPurchaseOrders(Supplier $supplier): bool
+    {
+        return $supplier->purchaseOrders()
+            ->where('status', '!=', 'received')
+            ->exists();
     }
 }

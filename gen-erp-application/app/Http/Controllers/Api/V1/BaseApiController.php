@@ -6,6 +6,18 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 
 /**
+ * @OA\Info(
+ *     title="Gen-ERP API",
+ *     version="1.0.0",
+ *     description="Gen-ERP REST API documentation",
+ *     @OA\Contact(
+ *         email="support@gen-erp.com"
+ *     ),
+ *     @OA\Server(
+ *         url="/api/v1",
+ *         description="API Server"
+ *     )
+ * )
  * Base API controller providing standard response envelope.
  */
 abstract class BaseApiController extends Controller

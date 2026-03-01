@@ -36,12 +36,12 @@ class AdminPanelProvider extends PanelProvider
             ->emailVerification()
             ->profile()
             ->colors([
-                'primary'   => Color::hex('#0F766E'), // Deep Teal
-                'secondary' => Color::hex('#115E59'), // Primary Dark
-                'info'      => Color::hex('#14B8A6'), // Primary Light
-                'success'   => Color::hex('#16A34A'), // Forest Green
-                'warning'   => Color::Amber,
-                'danger'    => Color::Rose,
+                'primary'   => Color::hex('#0F766E'),
+                'secondary' => Color::hex('#115E59'),
+                'info'      => Color::hex('#14B8A6'),
+                'success'   => Color::hex('#16A34A'),
+                'warning'   => Color::hex('#CA8A04'),
+                'danger'    => Color::hex('#B91C1C'),
                 'gray'      => Color::Slate,
             ])
             ->font('Inter', provider: \Filament\FontProviders\LocalFontProvider::class)
