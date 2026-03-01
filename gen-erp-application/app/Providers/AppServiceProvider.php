@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Events\ModelSaved;
 use App\Listeners\EvaluateAlertRules;
+use App\Models\CreditNoteItem;
 use App\Models\CustomFieldDefinition;
 use App\Models\EntityAlias;
+use App\Observers\CreditNoteItemObserver;
 use App\Observers\CustomFieldDefinitionObserver;
 use App\Observers\EntityAliasObserver;
 use Illuminate\Support\Facades\Event;
@@ -28,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
     {
         EntityAlias::observe(EntityAliasObserver::class);
         CustomFieldDefinition::observe(CustomFieldDefinitionObserver::class);
+        CreditNoteItem::observe(CreditNoteItemObserver::class);
 
         Event::listen(ModelSaved::class, EvaluateAlertRules::class);
     }

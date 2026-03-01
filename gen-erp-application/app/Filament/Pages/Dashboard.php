@@ -14,12 +14,28 @@ class Dashboard extends BaseDashboard
 
     public function getWidgets(): array
     {
-        return [];
+        return [
+            \App\Filament\Widgets\ModernStatsOverview::class,
+            \App\Filament\Widgets\MonthlyRevenueChart::class,
+            \App\Filament\Widgets\SalesVsPurchasesChart::class,
+            \App\Filament\Widgets\TopCustomersChart::class,
+            \App\Filament\Widgets\InvoiceStatusChart::class,
+            \App\Filament\Widgets\ProductCategoryChart::class,
+            \App\Filament\Widgets\RecentInvoicesWidget::class,
+            \App\Filament\Widgets\ActivityFeedWidget::class,
+        ];
     }
 
     public function getColumns(): int | string | array
     {
-        return 4; // Because the design has 4 stats cards!
+        return [
+            'default' => 1,
+            'sm' => 1,
+            'md' => 2,
+            'lg' => 2,
+            'xl' => 2,
+            '2xl' => 2,
+        ];
     }
 
     public function getHeaderWidgets(): array

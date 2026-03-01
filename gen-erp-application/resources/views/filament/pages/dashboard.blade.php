@@ -233,6 +233,37 @@
             text-transform: uppercase;
         }
 
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.green {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .stat-icon.blue {
+            background: rgba(37, 99, 235, 0.1);
+            color: #2563eb;
+        }
+
+        .stat-icon.amber {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .stat-icon.red {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
         .stat-value {
             font-size: 22px;
             font-weight: 700;
@@ -282,13 +313,17 @@
             background: #e8ecf0;
             transition: background 0.15s;
         }
-        .bar:hover, .bar:last-child {
-            background: #22c55e;
+        .bar.active {
+            background: var(--accent-green);
+        }
+        .bar:hover {
+            background: var(--accent-green);
             opacity: 0.7;
         }
         .bar:last-child { opacity: 1; }
     </style>
 
+    {{-- STATS GRID --}}
     <div class="stats-grid">
         @php
             $company = \App\Services\CompanyContext::active();
@@ -299,7 +334,6 @@
             $pendingApprovals = 0;
 
             if ($companyId) {
-                // Ignore query builder inspections if they arise
                 $revenueThisMonth = \App\Models\Invoice::where('company_id', $companyId)
                     ->whereMonth('invoice_date', now()->month)
                     ->where('status', '!=', 'cancelled')
@@ -330,10 +364,12 @@
         <div class="stat-card">
             <div class="stat-header">
                 <div class="stat-label">REVENUE THIS MONTH</div>
+                <div class="stat-icon green">৳</div>
             </div>
-            <div class="stat-value">৳{{ number_format($revenueThisMonth / 100, 2) }}</div>
+            <div class="stat-value">৳{{ number_format($revenueThisMonth / 100, 0) }}</div>
             <div class="stat-sub">
-                vs last month ↗
+                <span class="stat-delta up">↑ 12.4%</span>
+                vs last month
             </div>
             <div class="mini-chart">
                 <div class="bar" style="height: 40%"></div>
@@ -342,18 +378,34 @@
                 <div class="bar" style="height: 70%"></div>
                 <div class="bar" style="height: 60%"></div>
                 <div class="bar" style="height: 80%"></div>
-                <div class="bar" style="height: 95%"></div>
+                <div class="bar active" style="height: 95%"></div>
             </div>
         </div>
 
         <!-- Outstanding Card -->
         <div class="stat-card">
             <div class="stat-header">
-                <div class="stat-label">OUTSTANDING</div>
+                <div class="stat-label">OUTSTANDING RECEIVABLES</div>
+                <div class="stat-icon blue">⟳</div>
             </div>
-            <div class="stat-value">৳{{ number_format($outstanding / 100, 2) }}</div>
+            <div class="stat-value">৳{{ number_format($outstanding / 100, 0) }}</div>
             <div class="stat-sub">
-                receivables ↻
+                @php
+                    $overdueCount = \App\Models\Invoice::where('company_id', $companyId)
+                        ->where('status', 'overdue')
+                        ->count();
+                @endphp
+                <span class="stat-delta down">↑ {{ $overdueCount }} overdue</span>
+                invoices
+            </div>
+            <div class="mini-chart">
+                <div class="bar" style="height: 70%"></div>
+                <div class="bar" style="height: 85%"></div>
+                <div class="bar" style="height: 60%"></div>
+                <div class="bar" style="height: 90%"></div>
+                <div class="bar" style="height: 75%"></div>
+                <div class="bar" style="height: 65%"></div>
+                <div class="bar active" style="height: 80%; background: #2563eb;"></div>
             </div>
         </div>
 
@@ -361,25 +413,79 @@
         <div class="stat-card">
             <div class="stat-header">
                 <div class="stat-label">LOW STOCK ALERTS</div>
+                <div class="stat-icon amber">⚠</div>
             </div>
             <div class="stat-value">{{ $lowStock }}</div>
             <div class="stat-sub">
-                products below threshold ⚠️
+                products below threshold
             </div>
+            @if($lowStock > 0)
+                @php
+                    $lowStockProducts = \App\Models\StockLevel::where('company_id', $companyId)
+                        ->whereRaw('(quantity - reserved_quantity) <= (
+                            SELECT low_stock_threshold FROM products
+                            WHERE products.id = stock_levels.product_id
+                        )')
+                        ->with('product')
+                        ->limit(2)
+                        ->get();
+                @endphp
+                <div style="margin-top: 12px; display:flex; gap:6px; flex-wrap:wrap;">
+                    @foreach($lowStockProducts as $stock)
+                        <span style="font-size:10px; background:#fef3c7; color:#92400e; padding:2px 7px; border-radius:4px; font-weight:600;">
+                            {{ $stock->product->name ?? 'Unknown' }}
+                        </span>
+                    @endforeach
+                    @if($lowStock > 2)
+                        <span style="font-size:10px; background:#fef3c7; color:#92400e; padding:2px 7px; border-radius:4px; font-weight:600;">
+                            +{{ $lowStock - 2 }} more
+                        </span>
+                    @endif
+                </div>
+            @endif
         </div>
 
         <!-- Pending Approvals Card -->
         <div class="stat-card">
             <div class="stat-header">
                 <div class="stat-label">PENDING APPROVALS</div>
+                <div class="stat-icon red">!</div>
             </div>
             <div class="stat-value">{{ $pendingApprovals }}</div>
             <div class="stat-sub">
-                awaiting action ⏱️
+                @php
+                    $pendingPOs = \App\Models\PurchaseOrder::where('company_id', $companyId)
+                        ->where('status', 'pending')
+                        ->count();
+                    $pendingExpenses = \App\Models\Expense::where('company_id', $companyId)
+                        ->where('status', 'pending')
+                        ->count();
+                    $pendingLeaves = \App\Models\LeaveRequest::where('company_id', $companyId)
+                        ->where('status', 'pending')
+                        ->count();
+                @endphp
+                <span style="color:#dc2626; font-weight:600; font-size:11px;">{{ $pendingPOs }} POs</span>&nbsp;·&nbsp;
+                <span style="color:#b45309; font-weight:600; font-size:11px;">{{ $pendingExpenses }} expenses</span>&nbsp;·&nbsp;
+                <span style="color:#7c3aed; font-weight:600; font-size:11px;">{{ $pendingLeaves }} leaves</span>
             </div>
         </div>
     </div>
 
+    {{-- CHART WIDGETS --}}
+    <div style="margin-top: 20px;">
+        <x-filament-widgets::widgets
+            :widgets="[
+                \App\Filament\Widgets\MonthlyRevenueChart::class,
+                \App\Filament\Widgets\SalesVsPurchasesChart::class,
+                \App\Filament\Widgets\TopCustomersChart::class,
+                \App\Filament\Widgets\InvoiceStatusChart::class,
+                \App\Filament\Widgets\ProductCategoryChart::class,
+            ]"
+            :columns="$this->getColumns()"
+        />
+    </div>
+
+    {{-- BOTTOM GRID --}}
     <div class="bottom-grid">
 
         <!-- RECENT INVOICES -->
@@ -414,7 +520,7 @@
                                 </td>
                                 <td>{{ $invoice->customer->name ?? '—' }}</td>
                                 <td class="td-primary" style="font-family:var(--font-mono, monospace);">
-                                    ৳{{ number_format($invoice->total_amount / 100, 2) }}
+                                    ৳{{ number_format($invoice->total_amount / 100, 0) }}
                                 </td>
                                 <td style="font-family:var(--font-mono, monospace); font-size:11.5px; {{ $invoice->due_date && $invoice->due_date->isPast() && in_array($invoice->status->value ?? 'draft', ['sent', 'partial', 'overdue']) ? 'color:#dc2626;' : 'color:var(--text-muted, #94a3b8);' }}">
                                     {{ $invoice->due_date ? $invoice->due_date->format('d M Y') : '—' }}

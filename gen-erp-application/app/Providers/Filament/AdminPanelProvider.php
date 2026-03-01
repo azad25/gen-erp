@@ -34,7 +34,7 @@ class AdminPanelProvider extends PanelProvider
             ->registration(\App\Filament\Pages\Auth\Register::class)
             ->passwordReset()
             ->emailVerification()
-            ->profile()
+            ->profile(\App\Filament\Pages\Profile::class)
             ->colors([
                 'primary'   => Color::hex('#0F766E'), // Deep Teal
                 'secondary' => Color::hex('#115E59'), // Primary Dark
@@ -47,7 +47,6 @@ class AdminPanelProvider extends PanelProvider
             ->font('Inter', provider: \Filament\FontProviders\LocalFontProvider::class)
             ->favicon(asset('images/favicon.png'))
             ->brandLogo(fn () => view('filament.logo'))
-            ->defaultThemeMode(\Filament\Enums\ThemeMode::Light)
             ->brandLogoHeight('3rem')
             ->sidebarCollapsibleOnDesktop()
             ->sidebarWidth('280px')
@@ -175,6 +174,20 @@ class AdminPanelProvider extends PanelProvider
         FilamentView::registerRenderHook(
             PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
             fn (): \Illuminate\Contracts\View\View => view('filament.widgets.language-switcher')
+        );
+
+        // Replace default topbar with custom design
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::TOPBAR_BEFORE,
+            fn (): \Illuminate\Contracts\View\View => view('filament.components.custom-topbar', [
+                'heading' => 'Dashboard',
+            ])
+        );
+        
+        // Hide the default topbar
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::TOPBAR_START,
+            fn (): string => '<style>.fi-topbar:not(.generp-custom-topbar) { display: none !important; }</style>'
         );
     }
 }
