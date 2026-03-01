@@ -90,11 +90,25 @@ class EnsureActiveCompany
      */
     private function resolveCompanyId(Request $request): ?int
     {
-        // API: read from X-Company-ID header
+        // API: For token-based auth, get company from token
+        if ($request->bearerToken()) {
+            $token = $request->user()?->currentAccessToken();
+            
+            if ($token && $token->company_id) {
+                return $token->company_id;
+            }
+            
+            // Fallback to X-Company-ID header for API requests
+            $headerId = $request->header('X-Company-ID');
+            return $headerId ? (int) $headerId : null;
+        }
+
+        // API: read from X-Company-ID header (for cookie-based SPA API calls)
         if ($request->expectsJson() || $request->is('api/*')) {
             $headerId = $request->header('X-Company-ID');
-
-            return $headerId ? (int) $headerId : null;
+            
+            // If no header, try session (for SPA using cookie auth)
+            return $headerId ? (int) $headerId : session('active_company_id');
         }
 
         // Web: read from session

@@ -33,6 +33,14 @@ class SeedDevSampleData extends Command
         $this->info('🚀 Seeding comprehensive sample data...');
         $this->newLine();
 
+        // First, ensure dev admin exists with correct setup
+        $this->info('👤 Setting up dev admin account...');
+        $this->call('db:seed', [
+            '--class' => 'DevAdminSeeder',
+            '--force' => true,
+        ]);
+        $this->newLine();
+
         $seeder = new DevSampleDataSeeder();
         $seeder->setCommand($this);
         $seeder->run();
@@ -43,7 +51,7 @@ class SeedDevSampleData extends Command
         $this->table(['Field', 'Value'], [
             ['Dev Admin Email', 'dev@generp.test'],
             ['Dev Admin Password', 'DevAdmin@123'],
-            ['Companies Created', '3'],
+            ['Companies Created', '3+'],
             ['Scenarios', 'Ruposhi Retail, Shifa Pharmacy, Apex Garments'],
         ]);
 

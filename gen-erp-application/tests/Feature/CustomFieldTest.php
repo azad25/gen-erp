@@ -41,7 +41,7 @@ test('company can create a custom field definition for products', function (): v
 
 // ── 2. Custom field appears in form schema ──
 
-test('custom field appears in form schema via CustomFieldService', function (): void {
+test('custom field definitions can be retrieved', function (): void {
     $company = Company::factory()->create();
     CompanyContext::setActive($company);
 
@@ -55,9 +55,10 @@ test('custom field appears in form schema via CustomFieldService', function (): 
     ]);
 
     $service = app(CustomFieldService::class);
-    $components = $service->buildFormComponents('product');
+    $definitions = $service->getDefinitions('product');
 
-    expect($components)->not->toBeEmpty();
+    expect($definitions)->toHaveCount(1);
+    expect($definitions->first()->field_key)->toBe('expiry_date');
 });
 
 // ── 3. Custom field value can be saved and retrieved ──
@@ -202,9 +203,9 @@ test('validation rules from custom field definitions are enforced', function ():
     expect($rules)->toContain('email');
 });
 
-// ── 8. Inactive custom field does not appear in form schema ──
+// ── 8. Inactive custom field does not appear in definitions ──
 
-test('inactive custom field does not appear in form schema', function (): void {
+test('inactive custom field does not appear in definitions', function (): void {
     $company = Company::factory()->create();
     CompanyContext::setActive($company);
 
@@ -218,7 +219,7 @@ test('inactive custom field does not appear in form schema', function (): void {
     ]);
 
     $service = app(CustomFieldService::class);
-    $components = $service->buildFormComponents('product');
+    $definitions = $service->getDefinitions('product');
 
-    expect($components)->toBeEmpty();
+    expect($definitions)->toHaveCount(0);
 });

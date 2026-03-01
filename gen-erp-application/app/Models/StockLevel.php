@@ -78,4 +78,22 @@ class StockLevel extends Model
 
         return $this->availableQuantity() <= $threshold;
     }
+
+    /**
+     * Scope to filter stock levels that are at or below their product's low stock threshold.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<StockLevel> $query
+     * @return \Illuminate\Database\Eloquent\Builder<StockLevel>
+     */
+    public function scopeLowStock($query)
+    {
+        return $query->whereRaw('(quantity - reserved_quantity) <= (
+            SELECT low_stock_threshold FROM products
+            WHERE products.id = stock_levels.product_id
+        )')->whereRaw('(
+            SELECT low_stock_threshold FROM products
+            WHERE products.id = stock_levels.product_id
+        ) > 0');
+    }
+
 }

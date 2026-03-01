@@ -14,8 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
+            \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
-        
+
         $middleware->alias([
             'ensure.company' => \App\Http\Middleware\EnsureActiveCompany::class,
         ]);

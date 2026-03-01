@@ -5,20 +5,11 @@ namespace App\Services;
 use App\Enums\CustomFieldType;
 use App\Models\CustomFieldDefinition;
 use App\Models\CustomFieldValue;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Central service for managing custom field definitions, values, and UI components.
+ * Central service for managing custom field definitions and values.
  */
 class CustomFieldService
 {
@@ -99,71 +90,6 @@ class CustomFieldService
     }
 
     /**
-     * Build Filament form schema components for an entity type's custom fields.
-     *
-     * @return array<int, \Filament\Forms\Components\Component>
-     */
-    public function buildFormComponents(string $entityType): array
-    {
-        $definitions = $this->getDefinitions($entityType);
-
-        if ($definitions->isEmpty()) {
-            return [];
-        }
-
-        $fields = [];
-
-        foreach ($definitions as $definition) {
-            $field = $this->buildSingleFormComponent($definition);
-
-            if ($field) {
-                $fields[] = $field;
-            }
-        }
-
-        if (empty($fields)) {
-            return [];
-        }
-
-        return [
-            Section::make(__('Custom Fields'))
-                ->schema($fields)
-                ->collapsed(),
-        ];
-    }
-
-    /**
-     * Build Filament table columns for fields marked show_in_list.
-     *
-     * @return array<int, \Filament\Tables\Columns\Column>
-     */
-    public function buildTableColumns(string $entityType): array
-    {
-        $definitions = $this->getDefinitions($entityType)
-            ->where('show_in_list', true);
-
-        $columns = [];
-
-        foreach ($definitions as $definition) {
-            if ($definition->field_type === CustomFieldType::BOOLEAN) {
-                $columns[] = IconColumn::make("cf_{$definition->field_key}")
-                    ->label($definition->label)
-                    ->boolean()
-                    ->getStateUsing(fn ($record): ?bool => $this->getValueForRecord($record, $definition))
-                    ->sortable(false);
-            } else {
-                $columns[] = TextColumn::make("cf_{$definition->field_key}")
-                    ->label($definition->label)
-                    ->getStateUsing(fn ($record): mixed => $this->getValueForRecord($record, $definition))
-                    ->sortable(false)
-                    ->searchable(false);
-            }
-        }
-
-        return $columns;
-    }
-
-    /**
      * Build validation rules for all active custom fields of an entity type.
      *
      * @return array<string, array<int, mixed>>
@@ -178,79 +104,6 @@ class CustomFieldService
         }
 
         return $rules;
-    }
-
-    /**
-     * Build a single Filament form component from a custom field definition.
-     */
-    private function buildSingleFormComponent(CustomFieldDefinition $definition): ?\Filament\Forms\Components\Component
-    {
-        $fieldName = "custom_fields.{$definition->field_key}";
-
-        $component = match ($definition->field_type) {
-            CustomFieldType::TEXT, CustomFieldType::URL, CustomFieldType::EMAIL, CustomFieldType::PHONE => TextInput::make($fieldName)
-                ->label($definition->label)
-                ->required($definition->is_required)
-                ->default($definition->default_value)
-                ->maxLength(10000),
-            CustomFieldType::TEXTAREA => Textarea::make($fieldName)
-                ->label($definition->label)
-                ->required($definition->is_required)
-                ->default($definition->default_value),
-            CustomFieldType::NUMBER => TextInput::make($fieldName)
-                ->label($definition->label)
-                ->required($definition->is_required)
-                ->numeric()
-                ->default($definition->default_value),
-            CustomFieldType::DECIMAL => TextInput::make($fieldName)
-                ->label($definition->label)
-                ->required($definition->is_required)
-                ->numeric()
-                ->step(0.0001)
-                ->default($definition->default_value),
-            CustomFieldType::BOOLEAN => Toggle::make($fieldName)
-                ->label($definition->label)
-                ->required($definition->is_required)
-                ->default((bool) $definition->default_value),
-            CustomFieldType::DATE => DatePicker::make($fieldName)
-                ->label($definition->label)
-                ->required($definition->is_required)
-                ->default($definition->default_value),
-            CustomFieldType::DATETIME => DateTimePicker::make($fieldName)
-                ->label($definition->label)
-                ->required($definition->is_required)
-                ->default($definition->default_value),
-            CustomFieldType::SELECT => Select::make($fieldName)
-                ->label($definition->label)
-                ->required($definition->is_required)
-                ->options($this->parseSelectOptions($definition->options))
-                ->default($definition->default_value),
-            CustomFieldType::MULTISELECT => Select::make($fieldName)
-                ->label($definition->label)
-                ->required($definition->is_required)
-                ->multiple()
-                ->options($this->parseSelectOptions($definition->options))
-                ->default($definition->default_value),
-        };
-
-        return $component;
-    }
-
-    /**
-     * Parse select options from the JSON field.
-     *
-     * @param  array<int, array{value: string, label: string}>|null  $options
-     * @return array<string, string>
-     */
-    private function parseSelectOptions(?array $options): array
-    {
-        if (empty($options)) {
-            return [];
-        }
-
-        return collect($options)
-            ->mapWithKeys(fn (array $opt): array => [$opt['value'] => $opt['label']])
-            ->all();
     }
 
     /**
