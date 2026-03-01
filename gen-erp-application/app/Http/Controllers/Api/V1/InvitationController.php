@@ -31,8 +31,12 @@ class InvitationController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Invitation")})), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Invitation")),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -56,8 +60,11 @@ class InvitationController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/Invitation")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Invitation")
+     *         )
+     *     )
+     * )
      */
     public function show(Invitation $invitation): JsonResponse
     {
@@ -74,14 +81,20 @@ class InvitationController extends BaseApiController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-                @OA\Property(property="email", type="string"
-            ), @OA\Property(property="role", type="string"))),
+     *             @OA\Property(property="email", type="string"),
+     *             @OA\Property(property="role", type="string")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Invitation sent",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/Invitation"), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Invitation"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function store(Request $request): JsonResponse
     {
@@ -108,8 +121,11 @@ class InvitationController extends BaseApiController
      *         response=200,
      *         description="Invitation cancelled",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function destroy(Invitation $invitation): JsonResponse
     {

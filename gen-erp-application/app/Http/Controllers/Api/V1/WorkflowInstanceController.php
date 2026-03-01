@@ -33,8 +33,16 @@ class WorkflowInstanceController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/WorkflowInstance")})), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/WorkflowInstance")
+     *             ),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -59,8 +67,11 @@ class WorkflowInstanceController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/WorkflowInstance")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/WorkflowInstance")
+     *         )
+     *     )
+     * )
      */
     public function show(WorkflowInstance $workflowInstance): JsonResponse
     {
@@ -77,14 +88,21 @@ class WorkflowInstanceController extends BaseApiController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-                @OA\Property(property="document_type", type="string"
-            ), @OA\Property(property="document_id", type="integer"), @OA\Property(property="workflow_type", type="string"))),
+     *             @OA\Property(property="document_type", type="string"),
+     *             @OA\Property(property="document_id", type="integer"),
+     *             @OA\Property(property="workflow_type", type="string")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Workflow instance created",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/WorkflowInstance"), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/WorkflowInstance"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function store(Request $request): JsonResponse
     {
@@ -110,14 +128,20 @@ class WorkflowInstanceController extends BaseApiController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-                @OA\Property(property="transition", type="string"
-            ), @OA\Property(property="notes", type="string"))),
+     *             @OA\Property(property="transition", type="string"),
+     *             @OA\Property(property="notes", type="string")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Workflow transition completed",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/WorkflowInstance"), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/WorkflowInstance"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function transition(Request $request, WorkflowInstance $workflowInstance): JsonResponse
     {

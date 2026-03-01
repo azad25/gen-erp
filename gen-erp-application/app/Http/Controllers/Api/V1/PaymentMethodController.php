@@ -27,8 +27,16 @@ class PaymentMethodController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/PaymentMethod")})), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/PaymentMethod")
+     *             ),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -51,8 +59,10 @@ class PaymentMethodController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/PaymentMethod")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/PaymentMethod")
+     *         )
+     *     )
      */
     public function show(PaymentMethod $paymentMethod): JsonResponse
     {
@@ -67,14 +77,21 @@ class PaymentMethodController extends BaseApiController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-                @OA\Property(property="name", type="string"
-            ), @OA\Property(property="code", type="string"), @OA\Property(property="description", type="string"), @OA\Property(property="is_active", type="boolean"))),
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="code", type="string"),
+     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="is_active", type="boolean")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Payment method created",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/PaymentMethod"), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/PaymentMethod"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
      */
     public function store(Request $request): JsonResponse
     {
@@ -101,14 +118,21 @@ class PaymentMethodController extends BaseApiController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-                @OA\Property(property="name", type="string"
-            ), @OA\Property(property="code", type="string"), @OA\Property(property="description", type="string"), @OA\Property(property="is_active", type="boolean"))),
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="code", type="string"),
+     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="is_active", type="boolean")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Payment method updated",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/PaymentMethod"), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/PaymentMethod"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
      */
     public function update(Request $request, PaymentMethod $paymentMethod): JsonResponse
     {
@@ -134,8 +158,10 @@ class PaymentMethodController extends BaseApiController
      *         response=200,
      *         description="Payment method deleted",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
      */
     public function destroy(PaymentMethod $paymentMethod): JsonResponse
     {

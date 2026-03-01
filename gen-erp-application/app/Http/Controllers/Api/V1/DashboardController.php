@@ -27,8 +27,21 @@ class DashboardController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", type="object", @OA\Property(property="total_sales", type="integer"), @OA\Property(property="total_purchases", type="integer"), @OA\Property(property="total_expenses", type="integer"), @OA\Property(property="pending_approvals", type="integer"), @OA\Property(property="low_stock_products", type="array"), @OA\Property(property="recent_invoices", type="array"), @OA\Property(property="sales_chart", type="array"), @OA\Property(property="expense_chart", type="array")), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="total_sales", type="integer"),
+     *                 @OA\Property(property="total_purchases", type="integer"),
+     *                 @OA\Property(property="total_expenses", type="integer"),
+     *                 @OA\Property(property="pending_approvals", type="integer"),
+     *                 @OA\Property(property="low_stock_products", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="recent_invoices", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="sales_chart", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="expense_chart", type="array", @OA\Items(type="object"))
+     *             ),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function index(): JsonResponse
     {

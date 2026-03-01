@@ -26,8 +26,12 @@ class ImportJobController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/ImportJob")})), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/ImportJob")),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -50,8 +54,11 @@ class ImportJobController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/ImportJob")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/ImportJob")
+     *         )
+     *     )
+     * )
      */
     public function show(ImportJob $importJob): JsonResponse
     {

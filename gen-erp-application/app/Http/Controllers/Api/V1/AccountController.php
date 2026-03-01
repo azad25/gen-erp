@@ -29,8 +29,12 @@ class AccountController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Account")})), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Account")),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -55,8 +59,11 @@ class AccountController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/Account")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Account")
+     *         )
+     *     )
+     * )
      */
     public function show(Account $account): JsonResponse
     {
@@ -73,14 +80,24 @@ class AccountController extends BaseApiController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-                @OA\Property(property="account_group_id", type="integer"
-            ), @OA\Property(property="code", type="string"), @OA\Property(property="name", type="string"), @OA\Property(property="account_type", type="string"), @OA\Property(property="opening_balance", type="integer"), @OA\Property(property="is_active", type="boolean"))),
+     *             @OA\Property(property="account_group_id", type="integer"),
+     *             @OA\Property(property="code", type="string"),
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="account_type", type="string"),
+     *             @OA\Property(property="opening_balance", type="integer"),
+     *             @OA\Property(property="is_active", type="boolean")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Account created",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/Account"), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Account"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function store(Request $request): JsonResponse
     {
@@ -109,14 +126,23 @@ class AccountController extends BaseApiController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-                @OA\Property(property="code", type="string"
-            ), @OA\Property(property="name", type="string"), @OA\Property(property="account_type", type="string"), @OA\Property(property="opening_balance", type="integer"), @OA\Property(property="is_active", type="boolean"))),
+     *             @OA\Property(property="code", type="string"),
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="account_type", type="string"),
+     *             @OA\Property(property="opening_balance", type="integer"),
+     *             @OA\Property(property="is_active", type="boolean")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Account updated",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/Account"), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Account"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function update(Request $request, Account $account): JsonResponse
     {
@@ -143,8 +169,11 @@ class AccountController extends BaseApiController
      *         response=200,
      *         description="Account deleted",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function destroy(Account $account): JsonResponse
     {

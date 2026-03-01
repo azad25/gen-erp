@@ -34,10 +34,11 @@ class PurchaseOrderController extends BaseApiController
      *         description="Successful response",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/PurchaseOrder")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/PurchaseOrder")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -66,6 +67,7 @@ class PurchaseOrderController extends BaseApiController
      *             @OA\Property(property="data", ref="#/components/schemas/PurchaseOrder")
      *         )
      *     )
+     * )
      */
     public function show(PurchaseOrder $purchaseOrder): JsonResponse
     {
@@ -101,6 +103,7 @@ class PurchaseOrderController extends BaseApiController
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
+     * )
      */
     public function store(Request $request): JsonResponse
     {
@@ -155,6 +158,7 @@ class PurchaseOrderController extends BaseApiController
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
+     * )
      */
     public function update(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
     {
@@ -187,6 +191,7 @@ class PurchaseOrderController extends BaseApiController
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
+     * )
      */
     public function destroy(PurchaseOrder $purchaseOrder): JsonResponse
     {
@@ -210,6 +215,7 @@ class PurchaseOrderController extends BaseApiController
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
+     * )
      */
     public function confirm(PurchaseOrder $purchaseOrder): JsonResponse
     {
@@ -243,6 +249,7 @@ class PurchaseOrderController extends BaseApiController
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
+     * )
      */
     public function receive(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
     {
@@ -267,8 +274,12 @@ class PurchaseOrderController extends BaseApiController
      *         response=200,
      *         description="Purchase order cancelled",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/PurchaseOrder"), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/PurchaseOrder"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function cancel(PurchaseOrder $purchaseOrder): JsonResponse
     {

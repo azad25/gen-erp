@@ -27,8 +27,16 @@ class WarehouseController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Warehouse")})), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Warehouse")
+     *             ),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -51,8 +59,11 @@ class WarehouseController extends BaseApiController
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/Warehouse")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Warehouse")
+     *         )
+     *     )
+     * )
      */
     public function show(Warehouse $warehouse): JsonResponse
     {
@@ -67,14 +78,22 @@ class WarehouseController extends BaseApiController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-                @OA\Property(property="name", type="string"
-            ), @OA\Property(property="code", type="string"), @OA\Property(property="address", type="string"), @OA\Property(property="is_active", type="boolean"))),
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="code", type="string"),
+     *             @OA\Property(property="address", type="string"),
+     *             @OA\Property(property="is_active", type="boolean")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Warehouse created",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/Warehouse"), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Warehouse"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function store(Request $request): JsonResponse
     {
@@ -101,14 +120,22 @@ class WarehouseController extends BaseApiController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-                @OA\Property(property="name", type="string"
-            ), @OA\Property(property="code", type="string"), @OA\Property(property="address", type="string"), @OA\Property(property="is_active", type="boolean"))),
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="code", type="string"),
+     *             @OA\Property(property="address", type="string"),
+     *             @OA\Property(property="is_active", type="boolean")
+     *         )
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Warehouse updated",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="data", ref="#/components/schemas/Warehouse"), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Warehouse"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function update(Request $request, Warehouse $warehouse): JsonResponse
     {
@@ -134,8 +161,11 @@ class WarehouseController extends BaseApiController
      *         response=200,
      *         description="Warehouse deleted",
      *         @OA\JsonContent(
-                @OA\Property(property="success", type="boolean"
-            ), @OA\Property(property="message", type="string")))
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
      */
     public function destroy(Warehouse $warehouse): JsonResponse
     {
