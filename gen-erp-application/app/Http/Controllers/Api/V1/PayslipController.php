@@ -43,6 +43,7 @@ class PayslipController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $payslips = Payslip::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('employee_id'), fn ($q, $id) => $q->where('employee_id', $id))
             ->when($request->get('month'), fn ($q, $m) => $q->where('month', $m))
             ->when($request->get('year'), fn ($q, $y) => $q->where('year', $y))
@@ -114,7 +115,7 @@ class PayslipController extends BaseApiController
             'deductions' => ['nullable', 'array'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $payslip = $this->payrollService->generatePayslip($validated);
 

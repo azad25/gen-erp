@@ -41,6 +41,7 @@ class WarehouseController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $warehouses = Warehouse::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->when($request->get('is_active'), fn ($q, $s) => $q->where('is_active', $s))
             ->orderBy('name')
@@ -104,11 +105,11 @@ class WarehouseController extends BaseApiController
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $warehouse = Warehouse::create($validated);
 
-        return $this->success($warehouse, 'Warehouse created', 201);
+        return $this->success($warehouse, __('Warehouse created'), 201);
     }
 
     /**
@@ -148,7 +149,7 @@ class WarehouseController extends BaseApiController
 
         $warehouse->update($validated);
 
-        return $this->success($warehouse->fresh(), 'Warehouse updated');
+        return $this->success($warehouse->fresh(), __('Warehouse updated'));
     }
 
     /**
@@ -171,6 +172,6 @@ class WarehouseController extends BaseApiController
     {
         $warehouse->delete();
 
-        return $this->success(null, 'Warehouse deleted');
+        return $this->success(null, __('Warehouse deleted'));
     }
 }

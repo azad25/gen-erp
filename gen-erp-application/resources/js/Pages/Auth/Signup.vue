@@ -146,6 +146,7 @@ import { ref } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import { router } from '@inertiajs/vue3'
 import HomeLogo from '@/Components/Home/Logo.vue'
+import api from '@/Services/api.js'
 import axios from 'axios'
 
 const page = usePage()
@@ -167,10 +168,10 @@ const handleSubmit = async () => {
   error.value = ''
   
   try {
-    // Step 1: Get CSRF cookie
+    // Step 1: Get CSRF cookie (use plain axios to avoid baseURL prefix)
     await axios.get('/sanctum/csrf-cookie')
     
-    // Step 2: Register
+    // Step 2: Register (use plain axios - route is not under /api/v1)
     const response = await axios.post('/register', {
       name: name.value,
       email: email.value,

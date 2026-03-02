@@ -41,6 +41,7 @@ class PaymentMethodController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $methods = PaymentMethod::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->when($request->get('is_active'), fn ($q, $s) => $q->where('is_active', $s))
             ->orderBy('name')
@@ -102,11 +103,11 @@ class PaymentMethodController extends BaseApiController
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $method = PaymentMethod::create($validated);
 
-        return $this->success($method, 'Payment method created', 201);
+        return $this->success($method, __('Payment method created'), 201);
     }
 
     /**
@@ -145,7 +146,7 @@ class PaymentMethodController extends BaseApiController
 
         $paymentMethod->update($validated);
 
-        return $this->success($paymentMethod->fresh(), 'Payment method updated');
+        return $this->success($paymentMethod->fresh(), __('Payment method updated'));
     }
 
     /**
@@ -167,6 +168,6 @@ class PaymentMethodController extends BaseApiController
     {
         $paymentMethod->delete();
 
-        return $this->success(null, 'Payment method deleted');
+        return $this->success(null, __('Payment method deleted'));
     }
 }

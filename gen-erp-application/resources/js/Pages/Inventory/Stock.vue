@@ -149,7 +149,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -190,7 +190,7 @@ const columns = [
 const fetchMovements = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/stock-movements', {
+    const response = await api.get('/stock-movements', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     movements.value = response.data.data
@@ -204,7 +204,7 @@ const fetchMovements = async (page = 1) => {
 
 const fetchProducts = async () => {
   try {
-    const response = await axios.get('/api/v1/products', { params: { per_page: 100 } })
+    const response = await api.get('/products', { params: { per_page: 100 } })
     products.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch products:', error)
@@ -213,7 +213,7 @@ const fetchProducts = async () => {
 
 const fetchWarehouses = async () => {
   try {
-    const response = await axios.get('/api/v1/warehouses', { params: { per_page: 100 } })
+    const response = await api.get('/warehouses', { params: { per_page: 100 } })
     warehouses.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch warehouses:', error)
@@ -244,7 +244,7 @@ const viewMovement = (movement) => {
 
 const handleSubmit = async () => {
   try {
-    await axios.post('/api/v1/stock-movements', form.value)
+    await api.post('/stock-movements', form.value)
     closeModal()
     fetchMovements(pagination.value.current_page)
   } catch (error) {
@@ -255,7 +255,7 @@ const handleSubmit = async () => {
 const deleteMovement = async (movement) => {
   if (!confirm('Are you sure you want to delete this movement?')) return
   try {
-    await axios.delete(`/api/v1/stock-movements/${movement.id}`)
+    await api.delete(`/stock-movements/${movement.id}`)
     fetchMovements(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete movement:', error)

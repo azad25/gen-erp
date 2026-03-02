@@ -42,6 +42,7 @@ class ApprovalRequestController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $requests = ApprovalRequest::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('status'), fn ($q, $s) => $q->where('status', $s))
             ->when($request->get('user_id'), fn ($q, $id) => $q->where('user_id', $id))
             ->with(['user', 'workflowInstance', 'step'])

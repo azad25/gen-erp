@@ -47,6 +47,7 @@ class WorkflowInstanceController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $instances = WorkflowInstance::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('document_number', 'LIKE', "%{$s}%"))
             ->when($request->get('status'), fn ($q, $s) => $q->where('status', $s))
             ->when($request->get('workflow_type'), fn ($q, $s) => $q->where('workflow_type', $s))
@@ -112,7 +113,7 @@ class WorkflowInstanceController extends BaseApiController
             'workflow_type' => ['required', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $instance = $this->workflowService->initialise($validated);
 

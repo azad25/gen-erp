@@ -81,6 +81,7 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import HomeLogo from '@/Components/Home/Logo.vue'
+import api from '@/Services/api.js'
 import axios from 'axios'
 
 const code = ref('')
@@ -92,10 +93,10 @@ const handleSubmit = async () => {
   error.value = ''
   
   try {
-    // Step 1: Get CSRF cookie
+    // Step 1: Get CSRF cookie (use plain axios to avoid baseURL prefix)
     await axios.get('/sanctum/csrf-cookie')
     
-    // Step 2: Submit 2FA code
+    // Step 2: Submit 2FA code (use plain axios - route is not under /api/v1)
     const response = await axios.post('/auth/two-factor/challenge', {
       code: code.value
     })

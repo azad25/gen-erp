@@ -21,10 +21,30 @@
         <div>
           <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Main</p>
           <div class="space-y-1">
-            <NavItem icon="⊞" label="Dashboard" route="dashboard" :page-url="pageUrl" />
-            <NavItem icon="🧾" label="Invoices" route="invoices.index" :page-url="pageUrl" :badge="4" />
-            <NavItem icon="🛒" label="Sales Orders" route="sales-orders.index" :page-url="pageUrl" />
-            <NavItem icon="👥" label="Customers" route="customers.index" :page-url="pageUrl" />
+            <NavItem icon="⊞" label="Dashboard" route="/dashboard" :page-url="pageUrl" />
+          </div>
+        </div>
+
+        <!-- Sales -->
+        <div>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Sales</p>
+          <div class="space-y-1">
+            <NavItem icon="🧾" label="Invoices" route="/sales/invoices" :page-url="pageUrl" :badge="4" />
+            <NavItem icon="🛒" label="Orders" route="/sales/orders" :page-url="pageUrl" />
+            <NavItem icon="👥" label="Customers" route="/sales/customers" :page-url="pageUrl" />
+            <NavItem icon="📝" label="Credit Notes" route="/sales/credit-notes" :page-url="pageUrl" />
+            <NavItem icon="↩️" label="Returns" route="/sales/returns" :page-url="pageUrl" />
+          </div>
+        </div>
+
+        <!-- Purchase -->
+        <div>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Purchase</p>
+          <div class="space-y-1">
+            <NavItem icon="🚚" label="Orders" route="/purchase/orders" :page-url="pageUrl" />
+            <NavItem icon="📥" label="Receipts" route="/purchase/receipts" :page-url="pageUrl" />
+            <NavItem icon="🏬" label="Suppliers" route="/purchase/suppliers" :page-url="pageUrl" />
+            <NavItem icon="↩️" label="Returns" route="/purchase/returns" :page-url="pageUrl" />
           </div>
         </div>
 
@@ -32,30 +52,23 @@
         <div>
           <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Inventory</p>
           <div class="space-y-1">
-            <NavItem icon="📦" label="Products" route="products.index" :page-url="pageUrl" />
-            <NavItem icon="📊" label="Stock Levels" route="stock-levels.index" :page-url="pageUrl" :badge="3" badge-variant="warning" />
-            <NavItem icon="🏭" label="Warehouses" route="warehouses.index" :page-url="pageUrl" />
+            <NavItem icon="📦" label="Products" route="/inventory/products" :page-url="pageUrl" />
+            <NavItem icon="📊" label="Stock" route="/inventory/stock" :page-url="pageUrl" :badge="3" badge-variant="warning" />
+            <NavItem icon="🏭" label="Warehouses" route="/inventory/warehouses" :page-url="pageUrl" />
+            <NavItem icon="📤" label="Transfers" route="/inventory/transfers" :page-url="pageUrl" />
+            <NavItem icon="🔧" label="Adjustments" route="/inventory/adjustments" :page-url="pageUrl" />
           </div>
         </div>
 
-        <!-- Purchases -->
+        <!-- Accounting -->
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Purchases</p>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Accounting</p>
           <div class="space-y-1">
-            <NavItem icon="🚚" label="Purchase Orders" route="purchase-orders.index" :page-url="pageUrl" />
-            <NavItem icon="📥" label="Goods Receipts" route="goods-receipts.index" :page-url="pageUrl" />
-            <NavItem icon="🏬" label="Suppliers" route="suppliers.index" :page-url="pageUrl" />
-          </div>
-        </div>
-
-        <!-- Finance -->
-        <div>
-          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Finance</p>
-          <div class="space-y-1">
-            <NavItem icon="💵" label="Accounts" route="accounts.index" :page-url="pageUrl" />
-            <NavItem icon="📒" label="Journal Entries" route="journal-entries.index" :page-url="pageUrl" />
-            <NavItem icon="🧮" label="Expenses" route="expenses.index" :page-url="pageUrl" />
-            <NavItem icon="📈" label="Reports" route="reports.index" :page-url="pageUrl" />
+            <NavItem icon="💵" label="Chart of Accounts" route="/accounting/chart-of-accounts" :page-url="pageUrl" />
+            <NavItem icon="📒" label="Journal Entries" route="/accounting/journal-entries" :page-url="pageUrl" />
+            <NavItem icon="🧮" label="Trial Balance" route="/accounting/trial-balance" :page-url="pageUrl" />
+            <NavItem icon="📈" label="Profit & Loss" route="/accounting/profit-loss" :page-url="pageUrl" />
+            <NavItem icon="📊" label="Balance Sheet" route="/accounting/balance-sheet" :page-url="pageUrl" />
           </div>
         </div>
 
@@ -63,19 +76,26 @@
         <div>
           <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">HR & Payroll</p>
           <div class="space-y-1">
-            <NavItem icon="👤" label="Employees" route="employees.index" :page-url="pageUrl" />
-            <NavItem icon="📅" label="Attendance" route="attendance.index" :page-url="pageUrl" />
-            <NavItem icon="🏖" label="Leave" route="leave.index" :page-url="pageUrl" />
-            <NavItem icon="💰" label="Payroll" route="payroll.index" :page-url="pageUrl" />
+            <NavItem icon="👤" label="Employees" route="/hr/employees" :page-url="pageUrl" />
+            <NavItem icon="📅" label="Attendance" route="/hr/attendance" :page-url="pageUrl" />
+            <NavItem icon="🏖" label="Leave" route="/hr/leave" :page-url="pageUrl" />
+            <NavItem icon="💰" label="Payroll" route="/hr/payroll" :page-url="pageUrl" />
           </div>
         </div>
 
-        <!-- Branches & POS -->
+        <!-- POS -->
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Branches & POS</p>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">POS</p>
           <div class="space-y-1">
-            <NavItem icon="🏢" label="Branches" route="branches.index" :page-url="pageUrl" />
-            <NavItem icon="🖥" label="POS Terminal" route="pos.index" :page-url="pageUrl" />
+            <NavItem icon="🖥" label="Session" route="/pos/session" :page-url="pageUrl" />
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Settings</p>
+          <div class="space-y-1">
+            <NavItem icon="⚙️" label="Company" route="/settings/company" :page-url="pageUrl" />
           </div>
         </div>
       </nav>

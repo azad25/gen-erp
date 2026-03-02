@@ -41,7 +41,7 @@ class InvitationController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $invitations = Invitation::query()
-            ->where('company_id', activeCompany()?->id)
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('status'), fn ($q, $s) => $q->where('status', $s))
             ->with(['invitedBy'])
             ->orderBy('created_at', 'desc')
@@ -103,7 +103,7 @@ class InvitationController extends BaseApiController
             'role' => ['required', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
         $validated['invited_by'] = auth()->id();
 
         $invitation = $this->userService->sendInvitation($validated);

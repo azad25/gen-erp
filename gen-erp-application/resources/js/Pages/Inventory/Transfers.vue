@@ -154,7 +154,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -195,7 +195,7 @@ const columns = [
 const fetchTransfers = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/stock-transfers', {
+    const response = await api.get('/stock-transfers', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     transfers.value = response.data.data
@@ -209,7 +209,7 @@ const fetchTransfers = async (page = 1) => {
 
 const fetchProducts = async () => {
   try {
-    const response = await axios.get('/api/v1/products', { params: { per_page: 100 } })
+    const response = await api.get('/products', { params: { per_page: 100 } })
     products.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch products:', error)
@@ -218,7 +218,7 @@ const fetchProducts = async () => {
 
 const fetchWarehouses = async () => {
   try {
-    const response = await axios.get('/api/v1/warehouses', { params: { per_page: 100 } })
+    const response = await api.get('/warehouses', { params: { per_page: 100 } })
     warehouses.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch warehouses:', error)
@@ -249,7 +249,7 @@ const viewTransfer = (transfer) => {
 
 const handleSubmit = async () => {
   try {
-    await axios.post('/api/v1/stock-transfers', form.value)
+    await api.post('/stock-transfers', form.value)
     closeModal()
     fetchTransfers(pagination.value.current_page)
   } catch (error) {
@@ -260,7 +260,7 @@ const handleSubmit = async () => {
 const confirmTransfer = async (transfer) => {
   if (!confirm('Are you sure you want to confirm this transfer?')) return
   try {
-    await axios.post(`/api/v1/stock-transfers/${transfer.id}/confirm`)
+    await api.post(`/stock-transfers/${transfer.id}/confirm`)
     fetchTransfers(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to confirm transfer:', error)
@@ -270,7 +270,7 @@ const confirmTransfer = async (transfer) => {
 const cancelTransfer = async (transfer) => {
   if (!confirm('Are you sure you want to cancel this transfer?')) return
   try {
-    await axios.post(`/api/v1/stock-transfers/${transfer.id}/cancel`)
+    await api.post(`/stock-transfers/${transfer.id}/cancel`)
     fetchTransfers(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to cancel transfer:', error)
@@ -280,7 +280,7 @@ const cancelTransfer = async (transfer) => {
 const deleteTransfer = async (transfer) => {
   if (!confirm('Are you sure you want to delete this transfer?')) return
   try {
-    await axios.delete(`/api/v1/stock-transfers/${transfer.id}`)
+    await api.delete(`/stock-transfers/${transfer.id}`)
     fetchTransfers(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete transfer:', error)

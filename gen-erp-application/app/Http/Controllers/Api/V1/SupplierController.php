@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Requests\Api\V1\StoreSupplierRequest;
+use App\Http\Requests\Api\V1\UpdateSupplierRequest;
 use App\Models\Supplier;
+use App\Services\ContactService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 /**
  * @OA\Tag(
@@ -15,12 +19,18 @@ use Illuminate\Http\Request;
  */
 class SupplierController extends BaseApiController
 {
+    public function __construct(
+        private readonly ContactService $contactService
+    ) {}
+
     /**
      * @OA\Get(
      *     path="/suppliers",
      *     summary="List all suppliers",
      *     tags={"Suppliers"},
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="status", in="query", description="Status filter", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="contact_group_id", in="query", description="Contact Group ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
      *     @OA\Response(
      *         response=200,
@@ -35,10 +45,11 @@ class SupplierController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
-        $suppliers = Supplier::query()
-            ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
-            ->orderBy('name')
-            ->paginate($request->integer('per_page', 15));
+        $suppliers = $this->contactService->paginateSuppliers(
+            activeCompany(),
+            $request->only(['search', 'status', 'contact_group_id']),
+            $request->integer('per_page', 15),
+        );
 
         return $this->paginated($suppliers);
     }
@@ -61,6 +72,8 @@ class SupplierController extends BaseApiController
      */
     public function show(Supplier $supplier): JsonResponse
     {
+        $supplier->load(['contactGroup']);
+
         return $this->success($supplier);
     }
 
@@ -90,20 +103,19 @@ class SupplierController extends BaseApiController
      *     )
      * )
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreSupplierRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'address' => ['nullable', 'string', 'max:500'],
-            'vat_bin' => ['nullable', 'string', 'max:50'],
-        ]);
+        $validated = $request->validated();
+        $customFields = $validated['custom_fields'] ?? [];
+        unset($validated['custom_fields']);
 
-        $validated['company_id'] = activeCompany()?->id;
-        $supplier = Supplier::create($validated);
+        $supplier = $this->contactService->createSupplier(
+            activeCompany(),
+            $validated,
+            $customFields,
+        );
 
-        return $this->success($supplier, 'Supplier created', 201);
+        return $this->success($supplier, __('Supplier created'), 201);
     }
 
     /**
@@ -133,19 +145,19 @@ class SupplierController extends BaseApiController
      *     )
      * )
      */
-    public function update(Request $request, Supplier $supplier): JsonResponse
+    public function update(UpdateSupplierRequest $request, Supplier $supplier): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'address' => ['nullable', 'string', 'max:500'],
-            'vat_bin' => ['nullable', 'string', 'max:50'],
-        ]);
+        $validated = $request->validated();
+        $customFields = $validated['custom_fields'] ?? [];
+        unset($validated['custom_fields']);
 
-        $supplier->update($validated);
+        $supplier = $this->contactService->updateSupplier(
+            $supplier,
+            $validated,
+            $customFields,
+        );
 
-        return $this->success($supplier->fresh(), 'Supplier updated');
+        return $this->success($supplier, __('Supplier updated'));
     }
 
     /**
@@ -166,8 +178,12 @@ class SupplierController extends BaseApiController
      */
     public function destroy(Supplier $supplier): JsonResponse
     {
-        $supplier->delete();
+        try {
+            $this->contactService->deleteSupplier($supplier);
+        } catch (RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
+        }
 
-        return $this->success(null, 'Supplier deleted');
+        return $this->success(null, __('Supplier deleted'));
     }
 }

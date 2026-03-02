@@ -37,6 +37,7 @@ class DocumentFolderController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $folders = DocumentFolder::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->when($request->get('parent_id'), fn ($q, $id) => $q->where('parent_id', $id))
             ->with(['parent', 'children', 'documents'])
@@ -101,7 +102,7 @@ class DocumentFolderController extends BaseApiController
             'description' => ['nullable', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $folder = DocumentFolder::create($validated);
 

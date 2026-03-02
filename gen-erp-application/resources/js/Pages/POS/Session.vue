@@ -132,7 +132,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -170,7 +170,7 @@ const columns = [
 const fetchSessions = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/pos-sessions', {
+    const response = await api.get('/pos-sessions', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     sessions.value = response.data.data
@@ -184,7 +184,7 @@ const fetchSessions = async (page = 1) => {
 
 const fetchEmployees = async () => {
   try {
-    const response = await axios.get('/api/v1/employees', { params: { per_page: 100 } })
+    const response = await api.get('/employees', { params: { per_page: 100 } })
     employees.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch employees:', error)
@@ -193,7 +193,7 @@ const fetchEmployees = async () => {
 
 const fetchWarehouses = async () => {
   try {
-    const response = await axios.get('/api/v1/warehouses', { params: { per_page: 100 } })
+    const response = await api.get('/warehouses', { params: { per_page: 100 } })
     warehouses.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch warehouses:', error)
@@ -222,7 +222,7 @@ const viewSession = (session) => {
 
 const handleSubmit = async () => {
   try {
-    await axios.post('/api/v1/pos-sessions', form.value)
+    await api.post('/pos-sessions', form.value)
     closeModal()
     fetchSessions(pagination.value.current_page)
   } catch (error) {
@@ -233,7 +233,7 @@ const handleSubmit = async () => {
 const closeSession = async (session) => {
   if (!confirm('Are you sure you want to close this session?')) return
   try {
-    await axios.post(`/api/v1/pos-sessions/${session.id}/close`)
+    await api.post(`/pos-sessions/${session.id}/close`)
     fetchSessions(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to close session:', error)

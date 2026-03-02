@@ -42,6 +42,7 @@ class CreditNoteController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $creditNotes = CreditNote::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('note_number', 'LIKE', "%{$s}%"))
             ->when($request->get('status'), fn ($q, $s) => $q->where('status', $s))
             ->with(['customer', 'invoice'])
@@ -121,7 +122,7 @@ class CreditNoteController extends BaseApiController
             'items.*.unit_price' => ['required', 'integer', 'min:0'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
         $validated['status'] = 'pending';
 
         $creditNote = $this->paymentService->issueCreditNote($validated);

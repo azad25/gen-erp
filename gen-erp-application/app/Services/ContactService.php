@@ -128,6 +128,27 @@ class ContactService
         ]);
     }
 
+    /**
+     * Paginated customer listing with filters.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function paginateCustomers(Company $company, array $filters = [], int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return Customer::query()
+            ->where('company_id', $company->id)
+            ->when($filters['search'] ?? null, fn ($q, $s) => $q->where(function ($q) use ($s): void {
+                $q->where('name', 'LIKE', "%{$s}%")
+                    ->orWhere('phone', 'LIKE', "%{$s}%")
+                    ->orWhere('email', 'LIKE', "%{$s}%");
+            }))
+            ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
+            ->when($filters['contact_group_id'] ?? null, fn ($q, $id) => $q->where('contact_group_id', $id))
+            ->with(['contactGroup'])
+            ->orderBy('name')
+            ->paginate($perPage);
+    }
+
     // ═══════════════════════════════════════════
     // Supplier Operations
     // ═══════════════════════════════════════════
@@ -236,6 +257,27 @@ class ContactService
     public function calculateTdsVds(Supplier $supplier, int $grossAmount): array
     {
         return $supplier->netPaymentAmount($grossAmount);
+    }
+
+    /**
+     * Paginated supplier listing with filters.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function paginateSuppliers(Company $company, array $filters = [], int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return Supplier::query()
+            ->where('company_id', $company->id)
+            ->when($filters['search'] ?? null, fn ($q, $s) => $q->where(function ($q) use ($s): void {
+                $q->where('name', 'LIKE', "%{$s}%")
+                    ->orWhere('phone', 'LIKE', "%{$s}%")
+                    ->orWhere('email', 'LIKE', "%{$s}%");
+            }))
+            ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
+            ->when($filters['contact_group_id'] ?? null, fn ($q, $id) => $q->where('contact_group_id', $id))
+            ->with(['contactGroup'])
+            ->orderBy('name')
+            ->paginate($perPage);
     }
 
     // ═══════════════════════════════════════════

@@ -37,6 +37,7 @@ class LeaveTypeController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $types = LeaveType::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->when($request->get('is_active'), fn ($q, $s) => $q->where('is_active', $s))
             ->orderBy('name')
@@ -104,11 +105,11 @@ class LeaveTypeController extends BaseApiController
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $type = LeaveType::create($validated);
 
-        return $this->success($type, 'Leave type created', 201);
+        return $this->success($type, __('Leave type created'), 201);
     }
 
     /**
@@ -152,7 +153,7 @@ class LeaveTypeController extends BaseApiController
 
         $leaveType->update($validated);
 
-        return $this->success($leaveType->fresh(), 'Leave type updated');
+        return $this->success($leaveType->fresh(), __('Leave type updated'));
     }
 
     /**
@@ -175,6 +176,6 @@ class LeaveTypeController extends BaseApiController
     {
         $leaveType->delete();
 
-        return $this->success(null, 'Leave type deleted');
+        return $this->success(null, __('Leave type deleted'));
     }
 }

@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Services\HRService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use InvalidArgumentException;
 
 /**
  * @OA\Tag(
@@ -17,7 +20,7 @@ use Illuminate\Http\Request;
 class LeaveRequestController extends BaseApiController
 {
     public function __construct(
-        private HRService $hrService
+        private readonly HRService $hrService
     ) {}
 
     /**
@@ -27,14 +30,13 @@ class LeaveRequestController extends BaseApiController
      *     tags={"Leave Requests"},
      *     @OA\Parameter(name="employee_id", in="query", description="Employee ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="status", in="query", description="Status", @OA\Schema(type="string")),
-     *     @OA\Parameter(name="leave_type_id", in="query", description="Leave Type ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/LeaveRequest")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -43,9 +45,9 @@ class LeaveRequestController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $leaveRequests = LeaveRequest::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('employee_id'), fn ($q, $id) => $q->where('employee_id', $id))
             ->when($request->get('status'), fn ($q, $s) => $q->where('status', $s))
-            ->when($request->get('leave_type_id'), fn ($q, $id) => $q->where('leave_type_id', $id))
             ->with(['employee', 'leaveType'])
             ->orderBy('start_date', 'desc')
             ->paginate($request->integer('per_page', 15));
@@ -59,19 +61,12 @@ class LeaveRequestController extends BaseApiController
      *     summary="Get a specific leave request",
      *     tags={"Leave Requests"},
      *     @OA\Parameter(name="id", in="path", required=true, description="Leave Request ID", @OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful response",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/LeaveRequest")
-     *         )
-     *     )
+     *     @OA\Response(response=200, description="Successful response")
      * )
      */
     public function show(LeaveRequest $leaveRequest): JsonResponse
     {
-        $leaveRequest->load(['employee', 'leaveType']);
+        $leaveRequest->load(['employee', 'leaveType', 'approver']);
 
         return $this->success($leaveRequest);
     }
@@ -91,53 +86,68 @@ class LeaveRequestController extends BaseApiController
      *             @OA\Property(property="reason", type="string")
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Leave request created",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/LeaveRequest"),
-     *             @OA\Property(property="message", type="string")
-     *         )
-     *     )
+     *     @OA\Response(response=201, description="Leave request created")
      * )
      */
     public function store(Request $request): JsonResponse
     {
+        $companyId = activeCompany()->id;
+
         $validated = $request->validate([
-            'employee_id' => ['required', 'exists:employees,id'],
-            'leave_type_id' => ['required', 'exists:leave_types,id'],
+            'employee_id' => ['required', Rule::exists('employees', 'id')->where('company_id', $companyId)],
+            'leave_type_id' => ['required', Rule::exists('leave_types', 'id')->where('company_id', $companyId)],
             'start_date' => ['required', 'date'],
-            'end_date' => ['required', 'date', 'after:start_date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'reason' => ['required', 'string', 'max:1000'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
-        $validated['status'] = 'pending';
+        $employee = Employee::where('company_id', $companyId)->findOrFail($validated['employee_id']);
+        $data = collect($validated)->except(['employee_id'])->toArray();
 
-        $leaveRequest = $this->hrService->requestLeave($validated);
+        try {
+            $leaveRequest = $this->hrService->requestLeave($employee, $data);
+        } catch (InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), 422);
+        }
 
-        return $this->success($leaveRequest->load(['employee', 'leaveType']), 'Leave request created', 201);
+        return $this->success($leaveRequest->load(['employee', 'leaveType']), __('Leave request created'), 201);
     }
 
+    /**
+     * Leave requests can only be updated if pending.
+     */
     public function update(Request $request, LeaveRequest $leaveRequest): JsonResponse
     {
+        if ($leaveRequest->status !== 'pending') {
+            return $this->error(__('Only pending leave requests can be updated.'), 422);
+        }
+
+        $companyId = activeCompany()->id;
+
         $validated = $request->validate([
+            'leave_type_id' => ['sometimes', Rule::exists('leave_types', 'id')->where('company_id', $companyId)],
             'start_date' => ['sometimes', 'date'],
-            'end_date' => ['sometimes', 'date', 'after:start_date'],
+            'end_date' => ['sometimes', 'date', 'after_or_equal:start_date'],
             'reason' => ['sometimes', 'string', 'max:1000'],
         ]);
 
         $leaveRequest->update($validated);
 
-        return $this->success($leaveRequest->fresh(), 'Leave request updated');
+        return $this->success($leaveRequest->fresh()->load(['employee', 'leaveType']), __('Leave request updated'));
     }
 
+    /**
+     * Leave requests cannot be deleted — use reject instead.
+     */
     public function destroy(LeaveRequest $leaveRequest): JsonResponse
     {
-        $leaveRequest->delete();
+        if ($leaveRequest->status !== 'pending') {
+            return $this->error(__('Only pending leave requests can be cancelled.'), 422);
+        }
 
-        return $this->success(null, 'Leave request deleted');
+        $leaveRequest->update(['status' => 'cancelled']);
+
+        return $this->success(null, __('Leave request cancelled'));
     }
 
     /**
@@ -146,32 +156,26 @@ class LeaveRequestController extends BaseApiController
      *     summary="Approve a leave request",
      *     tags={"Leave Requests"},
      *     @OA\Parameter(name="leaveRequest", in="path", required=true, description="Leave Request ID", @OA\Schema(type="integer")),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="notes", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Leave request approved",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string")
-     *         )
-     *     )
+     *     @OA\Response(response=200, description="Leave request approved")
      * )
      */
-    public function approve(Request $request, LeaveRequest $leaveRequest): JsonResponse
+    public function approve(LeaveRequest $leaveRequest): JsonResponse
     {
-        $validated = $request->validate([
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
+        $approver = Employee::where('company_id', activeCompany()->id)
+            ->where('user_id', auth()->id())
+            ->first();
 
-        $result = $this->hrService->approveLeave($leaveRequest, $validated['notes'] ?? null);
+        if ($approver === null) {
+            return $this->error(__('Approver employee record not found.'), 403);
+        }
 
-        return $this->success($result, 'Leave request approved');
+        try {
+            $this->hrService->approveLeave($leaveRequest, $approver);
+        } catch (InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+
+        return $this->success($leaveRequest->fresh()->load(['employee', 'leaveType', 'approver']), __('Leave request approved'));
     }
 
     /**
@@ -186,15 +190,7 @@ class LeaveRequestController extends BaseApiController
      *             @OA\Property(property="reason", type="string")
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Leave request rejected",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="object"),
-     *             @OA\Property(property="message", type="string")
-     *         )
-     *     )
+     *     @OA\Response(response=200, description="Leave request rejected")
      * )
      */
     public function reject(Request $request, LeaveRequest $leaveRequest): JsonResponse
@@ -203,8 +199,16 @@ class LeaveRequestController extends BaseApiController
             'reason' => ['required', 'string', 'max:1000'],
         ]);
 
-        $result = $this->hrService->rejectLeave($leaveRequest, $validated['reason']);
+        $approver = Employee::where('company_id', activeCompany()->id)
+            ->where('user_id', auth()->id())
+            ->first();
 
-        return $this->success($result, 'Leave request rejected');
+        if ($approver === null) {
+            return $this->error(__('Approver employee record not found.'), 403);
+        }
+
+        $this->hrService->rejectLeave($leaveRequest, $approver, $validated['reason']);
+
+        return $this->success($leaveRequest->fresh(), __('Leave request rejected'));
     }
 }

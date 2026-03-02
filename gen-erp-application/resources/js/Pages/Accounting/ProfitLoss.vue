@@ -81,7 +81,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -94,7 +94,7 @@ const loading = ref(false)
 const generateReport = async () => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/accounting/profit-loss')
+    const response = await api.get('/accounting/profit-loss')
     profitLoss.value = response.data
   } catch (error) {
     console.error('Failed to generate profit & loss:', error)

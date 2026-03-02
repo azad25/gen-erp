@@ -168,7 +168,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -209,7 +209,7 @@ const columns = [
 const fetchInvoices = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/invoices', {
+    const response = await api.get('/invoices', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     invoices.value = response.data.data
@@ -223,7 +223,7 @@ const fetchInvoices = async (page = 1) => {
 
 const fetchCustomers = async () => {
   try {
-    const response = await axios.get('/api/v1/customers', { params: { per_page: 100 } })
+    const response = await api.get('/customers', { params: { per_page: 100 } })
     customers.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch customers:', error)
@@ -232,7 +232,7 @@ const fetchCustomers = async () => {
 
 const fetchProducts = async () => {
   try {
-    const response = await axios.get('/api/v1/products', { params: { per_page: 100 } })
+    const response = await api.get('/products', { params: { per_page: 100 } })
     products.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch products:', error)
@@ -289,9 +289,9 @@ const removeItem = (index) => {
 const handleSubmit = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`/api/v1/invoices/${selectedInvoice.value.id}`, form.value)
+      await api.put(`/invoices/${selectedInvoice.value.id}`, form.value)
     } else {
-      await axios.post('/api/v1/invoices', form.value)
+      await api.post('/invoices', form.value)
     }
     closeModal()
     fetchInvoices(pagination.value.current_page)
@@ -303,7 +303,7 @@ const handleSubmit = async () => {
 const sendInvoice = async (invoice) => {
   if (!confirm('Are you sure you want to send this invoice?')) return
   try {
-    await axios.post(`/api/v1/invoices/${invoice.id}/send`)
+    await api.post(`/invoices/${invoice.id}/send`)
     fetchInvoices(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to send invoice:', error)
@@ -313,7 +313,7 @@ const sendInvoice = async (invoice) => {
 const markPaid = async (invoice) => {
   if (!confirm('Are you sure you want to mark this invoice as paid?')) return
   try {
-    await axios.post(`/api/v1/invoices/${invoice.id}/mark-paid`)
+    await api.post(`/invoices/${invoice.id}/mark-paid`)
     fetchInvoices(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to mark invoice as paid:', error)
@@ -323,7 +323,7 @@ const markPaid = async (invoice) => {
 const deleteInvoice = async (invoice) => {
   if (!confirm('Are you sure you want to delete this invoice?')) return
   try {
-    await axios.delete(`/api/v1/invoices/${invoice.id}`)
+    await api.delete(`/invoices/${invoice.id}`)
     fetchInvoices(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete invoice:', error)

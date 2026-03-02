@@ -23,6 +23,61 @@ class SalesService
         private readonly ContactService $contactService,
     ) {}
 
+    /**
+     * Paginated sales order listing with filters.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function paginateOrders(Company $company, array $filters = [], int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return SalesOrder::query()
+            ->where('company_id', $company->id)
+            ->when($filters['search'] ?? null, fn ($q, $s) => $q->where(function ($q) use ($s): void {
+                $q->where('order_number', 'LIKE', "%{$s}%")
+                    ->orWhere('reference', 'LIKE', "%{$s}%");
+            }))
+            ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
+            ->when($filters['customer_id'] ?? null, fn ($q, $id) => $q->where('customer_id', $id))
+            ->with(['customer', 'items.product'])
+            ->orderBy('order_date', 'desc')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Paginated invoice listing with filters.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function paginateInvoices(Company $company, array $filters = [], int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return Invoice::query()
+            ->where('company_id', $company->id)
+            ->when($filters['search'] ?? null, fn ($q, $s) => $q->where(function ($q) use ($s): void {
+                $q->where('invoice_number', 'LIKE', "%{$s}%")
+                    ->orWhere('reference', 'LIKE', "%{$s}%");
+            }))
+            ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
+            ->when($filters['customer_id'] ?? null, fn ($q, $id) => $q->where('customer_id', $id))
+            ->with(['customer', 'items.product'])
+            ->orderBy('invoice_date', 'desc')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Delete a sales order — only allowed for draft or cancelled orders.
+     *
+     * @throws \RuntimeException
+     */
+    public function deleteOrder(SalesOrder $order): void
+    {
+        if (! in_array($order->status, [SalesOrderStatus::DRAFT, SalesOrderStatus::CANCELLED], true)) {
+            throw new \RuntimeException(__('Only draft or cancelled orders can be deleted.'));
+        }
+
+        $order->items()->delete();
+        $order->delete();
+    }
+
     public function createOrder(Company $company, array $data, array $items, array $customFields = []): SalesOrder
     {
         return DB::transaction(function () use ($company, $data, $items, $customFields): SalesOrder {

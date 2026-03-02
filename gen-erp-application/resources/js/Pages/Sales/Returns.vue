@@ -139,7 +139,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -179,7 +179,7 @@ const columns = [
 const fetchReturns = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/sales-returns', {
+    const response = await api.get('/sales-returns', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     returns.value = response.data.data
@@ -193,7 +193,7 @@ const fetchReturns = async (page = 1) => {
 
 const fetchCustomers = async () => {
   try {
-    const response = await axios.get('/api/v1/customers', { params: { per_page: 100 } })
+    const response = await api.get('/customers', { params: { per_page: 100 } })
     customers.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch customers:', error)
@@ -202,7 +202,7 @@ const fetchCustomers = async () => {
 
 const fetchInvoices = async () => {
   try {
-    const response = await axios.get('/api/v1/invoices', { params: { per_page: 100 } })
+    const response = await api.get('/invoices', { params: { per_page: 100 } })
     invoices.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch invoices:', error)
@@ -247,9 +247,9 @@ const viewReturn = (returnItem) => {
 const handleSubmit = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`/api/v1/sales-returns/${selectedReturn.value.id}`, form.value)
+      await api.put(`/sales-returns/${selectedReturn.value.id}`, form.value)
     } else {
-      await axios.post('/api/v1/sales-returns', form.value)
+      await api.post('/sales-returns', form.value)
     }
     closeModal()
     fetchReturns(pagination.value.current_page)
@@ -261,7 +261,7 @@ const handleSubmit = async () => {
 const approveReturn = async (returnItem) => {
   if (!confirm('Are you sure you want to approve this return?')) return
   try {
-    await axios.post(`/api/v1/sales-returns/${returnItem.id}/approve`)
+    await api.post(`/sales-returns/${returnItem.id}/approve`)
     fetchReturns(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to approve return:', error)
@@ -271,7 +271,7 @@ const approveReturn = async (returnItem) => {
 const rejectReturn = async (returnItem) => {
   if (!confirm('Are you sure you want to reject this return?')) return
   try {
-    await axios.post(`/api/v1/sales-returns/${returnItem.id}/reject`)
+    await api.post(`/sales-returns/${returnItem.id}/reject`)
     fetchReturns(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to reject return:', error)
@@ -281,7 +281,7 @@ const rejectReturn = async (returnItem) => {
 const deleteReturn = async (returnItem) => {
   if (!confirm('Are you sure you want to delete this return?')) return
   try {
-    await axios.delete(`/api/v1/sales-returns/${returnItem.id}`)
+    await api.delete(`/sales-returns/${returnItem.id}`)
     fetchReturns(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete return:', error)

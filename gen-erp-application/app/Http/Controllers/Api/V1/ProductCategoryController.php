@@ -36,6 +36,7 @@ class ProductCategoryController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $categories = ProductCategory::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->orderBy('name')
             ->paginate($request->integer('per_page', 15));
@@ -96,12 +97,12 @@ class ProductCategoryController extends BaseApiController
             'description' => ['nullable', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
         $validated['slug'] = $validated['slug'] ?? str($validated['name'])->slug();
 
         $category = ProductCategory::create($validated);
 
-        return $this->success($category, 'Product category created', 201);
+        return $this->success($category, __('Product category created'), 201);
     }
 
     /**
@@ -139,7 +140,7 @@ class ProductCategoryController extends BaseApiController
 
         $productCategory->update($validated);
 
-        return $this->success($productCategory->fresh(), 'Product category updated');
+        return $this->success($productCategory->fresh(), __('Product category updated'));
     }
 
     /**
@@ -162,6 +163,6 @@ class ProductCategoryController extends BaseApiController
     {
         $productCategory->delete();
 
-        return $this->success(null, 'Product category deleted');
+        return $this->success(null, __('Product category deleted'));
     }
 }

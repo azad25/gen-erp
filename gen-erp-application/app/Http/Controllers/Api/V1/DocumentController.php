@@ -44,6 +44,7 @@ class DocumentController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $documents = Document::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->when($request->get('mime_type'), fn ($q, $s) => $q->where('mime_type', $s))
             ->when($request->get('folder_id'), fn ($q, $id) => $q->where('folder_id', $id))
@@ -105,7 +106,7 @@ class DocumentController extends BaseApiController
             'file' => ['required', 'file', 'max:10240'], // 10MB max
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
         $validated['uploaded_by'] = auth()->id();
 
         $file = $request->file('file');

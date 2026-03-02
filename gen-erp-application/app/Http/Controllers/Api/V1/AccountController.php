@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\AccountGroup;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * @OA\Tag(
@@ -39,6 +40,7 @@ class AccountController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $accounts = Account::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->when($request->get('account_type'), fn ($q, $s) => $q->where('account_type', $s))
             ->when($request->get('account_group_id'), fn ($q, $id) => $q->where('account_group_id', $id))
@@ -101,8 +103,10 @@ class AccountController extends BaseApiController
      */
     public function store(Request $request): JsonResponse
     {
+        $companyId = activeCompany()->id;
+
         $validated = $request->validate([
-            'account_group_id' => ['required', 'exists:account_groups,id'],
+            'account_group_id' => ['required', Rule::exists('account_groups', 'id')->where('company_id', $companyId)],
             'code' => ['required', 'string', 'max:50'],
             'name' => ['required', 'string', 'max:255'],
             'account_type' => ['required', 'string'],
@@ -110,11 +114,11 @@ class AccountController extends BaseApiController
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = $companyId;
 
         $account = Account::create($validated);
 
-        return $this->success($account->load(['group']), 'Account created', 201);
+        return $this->success($account->load(['group']), __('Account created'), 201);
     }
 
     /**
@@ -156,7 +160,7 @@ class AccountController extends BaseApiController
 
         $account->update($validated);
 
-        return $this->success($account->fresh()->load(['group']), 'Account updated');
+        return $this->success($account->fresh()->load(['group']), __('Account updated'));
     }
 
     /**
@@ -179,6 +183,6 @@ class AccountController extends BaseApiController
     {
         $account->delete();
 
-        return $this->success(null, 'Account deleted');
+        return $this->success(null, __('Account deleted'));
     }
 }

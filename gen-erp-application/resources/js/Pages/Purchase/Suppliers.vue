@@ -151,7 +151,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -191,7 +191,7 @@ const columns = [
 const fetchSuppliers = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/suppliers', {
+    const response = await api.get('/suppliers', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     suppliers.value = response.data.data
@@ -247,9 +247,9 @@ const viewSupplier = (supplier) => {
 const handleSubmit = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`/api/v1/suppliers/${selectedSupplier.value.id}`, form.value)
+      await api.put(`/suppliers/${selectedSupplier.value.id}`, form.value)
     } else {
-      await axios.post('/api/v1/suppliers', form.value)
+      await api.post('/suppliers', form.value)
     }
     closeModal()
     fetchSuppliers(pagination.value.current_page)
@@ -261,7 +261,7 @@ const handleSubmit = async () => {
 const deleteSupplier = async (supplier) => {
   if (!confirm('Are you sure you want to delete this supplier?')) return
   try {
-    await axios.delete(`/api/v1/suppliers/${supplier.id}`)
+    await api.delete(`/suppliers/${supplier.id}`)
     fetchSuppliers(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete supplier:', error)

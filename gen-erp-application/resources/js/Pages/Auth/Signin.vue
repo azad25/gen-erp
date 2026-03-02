@@ -122,6 +122,7 @@ import { ref } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import { router } from '@inertiajs/vue3'
 import HomeLogo from '@/Components/Home/Logo.vue'
+import api from '@/Services/api.js'
 import axios from 'axios'
 
 const page = usePage()
@@ -141,10 +142,10 @@ const handleSubmit = async () => {
   error.value = ''
   
   try {
-    // Step 1: Get CSRF cookie
+    // Step 1: Get CSRF cookie (use plain axios to avoid baseURL prefix)
     await axios.get('/sanctum/csrf-cookie')
     
-    // Step 2: Login
+    // Step 2: Login (use plain axios - route is not under /api/v1)
     const response = await axios.post('/auth/login', {
       email: email.value,
       password: password.value,
@@ -153,15 +154,28 @@ const handleSubmit = async () => {
     
     // Check if 2FA is required
     if (response.data.data.two_factor_required) {
+      // Store email for 2FA page
+      sessionStorage.setItem('pending_2fa_email', email.value)
       // Redirect to 2FA page
-      router.visit('/auth/two-factor/challenge', {
-        data: { email: email.value }
-      })
+      router.visit('/auth/two-factor/challenge')
       return
     }
     
+    // Store active company ID in sessionStorage for API calls
+    if (response.data.data.user?.companies?.length === 1) {
+      const companyId = response.data.data.user.companies[0].id
+      sessionStorage.setItem('active_company_id', companyId)
+      
+      // Also set it on the server session by calling the switch API
+      try {
+        await axios.post(`/app/switch-company/${companyId}`)
+      } catch (err) {
+        console.error('Failed to set company context:', err)
+      }
+    }
+    
     // Redirect to dashboard or home
-    const redirectUrl = page.props.auth?.user ? '/dashboard' : '/'
+    const redirectUrl = response.data.data.user ? '/dashboard' : '/'
     router.visit(redirectUrl)
   } catch (err) {
     error.value = err.response?.data?.message || 'Login failed. Please try again.'

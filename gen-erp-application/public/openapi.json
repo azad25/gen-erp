@@ -761,7 +761,7 @@
                 "tags": [
                     "Attendance"
                 ],
-                "summary": "List all attendance records",
+                "summary": "List attendance records",
                 "operationId": "d57401347a93522bad941b809537d8b9",
                 "parameters": [
                     {
@@ -775,10 +775,9 @@
                     {
                         "name": "date",
                         "in": "query",
-                        "description": "Date",
+                        "description": "Date (Y-m-d)",
                         "schema": {
-                            "type": "string",
-                            "format": "date"
+                            "type": "string"
                         }
                     },
                     {
@@ -812,11 +811,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "allOf": [
-                                                    {
-                                                        "$ref": "#/components/schemas/Attendance"
-                                                    }
-                                                ]
+                                                "type": "object"
                                             }
                                         },
                                         "message": {
@@ -834,7 +829,7 @@
                 "tags": [
                     "Attendance"
                 ],
-                "summary": "Create a new attendance record",
+                "summary": "Mark attendance for an employee",
                 "operationId": "1b39ce984dd414ae463d5a8645386aae",
                 "requestBody": {
                     "required": true,
@@ -845,22 +840,17 @@
                                     "employee_id": {
                                         "type": "integer"
                                     },
-                                    "attendance_date": {
+                                    "date": {
                                         "type": "string",
                                         "format": "date"
-                                    },
-                                    "check_in": {
-                                        "type": "string",
-                                        "format": "time"
-                                    },
-                                    "check_out": {
-                                        "type": "string",
-                                        "format": "time"
                                     },
                                     "status": {
                                         "type": "string"
                                     },
-                                    "notes": {
+                                    "check_in": {
+                                        "type": "string"
+                                    },
+                                    "check_out": {
                                         "type": "string"
                                     }
                                 },
@@ -871,25 +861,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Attendance created",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Attendance"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Attendance marked"
                     }
                 }
             }
@@ -914,22 +886,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Attendance"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Successful response"
                     }
                 }
             }
@@ -940,7 +897,7 @@
                     "Attendance"
                 ],
                 "summary": "Bulk mark attendance",
-                "operationId": "4388b5c4e3f3aa783f5d5e5bda6330cd",
+                "operationId": "4aa9b351ca4a6fe88abf1cc43a283a56",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -951,7 +908,7 @@
                                         "type": "string",
                                         "format": "date"
                                     },
-                                    "attendance": {
+                                    "records": {
                                         "type": "array",
                                         "items": {
                                             "type": "object"
@@ -964,26 +921,8 @@
                     }
                 },
                 "responses": {
-                    "200": {
-                        "description": "Bulk attendance marked",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "type": "array"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                    "201": {
+                        "description": "Attendance marked"
                     }
                 }
             }
@@ -2129,6 +2068,22 @@
                         "description": "Search term",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Status filter",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "contact_group_id",
+                        "in": "query",
+                        "description": "Contact Group ID",
+                        "schema": {
+                            "type": "integer"
                         }
                     },
                     {
@@ -3499,6 +3454,14 @@
                 "operationId": "69d4913dbe48d86c7616c4b511a07b3f",
                 "parameters": [
                     {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "name": "department_id",
                         "in": "query",
                         "description": "Department ID",
@@ -3561,15 +3524,55 @@
                 ],
                 "summary": "Create a new employee",
                 "operationId": "38d8e9dc232fc6fdf22aac5c97cd7570",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string"
+                                    },
+                                    "last_name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "department_id": {
+                                        "type": "integer"
+                                    },
+                                    "designation_id": {
+                                        "type": "integer"
+                                    },
+                                    "joining_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "basic_salary": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
-                    "501": {
-                        "description": "Not implemented",
+                    "201": {
+                        "description": "Employee created",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "success": {
                                             "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Employee"
                                         },
                                         "message": {
                                             "type": "string"
@@ -3639,15 +3642,26 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
                 "responses": {
-                    "501": {
-                        "description": "Not implemented",
+                    "200": {
+                        "description": "Employee updated",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "success": {
                                             "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Employee"
                                         },
                                         "message": {
                                             "type": "string"
@@ -3659,16 +3673,18 @@
                         }
                     }
                 }
-            },
-            "delete": {
+            }
+        },
+        "/employees/{employee}/terminate": {
+            "post": {
                 "tags": [
                     "Employees"
                 ],
-                "summary": "Delete an employee",
-                "operationId": "d7e6df95f47227c20ee6a67a8c2e5b54",
+                "summary": "Terminate an employee",
+                "operationId": "064e15ad9010a0711a9e3dae14a70842",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "employee",
                         "in": "path",
                         "description": "Employee ID",
                         "required": true,
@@ -3677,24 +3693,28 @@
                         }
                     }
                 ],
-                "responses": {
-                    "403": {
-                        "description": "Not allowed",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "termination_date": {
+                                        "type": "string",
+                                        "format": "date"
                                     },
-                                    "type": "object"
-                                }
+                                    "reason": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Employee terminated"
                     }
                 }
             }
@@ -3784,9 +3804,6 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "expense_number": {
-                                        "type": "string"
-                                    },
                                     "expense_date": {
                                         "type": "string",
                                         "format": "date"
@@ -3806,20 +3823,11 @@
                                     "total_amount": {
                                         "type": "integer"
                                     },
-                                    "payment_method_id": {
+                                    "account_id": {
                                         "type": "integer"
                                     },
-                                    "reference_number": {
-                                        "type": "string"
-                                    },
-                                    "receipt_url": {
-                                        "type": "string"
-                                    },
-                                    "status": {
-                                        "type": "string"
-                                    },
-                                    "custom_fields": {
-                                        "type": "array"
+                                    "payment_account_id": {
+                                        "type": "integer"
                                     }
                                 },
                                 "type": "object"
@@ -4175,6 +4183,14 @@
                 "operationId": "176f86601dff5362250710476b314be6",
                 "parameters": [
                     {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "name": "status",
                         "in": "query",
                         "description": "Invoice status",
@@ -4235,17 +4251,48 @@
                 "tags": [
                     "Invoices"
                 ],
-                "summary": "Create a new invoice",
+                "summary": "Create a new direct invoice",
                 "operationId": "032630ac969f519682d839297c530d5c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "customer_id": {
+                                        "type": "integer"
+                                    },
+                                    "warehouse_id": {
+                                        "type": "integer"
+                                    },
+                                    "invoice_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
-                    "501": {
-                        "description": "Not implemented",
+                    "201": {
+                        "description": "Invoice created",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "success": {
                                             "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Invoice"
                                         },
                                         "message": {
                                             "type": "string"
@@ -4302,7 +4349,7 @@
                 "tags": [
                     "Invoices"
                 ],
-                "summary": "Update an invoice",
+                "summary": "Update a draft invoice",
                 "operationId": "7ec124e53679451f551e7d5f3ed9deea",
                 "parameters": [
                     {
@@ -4315,15 +4362,39 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "customer_id": {
+                                        "type": "integer"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
-                    "501": {
-                        "description": "Not implemented",
+                    "200": {
+                        "description": "Invoice updated",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "success": {
                                             "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Invoice"
                                         },
                                         "message": {
                                             "type": "string"
@@ -4335,16 +4406,18 @@
                         }
                     }
                 }
-            },
-            "delete": {
+            }
+        },
+        "/invoices/{invoice}/send": {
+            "post": {
                 "tags": [
                     "Invoices"
                 ],
-                "summary": "Delete an invoice",
-                "operationId": "056695bac32ace10c9dec32991fad318",
+                "summary": "Send an invoice",
+                "operationId": "9e8ed51f10f2fec0dd6c3026677d6088",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "invoice",
                         "in": "path",
                         "description": "Invoice ID",
                         "required": true,
@@ -4354,14 +4427,60 @@
                     }
                 ],
                 "responses": {
-                    "403": {
-                        "description": "Not allowed",
+                    "200": {
+                        "description": "Invoice sent",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "success": {
                                             "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Invoice"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/invoices/{invoice}/cancel": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Cancel an invoice",
+                "operationId": "720e0534fd6375d4be10482cff6700bf",
+                "parameters": [
+                    {
+                        "name": "invoice",
+                        "in": "path",
+                        "description": "Invoice ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Invoice cancelled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Invoice"
                                         },
                                         "message": {
                                             "type": "string"
@@ -4603,14 +4722,6 @@
                         }
                     },
                     {
-                        "name": "leave_type_id",
-                        "in": "query",
-                        "description": "Leave Type ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
                         "name": "per_page",
                         "in": "query",
                         "description": "Items per page",
@@ -4633,11 +4744,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "allOf": [
-                                                    {
-                                                        "$ref": "#/components/schemas/LeaveRequest"
-                                                    }
-                                                ]
+                                                "type": "object"
                                             }
                                         },
                                         "message": {
@@ -4688,25 +4795,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Leave request created",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/LeaveRequest"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Leave request created"
                     }
                 }
             }
@@ -4731,22 +4820,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/LeaveRequest"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Successful response"
                     }
                 }
             }
@@ -4769,42 +4843,9 @@
                         }
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "notes": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "Leave request approved",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Leave request approved"
                     }
                 }
             }
@@ -4844,25 +4885,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Leave request rejected",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Leave request rejected"
                     }
                 }
             }
@@ -5305,7 +5328,7 @@
                 "tags": [
                     "Payments"
                 ],
-                "summary": "List all payments",
+                "summary": "List all customer payments",
                 "operationId": "d42af22098bc46725c8075794e61e560",
                 "parameters": [
                     {
@@ -5317,19 +5340,11 @@
                         }
                     },
                     {
-                        "name": "payment_type",
+                        "name": "customer_id",
                         "in": "query",
-                        "description": "Payment type",
+                        "description": "Customer ID",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "status",
-                        "in": "query",
-                        "description": "Payment status",
-                        "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     {
@@ -5355,11 +5370,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "allOf": [
-                                                    {
-                                                        "$ref": "#/components/schemas/Payment"
-                                                    }
-                                                ]
+                                                "type": "object"
                                             }
                                         },
                                         "message": {
@@ -5377,7 +5388,7 @@
                 "tags": [
                     "Payments"
                 ],
-                "summary": "Create a new payment",
+                "summary": "Receive a customer payment",
                 "operationId": "480d4be6e6698ff0c959c6b44c4bacbc",
                 "requestBody": {
                     "required": true,
@@ -5385,16 +5396,7 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "payment_type": {
-                                        "type": "string"
-                                    },
                                     "customer_id": {
-                                        "type": "integer"
-                                    },
-                                    "supplier_id": {
-                                        "type": "integer"
-                                    },
-                                    "payment_method_id": {
                                         "type": "integer"
                                     },
                                     "payment_date": {
@@ -5404,11 +5406,20 @@
                                     "amount": {
                                         "type": "integer"
                                     },
+                                    "payment_method": {
+                                        "type": "string"
+                                    },
                                     "reference": {
                                         "type": "string"
                                     },
                                     "notes": {
                                         "type": "string"
+                                    },
+                                    "allocations": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -5418,7 +5429,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Payment created",
+                        "description": "Payment received",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -5427,7 +5438,7 @@
                                             "type": "boolean"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/Payment"
+                                            "type": "object"
                                         },
                                         "message": {
                                             "type": "string"
@@ -5446,7 +5457,7 @@
                 "tags": [
                     "Payments"
                 ],
-                "summary": "Get a specific payment",
+                "summary": "Get a specific customer payment",
                 "operationId": "1331884e82b60a4649bf370b22a043d7",
                 "parameters": [
                     {
@@ -5470,111 +5481,7 @@
                                             "type": "boolean"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/Payment"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "Payments"
-                ],
-                "summary": "Update a payment",
-                "operationId": "068985bb129c49d70a691e98414368bb",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Payment ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "payment_date": {
-                                        "type": "string",
-                                        "format": "date"
-                                    },
-                                    "amount": {
-                                        "type": "integer"
-                                    },
-                                    "reference": {
-                                        "type": "string"
-                                    },
-                                    "notes": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Payment updated",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Payment"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "Payments"
-                ],
-                "summary": "Delete a payment",
-                "operationId": "6b740252b56de8bbd0b362c734f9f7c0",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Payment ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Payment deleted",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "message": {
-                                            "type": "string"
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -6315,19 +6222,19 @@
                         }
                     },
                     {
+                        "name": "product_type",
+                        "in": "query",
+                        "description": "Product type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "name": "category_id",
                         "in": "query",
                         "description": "Category ID",
                         "schema": {
                             "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "active_only",
-                        "in": "query",
-                        "description": "Active only",
-                        "schema": {
-                            "type": "boolean"
                         }
                     },
                     {
@@ -6389,26 +6296,17 @@
                                     "sku": {
                                         "type": "string"
                                     },
-                                    "cost_price": {
+                                    "product_type": {
+                                        "type": "string"
+                                    },
+                                    "category_id": {
                                         "type": "integer"
                                     },
                                     "selling_price": {
                                         "type": "integer"
                                     },
-                                    "category_id": {
+                                    "purchase_price": {
                                         "type": "integer"
-                                    },
-                                    "tax_group_id": {
-                                        "type": "integer"
-                                    },
-                                    "product_type": {
-                                        "type": "string"
-                                    },
-                                    "unit": {
-                                        "type": "string"
-                                    },
-                                    "is_active": {
-                                        "type": "boolean"
                                     }
                                 },
                                 "type": "object"
@@ -6509,20 +6407,11 @@
                                     "sku": {
                                         "type": "string"
                                     },
-                                    "cost_price": {
-                                        "type": "integer"
-                                    },
                                     "selling_price": {
                                         "type": "integer"
                                     },
-                                    "category_id": {
+                                    "purchase_price": {
                                         "type": "integer"
-                                    },
-                                    "tax_group_id": {
-                                        "type": "integer"
-                                    },
-                                    "is_active": {
-                                        "type": "boolean"
                                     }
                                 },
                                 "type": "object"
@@ -6684,18 +6573,6 @@
                                         "type": "string",
                                         "format": "date"
                                     },
-                                    "subtotal": {
-                                        "type": "integer"
-                                    },
-                                    "discount_amount": {
-                                        "type": "integer"
-                                    },
-                                    "tax_amount": {
-                                        "type": "integer"
-                                    },
-                                    "total_amount": {
-                                        "type": "integer"
-                                    },
                                     "items": {
                                         "type": "array",
                                         "items": {
@@ -6805,17 +6682,11 @@
                                         "type": "string",
                                         "format": "date"
                                     },
-                                    "subtotal": {
-                                        "type": "integer"
-                                    },
-                                    "discount_amount": {
-                                        "type": "integer"
-                                    },
-                                    "tax_amount": {
-                                        "type": "integer"
-                                    },
-                                    "total_amount": {
-                                        "type": "integer"
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -6916,6 +6787,67 @@
                                         },
                                         "data": {
                                             "$ref": "#/components/schemas/PurchaseOrder"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/purchase-orders/{purchaseOrder}/receive": {
+            "post": {
+                "tags": [
+                    "Purchase Orders"
+                ],
+                "summary": "Receive goods from purchase order",
+                "operationId": "0989453cce2d17b84a842dde63c184b6",
+                "parameters": [
+                    {
+                        "name": "purchaseOrder",
+                        "in": "path",
+                        "description": "Purchase Order ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Goods receipt created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/GoodsReceipt"
                                         },
                                         "message": {
                                             "type": "string"
@@ -7146,18 +7078,6 @@
                                         "type": "string",
                                         "format": "date"
                                     },
-                                    "subtotal": {
-                                        "type": "integer"
-                                    },
-                                    "discount_amount": {
-                                        "type": "integer"
-                                    },
-                                    "tax_amount": {
-                                        "type": "integer"
-                                    },
-                                    "total_amount": {
-                                        "type": "integer"
-                                    },
                                     "items": {
                                         "type": "array",
                                         "items": {
@@ -7267,17 +7187,11 @@
                                         "type": "string",
                                         "format": "date"
                                     },
-                                    "subtotal": {
-                                        "type": "integer"
-                                    },
-                                    "discount_amount": {
-                                        "type": "integer"
-                                    },
-                                    "tax_amount": {
-                                        "type": "integer"
-                                    },
-                                    "total_amount": {
-                                        "type": "integer"
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -7557,82 +7471,6 @@
                         }
                     }
                 }
-            },
-            "post": {
-                "tags": [
-                    "Stock Movements"
-                ],
-                "summary": "Create a new stock movement",
-                "operationId": "76a4d5ae76f57e790441cac64fa58e0c",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "product_id": {
-                                        "type": "integer"
-                                    },
-                                    "warehouse_id": {
-                                        "type": "integer"
-                                    },
-                                    "branch_id": {
-                                        "type": "integer"
-                                    },
-                                    "movement_type": {
-                                        "type": "string"
-                                    },
-                                    "quantity": {
-                                        "type": "integer"
-                                    },
-                                    "quantity_before": {
-                                        "type": "integer"
-                                    },
-                                    "quantity_after": {
-                                        "type": "integer"
-                                    },
-                                    "unit_cost": {
-                                        "type": "integer"
-                                    },
-                                    "movement_date": {
-                                        "type": "string",
-                                        "format": "date"
-                                    },
-                                    "reference": {
-                                        "type": "string"
-                                    },
-                                    "notes": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Stock movement created",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/StockMovement"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
             }
         },
         "/stock-movements/{id}": {
@@ -7673,119 +7511,6 @@
                         }
                     }
                 }
-            },
-            "put": {
-                "tags": [
-                    "Stock Movements"
-                ],
-                "summary": "Update a stock movement",
-                "operationId": "fc71abc9a0c86a5df449c6015eac4925",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Stock Movement ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "quantity": {
-                                        "type": "integer"
-                                    },
-                                    "quantity_before": {
-                                        "type": "integer"
-                                    },
-                                    "quantity_after": {
-                                        "type": "integer"
-                                    },
-                                    "unit_cost": {
-                                        "type": "integer"
-                                    },
-                                    "movement_date": {
-                                        "type": "string",
-                                        "format": "date"
-                                    },
-                                    "reference": {
-                                        "type": "string"
-                                    },
-                                    "notes": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Stock movement updated",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/StockMovement"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "Stock Movements"
-                ],
-                "summary": "Delete a stock movement",
-                "operationId": "e9c15ebb70cd3d2b1365d66a87eb242d",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Stock Movement ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Stock movement deleted",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
             }
         },
         "/suppliers": {
@@ -7802,6 +7527,22 @@
                         "description": "Search term",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Status filter",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "contact_group_id",
+                        "in": "query",
+                        "description": "Contact Group ID",
+                        "schema": {
+                            "type": "integer"
                         }
                     },
                     {
@@ -9178,7 +8919,7 @@
         },
         {
             "name": "Attendance",
-            "description": "Attendance management"
+            "description": "Attendance tracking"
         },
         {
             "name": "Branches",
@@ -9226,7 +8967,7 @@
         },
         {
             "name": "Employees",
-            "description": "Employee management (read-only)"
+            "description": "Employee management"
         },
         {
             "name": "Expenses",
@@ -9242,7 +8983,7 @@
         },
         {
             "name": "Invoices",
-            "description": "Invoice management (read-only)"
+            "description": "Invoice management"
         },
         {
             "name": "Journal Entries",
@@ -9262,7 +9003,7 @@
         },
         {
             "name": "Payments",
-            "description": "Payment management"
+            "description": "Customer payment management"
         },
         {
             "name": "Payment Methods",

@@ -42,6 +42,7 @@ class JournalEntryController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $entries = JournalEntry::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('reference', 'LIKE', "%{$s}%"))
             ->when($request->get('entry_date'), fn ($q, $d) => $q->where('entry_date', $d))
             ->with(['lines.account'])
@@ -111,7 +112,7 @@ class JournalEntryController extends BaseApiController
             'lines.*.credit' => ['required', 'integer', 'min:0'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $entry = $this->accountingService->createJournalEntry($validated);
 

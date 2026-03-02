@@ -37,6 +37,7 @@ class BranchController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $branches = Branch::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->when($request->get('is_active'), fn ($q, $s) => $q->where('is_active', $s))
             ->orderBy('name')
@@ -100,11 +101,11 @@ class BranchController extends BaseApiController
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $branch = Branch::create($validated);
 
-        return $this->success($branch, 'Branch created', 201);
+        return $this->success($branch, __('Branch created'), 201);
     }
 
     /**
@@ -144,7 +145,7 @@ class BranchController extends BaseApiController
 
         $branch->update($validated);
 
-        return $this->success($branch->fresh(), 'Branch updated');
+        return $this->success($branch->fresh(), __('Branch updated'));
     }
 
     /**
@@ -167,6 +168,6 @@ class BranchController extends BaseApiController
     {
         $branch->delete();
 
-        return $this->success(null, 'Branch deleted');
+        return $this->success(null, __('Branch deleted'));
     }
 }

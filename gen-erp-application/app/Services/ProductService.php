@@ -138,6 +138,28 @@ class ProductService
     }
 
     /**
+     * Paginated product listing with filters.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function paginate(Company $company, array $filters = [], int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return Product::query()
+            ->where('company_id', $company->id)
+            ->when($filters['search'] ?? null, fn ($q, $s) => $q->where(function ($q) use ($s): void {
+                $q->where('name', 'LIKE', "%{$s}%")
+                    ->orWhere('sku', 'LIKE', "%{$s}%")
+                    ->orWhere('barcode', 'LIKE', "%{$s}%");
+            }))
+            ->when($filters['product_type'] ?? null, fn ($q, $t) => $q->where('product_type', $t))
+            ->when($filters['category_id'] ?? null, fn ($q, $id) => $q->where('category_id', $id))
+            ->when(isset($filters['is_active']), fn ($q) => $q->where('is_active', $filters['is_active']))
+            ->with(['category', 'taxGroup'])
+            ->orderBy('name')
+            ->paginate($perPage);
+    }
+
+    /**
      * Search products by name, SKU, or barcode, scoped to the active company.
      *
      * @return Collection<int, Product>

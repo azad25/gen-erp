@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Requests\Api\V1\StoreCustomerRequest;
+use App\Http\Requests\Api\V1\UpdateCustomerRequest;
 use App\Models\Customer;
+use App\Services\ContactService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 /**
  * @OA\Tag(
@@ -15,12 +19,18 @@ use Illuminate\Http\Request;
  */
 class CustomerController extends BaseApiController
 {
+    public function __construct(
+        private readonly ContactService $contactService
+    ) {}
+
     /**
      * @OA\Get(
      *     path="/customers",
      *     summary="List all customers",
      *     tags={"Customers"},
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="status", in="query", description="Status filter", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="contact_group_id", in="query", description="Contact Group ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
      *     @OA\Response(
      *         response=200,
@@ -35,10 +45,11 @@ class CustomerController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
-        $customers = Customer::query()
-            ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
-            ->orderBy('name')
-            ->paginate($request->integer('per_page', 15));
+        $customers = $this->contactService->paginateCustomers(
+            activeCompany(),
+            $request->only(['search', 'status', 'contact_group_id']),
+            $request->integer('per_page', 15),
+        );
 
         return $this->paginated($customers);
     }
@@ -61,6 +72,8 @@ class CustomerController extends BaseApiController
      */
     public function show(Customer $customer): JsonResponse
     {
+        $customer->load(['contactGroup']);
+
         return $this->success($customer);
     }
 
@@ -91,21 +104,19 @@ class CustomerController extends BaseApiController
      *     )
      * )
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreCustomerRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'address' => ['nullable', 'string', 'max:500'],
-            'district' => ['nullable', 'string', 'max:100'],
-            'credit_limit' => ['nullable', 'integer', 'min:0'],
-        ]);
+        $validated = $request->validated();
+        $customFields = $validated['custom_fields'] ?? [];
+        unset($validated['custom_fields']);
 
-        $validated['company_id'] = activeCompany()?->id;
-        $customer = Customer::create($validated);
+        $customer = $this->contactService->createCustomer(
+            activeCompany(),
+            $validated,
+            $customFields,
+        );
 
-        return $this->success($customer, 'Customer created', 201);
+        return $this->success($customer, __('Customer created'), 201);
     }
 
     /**
@@ -136,20 +147,19 @@ class CustomerController extends BaseApiController
      *     )
      * )
      */
-    public function update(Request $request, Customer $customer): JsonResponse
+    public function update(UpdateCustomerRequest $request, Customer $customer): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'address' => ['nullable', 'string', 'max:500'],
-            'district' => ['nullable', 'string', 'max:100'],
-            'credit_limit' => ['nullable', 'integer', 'min:0'],
-        ]);
+        $validated = $request->validated();
+        $customFields = $validated['custom_fields'] ?? [];
+        unset($validated['custom_fields']);
 
-        $customer->update($validated);
+        $customer = $this->contactService->updateCustomer(
+            $customer,
+            $validated,
+            $customFields,
+        );
 
-        return $this->success($customer->fresh(), 'Customer updated');
+        return $this->success($customer, __('Customer updated'));
     }
 
     /**
@@ -170,8 +180,12 @@ class CustomerController extends BaseApiController
      */
     public function destroy(Customer $customer): JsonResponse
     {
-        $customer->delete();
+        try {
+            $this->contactService->deleteCustomer($customer);
+        } catch (RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
+        }
 
-        return $this->success(null, 'Customer deleted');
+        return $this->success(null, __('Customer deleted'));
     }
 }

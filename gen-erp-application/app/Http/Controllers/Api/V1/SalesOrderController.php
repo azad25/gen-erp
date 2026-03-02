@@ -6,6 +6,8 @@ use App\Models\SalesOrder;
 use App\Services\SalesService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use RuntimeException;
 
 /**
  * @OA\Tag(
@@ -17,7 +19,7 @@ use Illuminate\Http\Request;
 class SalesOrderController extends BaseApiController
 {
     public function __construct(
-        private SalesService $salesService
+        private readonly SalesService $salesService
     ) {}
 
     /**
@@ -42,13 +44,11 @@ class SalesOrderController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
-        $orders = SalesOrder::query()
-            ->when($request->get('search'), fn ($q, $s) => $q->where('order_number', 'LIKE', "%{$s}%"))
-            ->when($request->get('status'), fn ($q, $s) => $q->where('status', $s))
-            ->when($request->get('customer_id'), fn ($q, $id) => $q->where('customer_id', $id))
-            ->with(['customer', 'warehouse'])
-            ->orderBy('order_date', 'desc')
-            ->paginate($request->integer('per_page', 15));
+        $orders = $this->salesService->paginateOrders(
+            activeCompany(),
+            $request->only(['search', 'status', 'customer_id']),
+            $request->integer('per_page', 15),
+        );
 
         return $this->paginated($orders);
     }
@@ -87,10 +87,6 @@ class SalesOrderController extends BaseApiController
      *             @OA\Property(property="customer_id", type="integer"),
      *             @OA\Property(property="warehouse_id", type="integer"),
      *             @OA\Property(property="order_date", type="string", format="date"),
-     *             @OA\Property(property="subtotal", type="integer"),
-     *             @OA\Property(property="discount_amount", type="integer"),
-     *             @OA\Property(property="tax_amount", type="integer"),
-     *             @OA\Property(property="total_amount", type="integer"),
      *             @OA\Property(property="items", type="array", @OA\Items(type="object"))
      *         )
      *     ),
@@ -107,28 +103,36 @@ class SalesOrderController extends BaseApiController
      */
     public function store(Request $request): JsonResponse
     {
+        $companyId = activeCompany()->id;
+
         $validated = $request->validate([
-            'customer_id' => ['required', 'exists:customers,id'],
-            'warehouse_id' => ['required', 'exists:warehouses,id'],
+            'customer_id' => ['required', Rule::exists('customers', 'id')->where('company_id', $companyId)],
+            'warehouse_id' => ['required', Rule::exists('warehouses', 'id')->where('company_id', $companyId)],
             'order_date' => ['required', 'date'],
-            'subtotal' => ['required', 'integer', 'min:0'],
-            'discount_amount' => ['nullable', 'integer', 'min:0'],
-            'tax_amount' => ['nullable', 'integer', 'min:0'],
-            'total_amount' => ['required', 'integer', 'min:0'],
-            'items' => ['required', 'array'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'terms_conditions' => ['nullable', 'string', 'max:5000'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['nullable', Rule::exists('products', 'id')->where('company_id', $companyId)],
+            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'items.*.unit_price' => ['required', 'integer', 'min:0'],
             'items.*.description' => ['nullable', 'string'],
             'items.*.unit' => ['nullable', 'string'],
+            'items.*.discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'items.*.tax_rate' => ['nullable', 'numeric', 'min:0'],
+            'items.*.tax_group_id' => ['nullable', Rule::exists('tax_groups', 'id')->where('company_id', $companyId)],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $items = $validated['items'];
+        unset($validated['items']);
         $validated['status'] = 'draft';
 
-        $order = $this->salesService->createOrder($validated);
+        $order = $this->salesService->createOrder(
+            activeCompany(),
+            $validated,
+            $items,
+        );
 
-        return $this->success($order->load(['customer', 'warehouse', 'items.product']), 'Sales order created', 201);
+        return $this->success($order->load(['customer', 'warehouse', 'items.product']), __('Sales order created'), 201);
     }
 
     /**
@@ -143,10 +147,7 @@ class SalesOrderController extends BaseApiController
      *             @OA\Property(property="customer_id", type="integer"),
      *             @OA\Property(property="warehouse_id", type="integer"),
      *             @OA\Property(property="order_date", type="string", format="date"),
-     *             @OA\Property(property="subtotal", type="integer"),
-     *             @OA\Property(property="discount_amount", type="integer"),
-     *             @OA\Property(property="tax_amount", type="integer"),
-     *             @OA\Property(property="total_amount", type="integer")
+     *             @OA\Property(property="items", type="array", @OA\Items(type="object"))
      *         )
      *     ),
      *     @OA\Response(
@@ -162,19 +163,31 @@ class SalesOrderController extends BaseApiController
      */
     public function update(Request $request, SalesOrder $salesOrder): JsonResponse
     {
+        $companyId = activeCompany()->id;
+
         $validated = $request->validate([
-            'customer_id' => ['sometimes', 'exists:customers,id'],
-            'warehouse_id' => ['sometimes', 'exists:warehouses,id'],
+            'customer_id' => ['sometimes', Rule::exists('customers', 'id')->where('company_id', $companyId)],
+            'warehouse_id' => ['sometimes', Rule::exists('warehouses', 'id')->where('company_id', $companyId)],
             'order_date' => ['sometimes', 'date'],
-            'subtotal' => ['sometimes', 'integer', 'min:0'],
-            'discount_amount' => ['nullable', 'integer', 'min:0'],
-            'tax_amount' => ['nullable', 'integer', 'min:0'],
-            'total_amount' => ['sometimes', 'integer', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'terms_conditions' => ['nullable', 'string', 'max:5000'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['nullable', Rule::exists('products', 'id')->where('company_id', $companyId)],
+            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
+            'items.*.unit_price' => ['required', 'integer', 'min:0'],
+            'items.*.description' => ['nullable', 'string'],
+            'items.*.unit' => ['nullable', 'string'],
+            'items.*.discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'items.*.tax_rate' => ['nullable', 'numeric', 'min:0'],
+            'items.*.tax_group_id' => ['nullable', Rule::exists('tax_groups', 'id')->where('company_id', $companyId)],
         ]);
 
-        $salesOrder->update($validated);
+        $items = $validated['items'];
+        unset($validated['items']);
 
-        return $this->success($salesOrder->fresh(), 'Sales order updated');
+        $order = $this->salesService->updateOrder($salesOrder, $validated, $items);
+
+        return $this->success($order->load(['customer', 'warehouse', 'items.product']), __('Sales order updated'));
     }
 
     /**
@@ -195,9 +208,13 @@ class SalesOrderController extends BaseApiController
      */
     public function destroy(SalesOrder $salesOrder): JsonResponse
     {
-        $salesOrder->delete();
+        try {
+            $this->salesService->deleteOrder($salesOrder);
+        } catch (RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
+        }
 
-        return $this->success(null, 'Sales order deleted');
+        return $this->success(null, __('Sales order deleted'));
     }
 
     /**
@@ -221,7 +238,7 @@ class SalesOrderController extends BaseApiController
     {
         $this->salesService->confirmOrder($salesOrder);
 
-        return $this->success($salesOrder->fresh(), 'Sales order confirmed');
+        return $this->success($salesOrder->fresh(), __('Sales order confirmed'));
     }
 
     /**
@@ -245,7 +262,7 @@ class SalesOrderController extends BaseApiController
     {
         $invoice = $this->salesService->convertToInvoice($salesOrder);
 
-        return $this->success($invoice->load(['customer', 'warehouse', 'items.product']), 'Invoice created from sales order', 201);
+        return $this->success($invoice->load(['customer', 'items.product']), __('Invoice created from sales order'), 201);
     }
 
     /**
@@ -269,6 +286,6 @@ class SalesOrderController extends BaseApiController
     {
         $this->salesService->cancelOrder($salesOrder);
 
-        return $this->success($salesOrder->fresh(), 'Sales order cancelled');
+        return $this->success($salesOrder->fresh(), __('Sales order cancelled'));
     }
 }

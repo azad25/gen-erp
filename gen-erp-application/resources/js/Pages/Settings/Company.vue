@@ -114,7 +114,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -142,7 +142,7 @@ const form = ref({
 const fetchSettings = async () => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/company/settings')
+    const response = await api.get('/company/settings')
     form.value = response.data
   } catch (error) {
     console.error('Failed to fetch settings:', error)
@@ -153,7 +153,7 @@ const fetchSettings = async () => {
 
 const saveSettings = async () => {
   try {
-    await axios.put('/api/v1/company/settings', form.value)
+    await api.put('/company/settings', form.value)
     alert('Settings saved successfully!')
   } catch (error) {
     console.error('Failed to save settings:', error)

@@ -36,6 +36,7 @@ class DepartmentController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $departments = Department::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->orderBy('name')
             ->paginate($request->integer('per_page', 15));
@@ -96,11 +97,11 @@ class DepartmentController extends BaseApiController
             'description' => ['nullable', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $department = Department::create($validated);
 
-        return $this->success($department, 'Department created', 201);
+        return $this->success($department, __('Department created'), 201);
     }
 
     /**
@@ -136,7 +137,7 @@ class DepartmentController extends BaseApiController
 
         $department->update($validated);
 
-        return $this->success($department->fresh(), 'Department updated');
+        return $this->success($department->fresh(), __('Department updated'));
     }
 
     /**
@@ -159,6 +160,6 @@ class DepartmentController extends BaseApiController
     {
         $department->delete();
 
-        return $this->success(null, 'Department deleted');
+        return $this->success(null, __('Department deleted'));
     }
 }

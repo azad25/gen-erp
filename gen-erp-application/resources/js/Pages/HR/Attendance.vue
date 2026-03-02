@@ -127,7 +127,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -165,7 +165,7 @@ const columns = [
 const fetchAttendance = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/attendance', {
+    const response = await api.get('/attendance', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     attendance.value = response.data.data
@@ -179,7 +179,7 @@ const fetchAttendance = async (page = 1) => {
 
 const fetchEmployees = async () => {
   try {
-    const response = await axios.get('/api/v1/employees', { params: { per_page: 100 } })
+    const response = await api.get('/employees', { params: { per_page: 100 } })
     employees.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch employees:', error)
@@ -209,7 +209,7 @@ const viewAttendance = (attendance) => {
 
 const handleSubmit = async () => {
   try {
-    await axios.post('/api/v1/attendance', form.value)
+    await api.post('/attendance', form.value)
     closeModal()
     fetchAttendance(pagination.value.current_page)
   } catch (error) {
@@ -220,7 +220,7 @@ const handleSubmit = async () => {
 const deleteAttendance = async (attendance) => {
   if (!confirm('Are you sure you want to delete this attendance record?')) return
   try {
-    await axios.delete(`/api/v1/attendance/${attendance.id}`)
+    await api.delete(`/attendance/${attendance.id}`)
     fetchAttendance(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete attendance:', error)

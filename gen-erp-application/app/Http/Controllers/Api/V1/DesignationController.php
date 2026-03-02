@@ -36,6 +36,7 @@ class DesignationController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $designations = Designation::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->orderBy('name')
             ->paginate($request->integer('per_page', 15));
@@ -94,11 +95,11 @@ class DesignationController extends BaseApiController
             'description' => ['nullable', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $designation = Designation::create($validated);
 
-        return $this->success($designation, 'Designation created', 201);
+        return $this->success($designation, __('Designation created'), 201);
     }
 
     /**
@@ -134,7 +135,7 @@ class DesignationController extends BaseApiController
 
         $designation->update($validated);
 
-        return $this->success($designation->fresh(), 'Designation updated');
+        return $this->success($designation->fresh(), __('Designation updated'));
     }
 
     /**
@@ -157,6 +158,6 @@ class DesignationController extends BaseApiController
     {
         $designation->delete();
 
-        return $this->success(null, 'Designation deleted');
+        return $this->success(null, __('Designation deleted'));
     }
 }

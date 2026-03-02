@@ -139,7 +139,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -179,7 +179,7 @@ const columns = [
 const fetchReturns = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/purchase-returns', {
+    const response = await api.get('/purchase-returns', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     returns.value = response.data.data
@@ -193,7 +193,7 @@ const fetchReturns = async (page = 1) => {
 
 const fetchSuppliers = async () => {
   try {
-    const response = await axios.get('/api/v1/suppliers', { params: { per_page: 100 } })
+    const response = await api.get('/suppliers', { params: { per_page: 100 } })
     suppliers.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch suppliers:', error)
@@ -202,7 +202,7 @@ const fetchSuppliers = async () => {
 
 const fetchPurchaseOrders = async () => {
   try {
-    const response = await axios.get('/api/v1/purchase-orders', { params: { per_page: 100 } })
+    const response = await api.get('/purchase-orders', { params: { per_page: 100 } })
     purchaseOrders.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch purchase orders:', error)
@@ -247,9 +247,9 @@ const viewReturn = (returnItem) => {
 const handleSubmit = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`/api/v1/purchase-returns/${selectedReturn.value.id}`, form.value)
+      await api.put(`/purchase-returns/${selectedReturn.value.id}`, form.value)
     } else {
-      await axios.post('/api/v1/purchase-returns', form.value)
+      await api.post('/purchase-returns', form.value)
     }
     closeModal()
     fetchReturns(pagination.value.current_page)
@@ -261,7 +261,7 @@ const handleSubmit = async () => {
 const approveReturn = async (returnItem) => {
   if (!confirm('Are you sure you want to approve this return?')) return
   try {
-    await axios.post(`/api/v1/purchase-returns/${returnItem.id}/approve`)
+    await api.post(`/purchase-returns/${returnItem.id}/approve`)
     fetchReturns(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to approve return:', error)
@@ -271,7 +271,7 @@ const approveReturn = async (returnItem) => {
 const rejectReturn = async (returnItem) => {
   if (!confirm('Are you sure you want to reject this return?')) return
   try {
-    await axios.post(`/api/v1/purchase-returns/${returnItem.id}/reject`)
+    await api.post(`/purchase-returns/${returnItem.id}/reject`)
     fetchReturns(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to reject return:', error)
@@ -281,7 +281,7 @@ const rejectReturn = async (returnItem) => {
 const deleteReturn = async (returnItem) => {
   if (!confirm('Are you sure you want to delete this return?')) return
   try {
-    await axios.delete(`/api/v1/purchase-returns/${returnItem.id}`)
+    await api.delete(`/purchase-returns/${returnItem.id}`)
     fetchReturns(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete return:', error)

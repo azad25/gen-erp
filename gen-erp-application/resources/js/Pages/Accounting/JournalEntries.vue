@@ -145,7 +145,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -182,7 +182,7 @@ const columns = [
 const fetchEntries = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/journal-entries', {
+    const response = await api.get('/journal-entries', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     entries.value = response.data.data
@@ -196,7 +196,7 @@ const fetchEntries = async (page = 1) => {
 
 const fetchAccounts = async () => {
   try {
-    const response = await axios.get('/api/v1/accounts', { params: { per_page: 100 } })
+    const response = await api.get('/accounts', { params: { per_page: 100 } })
     accounts.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch accounts:', error)
@@ -233,7 +233,7 @@ const viewEntry = (entry) => {
 
 const handleSubmit = async () => {
   try {
-    await axios.post('/api/v1/journal-entries', form.value)
+    await api.post('/journal-entries', form.value)
     closeModal()
     fetchEntries(pagination.value.current_page)
   } catch (error) {
@@ -244,7 +244,7 @@ const handleSubmit = async () => {
 const postEntry = async (entry) => {
   if (!confirm('Are you sure you want to post this entry?')) return
   try {
-    await axios.post(`/api/v1/journal-entries/${entry.id}/post`)
+    await api.post(`/journal-entries/${entry.id}/post`)
     fetchEntries(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to post entry:', error)
@@ -254,7 +254,7 @@ const postEntry = async (entry) => {
 const deleteEntry = async (entry) => {
   if (!confirm('Are you sure you want to delete this entry?')) return
   try {
-    await axios.delete(`/api/v1/journal-entries/${entry.id}`)
+    await api.delete(`/journal-entries/${entry.id}`)
     fetchEntries(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete entry:', error)

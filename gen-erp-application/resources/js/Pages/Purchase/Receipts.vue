@@ -160,7 +160,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -201,7 +201,7 @@ const columns = [
 const fetchReceipts = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/goods-receipts', {
+    const response = await api.get('/goods-receipts', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     receipts.value = response.data.data
@@ -215,7 +215,7 @@ const fetchReceipts = async (page = 1) => {
 
 const fetchSuppliers = async () => {
   try {
-    const response = await axios.get('/api/v1/suppliers', { params: { per_page: 100 } })
+    const response = await api.get('/suppliers', { params: { per_page: 100 } })
     suppliers.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch suppliers:', error)
@@ -224,7 +224,7 @@ const fetchSuppliers = async () => {
 
 const fetchWarehouses = async () => {
   try {
-    const response = await axios.get('/api/v1/warehouses', { params: { per_page: 100 } })
+    const response = await api.get('/warehouses', { params: { per_page: 100 } })
     warehouses.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch warehouses:', error)
@@ -233,7 +233,7 @@ const fetchWarehouses = async () => {
 
 const fetchProducts = async () => {
   try {
-    const response = await axios.get('/api/v1/products', { params: { per_page: 100 } })
+    const response = await api.get('/products', { params: { per_page: 100 } })
     products.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch products:', error)
@@ -242,7 +242,7 @@ const fetchProducts = async () => {
 
 const fetchPurchaseOrders = async () => {
   try {
-    const response = await axios.get('/api/v1/purchase-orders', { params: { per_page: 100 } })
+    const response = await api.get('/purchase-orders', { params: { per_page: 100 } })
     purchaseOrders.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch purchase orders:', error)
@@ -298,9 +298,9 @@ const removeItem = (index) => {
 const handleSubmit = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`/api/v1/goods-receipts/${selectedReceipt.value.id}`, form.value)
+      await api.put(`/goods-receipts/${selectedReceipt.value.id}`, form.value)
     } else {
-      await axios.post('/api/v1/goods-receipts', form.value)
+      await api.post('/goods-receipts', form.value)
     }
     closeModal()
     fetchReceipts(pagination.value.current_page)
@@ -312,7 +312,7 @@ const handleSubmit = async () => {
 const confirmReceipt = async (receipt) => {
   if (!confirm('Are you sure you want to confirm this receipt?')) return
   try {
-    await axios.post(`/api/v1/goods-receipts/${receipt.id}/confirm`)
+    await api.post(`/goods-receipts/${receipt.id}/confirm`)
     fetchReceipts(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to confirm receipt:', error)
@@ -322,7 +322,7 @@ const confirmReceipt = async (receipt) => {
 const deleteReceipt = async (receipt) => {
   if (!confirm('Are you sure you want to delete this receipt?')) return
   try {
-    await axios.delete(`/api/v1/goods-receipts/${receipt.id}`)
+    await api.delete(`/goods-receipts/${receipt.id}`)
     fetchReceipts(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete receipt:', error)

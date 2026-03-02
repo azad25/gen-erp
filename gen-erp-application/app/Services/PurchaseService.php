@@ -23,6 +23,41 @@ class PurchaseService
         private readonly ContactService $contactService,
     ) {}
 
+    /**
+     * Paginated purchase order listing with filters.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function paginateOrders(Company $company, array $filters = [], int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return PurchaseOrder::query()
+            ->where('company_id', $company->id)
+            ->when($filters['search'] ?? null, fn ($q, $s) => $q->where(function ($q) use ($s): void {
+                $q->where('order_number', 'LIKE', "%{$s}%")
+                    ->orWhere('reference', 'LIKE', "%{$s}%");
+            }))
+            ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
+            ->when($filters['supplier_id'] ?? null, fn ($q, $id) => $q->where('supplier_id', $id))
+            ->with(['supplier', 'items.product'])
+            ->orderBy('order_date', 'desc')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Delete a purchase order — only allowed for draft or cancelled orders.
+     *
+     * @throws RuntimeException
+     */
+    public function deleteOrder(PurchaseOrder $order): void
+    {
+        if (! in_array($order->status, [PurchaseOrderStatus::DRAFT, PurchaseOrderStatus::CANCELLED], true)) {
+            throw new RuntimeException(__('Only draft or cancelled orders can be deleted.'));
+        }
+
+        $order->items()->delete();
+        $order->delete();
+    }
+
     public function createOrder(Company $company, array $data, array $items, array $customFields = []): PurchaseOrder
     {
         return DB::transaction(function () use ($company, $data, $items, $customFields): PurchaseOrder {

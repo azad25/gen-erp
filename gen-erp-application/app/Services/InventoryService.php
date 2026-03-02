@@ -230,6 +230,24 @@ class InventoryService
     }
 
     /**
+     * Paginated stock movement listing with filters.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function paginateMovements(Company $company, array $filters = [], int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return StockMovement::query()
+            ->where('company_id', $company->id)
+            ->when($filters['search'] ?? null, fn ($q, $s) => $q->where('reference', 'LIKE', "%{$s}%"))
+            ->when($filters['movement_type'] ?? null, fn ($q, $t) => $q->where('movement_type', $t))
+            ->when($filters['product_id'] ?? null, fn ($q, $id) => $q->where('product_id', $id))
+            ->when($filters['warehouse_id'] ?? null, fn ($q, $id) => $q->where('warehouse_id', $id))
+            ->with(['product', 'warehouse'])
+            ->orderBy('movement_date', 'desc')
+            ->paginate($perPage);
+    }
+
+    /**
      * Stock valuation report data.
      *
      * @return array<int, array{product_id: int, product_name: string, sku: string|null, warehouse: string, quantity: float, avg_cost: int, total_value: int}>

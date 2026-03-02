@@ -123,7 +123,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -160,7 +160,7 @@ const columns = [
 const fetchPayrolls = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/payroll', {
+    const response = await api.get('/payroll', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     payrolls.value = response.data.data
@@ -174,7 +174,7 @@ const fetchPayrolls = async (page = 1) => {
 
 const fetchEmployees = async () => {
   try {
-    const response = await axios.get('/api/v1/employees', { params: { per_page: 100 } })
+    const response = await api.get('/employees', { params: { per_page: 100 } })
     employees.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch employees:', error)
@@ -203,7 +203,7 @@ const viewPayroll = (payroll) => {
 
 const handleSubmit = async () => {
   try {
-    await axios.post('/api/v1/payroll', form.value)
+    await api.post('/payroll', form.value)
     closeModal()
     fetchPayrolls(pagination.value.current_page)
   } catch (error) {
@@ -214,7 +214,7 @@ const handleSubmit = async () => {
 const processPayroll = async (payroll) => {
   if (!confirm('Are you sure you want to process this payroll?')) return
   try {
-    await axios.post(`/api/v1/payroll/${payroll.id}/process`)
+    await api.post(`/payroll/${payroll.id}/process`)
     fetchPayrolls(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to process payroll:', error)

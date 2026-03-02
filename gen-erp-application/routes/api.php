@@ -49,7 +49,7 @@ use Illuminate\Support\Facades\Route;
 | All routes use Sanctum token auth and the standard response envelope.
 */
 
-Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
+Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api', 'ensure.company'])->group(function (): void {
 
     // Users (Admin Panel)
     Route::apiResource('users', UserController::class);

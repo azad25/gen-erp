@@ -35,7 +35,7 @@ class NotificationController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $notifications = Notification::query()
-            ->where('user_id', auth()->id())
+            ->where('company_id', activeCompany()->id)            ->where('user_id', auth()->id())
             ->orderBy('created_at', 'desc')
             ->paginate($request->integer('per_page', 15));
 

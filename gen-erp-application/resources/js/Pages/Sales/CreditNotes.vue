@@ -138,7 +138,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -178,7 +178,7 @@ const columns = [
 const fetchCreditNotes = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/credit-notes', {
+    const response = await api.get('/credit-notes', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     creditNotes.value = response.data.data
@@ -192,7 +192,7 @@ const fetchCreditNotes = async (page = 1) => {
 
 const fetchCustomers = async () => {
   try {
-    const response = await axios.get('/api/v1/customers', { params: { per_page: 100 } })
+    const response = await api.get('/customers', { params: { per_page: 100 } })
     customers.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch customers:', error)
@@ -201,7 +201,7 @@ const fetchCustomers = async () => {
 
 const fetchInvoices = async () => {
   try {
-    const response = await axios.get('/api/v1/invoices', { params: { per_page: 100 } })
+    const response = await api.get('/invoices', { params: { per_page: 100 } })
     invoices.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch invoices:', error)
@@ -246,9 +246,9 @@ const viewCreditNote = (creditNote) => {
 const handleSubmit = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`/api/v1/credit-notes/${selectedCreditNote.value.id}`, form.value)
+      await api.put(`/credit-notes/${selectedCreditNote.value.id}`, form.value)
     } else {
-      await axios.post('/api/v1/credit-notes', form.value)
+      await api.post('/credit-notes', form.value)
     }
     closeModal()
     fetchCreditNotes(pagination.value.current_page)
@@ -260,7 +260,7 @@ const handleSubmit = async () => {
 const approveCreditNote = async (creditNote) => {
   if (!confirm('Are you sure you want to approve this credit note?')) return
   try {
-    await axios.post(`/api/v1/credit-notes/${creditNote.id}/approve`)
+    await api.post(`/credit-notes/${creditNote.id}/approve`)
     fetchCreditNotes(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to approve credit note:', error)
@@ -270,7 +270,7 @@ const approveCreditNote = async (creditNote) => {
 const deleteCreditNote = async (creditNote) => {
   if (!confirm('Are you sure you want to delete this credit note?')) return
   try {
-    await axios.delete(`/api/v1/credit-notes/${creditNote.id}`)
+    await api.delete(`/credit-notes/${creditNote.id}`)
     fetchCreditNotes(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete credit note:', error)

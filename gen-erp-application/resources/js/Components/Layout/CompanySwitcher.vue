@@ -49,10 +49,15 @@ const switchCompany = (companyId) => {
     return
   }
   
+  // Update sessionStorage for API calls
+  sessionStorage.setItem('active_company_id', companyId)
+  
   router.post(`/app/switch-company/${companyId}`, {}, {
     preserveScroll: true,
     onSuccess: () => {
       open.value = false
+      // Reload the page to refresh all data with new company context
+      window.location.reload()
     }
   })
 }

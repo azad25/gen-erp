@@ -162,7 +162,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -204,7 +204,7 @@ const columns = [
 const fetchProducts = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/products', {
+    const response = await api.get('/products', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     products.value = response.data.data
@@ -218,7 +218,7 @@ const fetchProducts = async (page = 1) => {
 
 const fetchCategories = async () => {
   try {
-    const response = await axios.get('/api/v1/product-categories', { params: { per_page: 100 } })
+    const response = await api.get('/product-categories', { params: { per_page: 100 } })
     categories.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch categories:', error)
@@ -227,7 +227,7 @@ const fetchCategories = async () => {
 
 const fetchTaxGroups = async () => {
   try {
-    const response = await axios.get('/api/v1/tax-groups', { params: { per_page: 100 } })
+    const response = await api.get('/tax-groups', { params: { per_page: 100 } })
     taxGroups.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch tax groups:', error)
@@ -278,9 +278,9 @@ const viewProduct = (product) => {
 const handleSubmit = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`/api/v1/products/${selectedProduct.value.id}`, form.value)
+      await api.put(`/products/${selectedProduct.value.id}`, form.value)
     } else {
-      await axios.post('/api/v1/products', form.value)
+      await api.post('/products', form.value)
     }
     closeModal()
     fetchProducts(pagination.value.current_page)
@@ -292,7 +292,7 @@ const handleSubmit = async () => {
 const deleteProduct = async (product) => {
   if (!confirm('Are you sure you want to delete this product?')) return
   try {
-    await axios.delete(`/api/v1/products/${product.id}`)
+    await api.delete(`/products/${product.id}`)
     fetchProducts(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete product:', error)

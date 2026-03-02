@@ -36,6 +36,7 @@ class AccountGroupController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $groups = AccountGroup::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->orderBy('name')
             ->paginate($request->integer('per_page', 15));
@@ -98,11 +99,11 @@ class AccountGroupController extends BaseApiController
             'description' => ['nullable', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $group = AccountGroup::create($validated);
 
-        return $this->success($group, 'Account group created', 201);
+        return $this->success($group, __('Account group created'), 201);
     }
 
     /**
@@ -140,7 +141,7 @@ class AccountGroupController extends BaseApiController
 
         $accountGroup->update($validated);
 
-        return $this->success($accountGroup->fresh(), 'Account group updated');
+        return $this->success($accountGroup->fresh(), __('Account group updated'));
     }
 
     /**
@@ -163,6 +164,6 @@ class AccountGroupController extends BaseApiController
     {
         $accountGroup->delete();
 
-        return $this->success(null, 'Account group deleted');
+        return $this->success(null, __('Account group deleted'));
     }
 }

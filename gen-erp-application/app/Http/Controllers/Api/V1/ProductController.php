@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Requests\Api\V1\StoreProductRequest;
+use App\Http\Requests\Api\V1\UpdateProductRequest;
 use App\Models\Product;
+use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 /**
  * @OA\Tag(
@@ -15,14 +19,18 @@ use Illuminate\Http\Request;
  */
 class ProductController extends BaseApiController
 {
+    public function __construct(
+        private readonly ProductService $productService
+    ) {}
+
     /**
      * @OA\Get(
      *     path="/products",
      *     summary="List all products",
      *     tags={"Products"},
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="product_type", in="query", description="Product type", @OA\Schema(type="string")),
      *     @OA\Parameter(name="category_id", in="query", description="Category ID", @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="active_only", in="query", description="Active only", @OA\Schema(type="boolean")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
      *     @OA\Response(
      *         response=200,
@@ -37,12 +45,11 @@ class ProductController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
-        $products = Product::query()
-            ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
-            ->when($request->get('category_id'), fn ($q, $c) => $q->where('category_id', $c))
-            ->when($request->boolean('active_only'), fn ($q) => $q->where('is_active', true))
-            ->orderBy('name')
-            ->paginate($request->integer('per_page', 15));
+        $products = $this->productService->paginate(
+            activeCompany(),
+            $request->only(['search', 'product_type', 'category_id', 'is_active']),
+            $request->integer('per_page', 15),
+        );
 
         return $this->paginated($products);
     }
@@ -65,7 +72,9 @@ class ProductController extends BaseApiController
      */
     public function show(Product $product): JsonResponse
     {
-        return $this->success($product->load(['category', 'taxGroup']));
+        $product->load(['category', 'taxGroup', 'variants']);
+
+        return $this->success($product);
     }
 
     /**
@@ -78,13 +87,10 @@ class ProductController extends BaseApiController
      *         @OA\JsonContent(
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="sku", type="string"),
-     *             @OA\Property(property="cost_price", type="integer"),
-     *             @OA\Property(property="selling_price", type="integer"),
-     *             @OA\Property(property="category_id", type="integer"),
-     *             @OA\Property(property="tax_group_id", type="integer"),
      *             @OA\Property(property="product_type", type="string"),
-     *             @OA\Property(property="unit", type="string"),
-     *             @OA\Property(property="is_active", type="boolean")
+     *             @OA\Property(property="category_id", type="integer"),
+     *             @OA\Property(property="selling_price", type="integer"),
+     *             @OA\Property(property="purchase_price", type="integer")
      *         )
      *     ),
      *     @OA\Response(
@@ -98,24 +104,19 @@ class ProductController extends BaseApiController
      *     )
      * )
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreProductRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'sku' => ['nullable', 'string', 'max:100'],
-            'cost_price' => ['required', 'integer', 'min:0'],
-            'selling_price' => ['required', 'integer', 'min:0'],
-            'category_id' => ['nullable', 'integer', 'exists:product_categories,id'],
-            'tax_group_id' => ['nullable', 'integer', 'exists:tax_groups,id'],
-            'product_type' => ['nullable', 'string'],
-            'unit' => ['nullable', 'string', 'max:50'],
-            'is_active' => ['boolean'],
-        ]);
+        $validated = $request->validated();
+        $customFields = $validated['custom_fields'] ?? [];
+        unset($validated['custom_fields']);
 
-        $validated['company_id'] = activeCompany()?->id;
-        $product = Product::create($validated);
+        $product = $this->productService->create(
+            activeCompany(),
+            $validated,
+            $customFields,
+        );
 
-        return $this->success($product, 'Product created', 201);
+        return $this->success($product->load(['category', 'taxGroup']), __('Product created'), 201);
     }
 
     /**
@@ -129,11 +130,8 @@ class ProductController extends BaseApiController
      *         @OA\JsonContent(
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="sku", type="string"),
-     *             @OA\Property(property="cost_price", type="integer"),
      *             @OA\Property(property="selling_price", type="integer"),
-     *             @OA\Property(property="category_id", type="integer"),
-     *             @OA\Property(property="tax_group_id", type="integer"),
-     *             @OA\Property(property="is_active", type="boolean")
+     *             @OA\Property(property="purchase_price", type="integer")
      *         )
      *     ),
      *     @OA\Response(
@@ -147,21 +145,19 @@ class ProductController extends BaseApiController
      *     )
      * )
      */
-    public function update(Request $request, Product $product): JsonResponse
+    public function update(UpdateProductRequest $request, Product $product): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'sku' => ['nullable', 'string', 'max:100'],
-            'cost_price' => ['sometimes', 'integer', 'min:0'],
-            'selling_price' => ['sometimes', 'integer', 'min:0'],
-            'category_id' => ['nullable', 'integer', 'exists:product_categories,id'],
-            'tax_group_id' => ['nullable', 'integer', 'exists:tax_groups,id'],
-            'is_active' => ['boolean'],
-        ]);
+        $validated = $request->validated();
+        $customFields = $validated['custom_fields'] ?? [];
+        unset($validated['custom_fields']);
 
-        $product->update($validated);
+        $product = $this->productService->update(
+            $product,
+            $validated,
+            $customFields,
+        );
 
-        return $this->success($product->fresh(), 'Product updated');
+        return $this->success($product->load(['category', 'taxGroup']), __('Product updated'));
     }
 
     /**
@@ -182,8 +178,12 @@ class ProductController extends BaseApiController
      */
     public function destroy(Product $product): JsonResponse
     {
-        $product->delete();
+        try {
+            $this->productService->delete($product);
+        } catch (RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
+        }
 
-        return $this->success(null, 'Product deleted');
+        return $this->success(null, __('Product deleted'));
     }
 }

@@ -177,7 +177,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -219,7 +219,7 @@ const columns = [
 const fetchOrders = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/purchase-orders', {
+    const response = await api.get('/purchase-orders', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     orders.value = response.data.data
@@ -233,7 +233,7 @@ const fetchOrders = async (page = 1) => {
 
 const fetchSuppliers = async () => {
   try {
-    const response = await axios.get('/api/v1/suppliers', { params: { per_page: 100 } })
+    const response = await api.get('/suppliers', { params: { per_page: 100 } })
     suppliers.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch suppliers:', error)
@@ -242,7 +242,7 @@ const fetchSuppliers = async () => {
 
 const fetchWarehouses = async () => {
   try {
-    const response = await axios.get('/api/v1/warehouses', { params: { per_page: 100 } })
+    const response = await api.get('/warehouses', { params: { per_page: 100 } })
     warehouses.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch warehouses:', error)
@@ -251,7 +251,7 @@ const fetchWarehouses = async () => {
 
 const fetchProducts = async () => {
   try {
-    const response = await axios.get('/api/v1/products', { params: { per_page: 100 } })
+    const response = await api.get('/products', { params: { per_page: 100 } })
     products.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch products:', error)
@@ -310,9 +310,9 @@ const removeItem = (index) => {
 const handleSubmit = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`/api/v1/purchase-orders/${selectedOrder.value.id}`, form.value)
+      await api.put(`/purchase-orders/${selectedOrder.value.id}`, form.value)
     } else {
-      await axios.post('/api/v1/purchase-orders', form.value)
+      await api.post('/purchase-orders', form.value)
     }
     closeModal()
     fetchOrders(pagination.value.current_page)
@@ -324,7 +324,7 @@ const handleSubmit = async () => {
 const confirmOrder = async (order) => {
   if (!confirm('Are you sure you want to confirm this order?')) return
   try {
-    await axios.post(`/api/v1/purchase-orders/${order.id}/confirm`)
+    await api.post(`/purchase-orders/${order.id}/confirm`)
     fetchOrders(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to confirm order:', error)
@@ -334,7 +334,7 @@ const confirmOrder = async (order) => {
 const cancelOrder = async (order) => {
   if (!confirm('Are you sure you want to cancel this order?')) return
   try {
-    await axios.post(`/api/v1/purchase-orders/${order.id}/cancel`)
+    await api.post(`/purchase-orders/${order.id}/cancel`)
     fetchOrders(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to cancel order:', error)
@@ -344,7 +344,7 @@ const cancelOrder = async (order) => {
 const deleteOrder = async (order) => {
   if (!confirm('Are you sure you want to delete this order?')) return
   try {
-    await axios.delete(`/api/v1/purchase-orders/${order.id}`)
+    await api.delete(`/purchase-orders/${order.id}`)
     fetchOrders(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete order:', error)

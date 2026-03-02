@@ -36,6 +36,7 @@ class TaxGroupController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $taxGroups = TaxGroup::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->orderBy('name')
             ->paginate($request->integer('per_page', 15));
@@ -96,11 +97,11 @@ class TaxGroupController extends BaseApiController
             'description' => ['nullable', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $taxGroup = TaxGroup::create($validated);
 
-        return $this->success($taxGroup, 'Tax group created', 201);
+        return $this->success($taxGroup, __('Tax group created'), 201);
     }
 
     /**
@@ -138,7 +139,7 @@ class TaxGroupController extends BaseApiController
 
         $taxGroup->update($validated);
 
-        return $this->success($taxGroup->fresh(), 'Tax group updated');
+        return $this->success($taxGroup->fresh(), __('Tax group updated'));
     }
 
     /**
@@ -161,6 +162,6 @@ class TaxGroupController extends BaseApiController
     {
         $taxGroup->delete();
 
-        return $this->success(null, 'Tax group deleted');
+        return $this->success(null, __('Tax group deleted'));
     }
 }

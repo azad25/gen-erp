@@ -155,7 +155,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -196,7 +196,7 @@ const columns = [
 const fetchEmployees = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/employees', {
+    const response = await api.get('/employees', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     employees.value = response.data.data
@@ -254,9 +254,9 @@ const viewEmployee = (employee) => {
 const handleSubmit = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`/api/v1/employees/${selectedEmployee.value.id}`, form.value)
+      await api.put(`/employees/${selectedEmployee.value.id}`, form.value)
     } else {
-      await axios.post('/api/v1/employees', form.value)
+      await api.post('/employees', form.value)
     }
     closeModal()
     fetchEmployees(pagination.value.current_page)
@@ -268,7 +268,7 @@ const handleSubmit = async () => {
 const deleteEmployee = async (employee) => {
   if (!confirm('Are you sure you want to delete this employee?')) return
   try {
-    await axios.delete(`/api/v1/employees/${employee.id}`)
+    await api.delete(`/employees/${employee.id}`)
     fetchEmployees(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete employee:', error)

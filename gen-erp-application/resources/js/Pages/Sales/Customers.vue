@@ -151,7 +151,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -191,7 +191,7 @@ const columns = [
 const fetchCustomers = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/customers', {
+    const response = await api.get('/customers', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     customers.value = response.data.data
@@ -247,9 +247,9 @@ const viewCustomer = (customer) => {
 const handleSubmit = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`/api/v1/customers/${selectedCustomer.value.id}`, form.value)
+      await api.put(`/customers/${selectedCustomer.value.id}`, form.value)
     } else {
-      await axios.post('/api/v1/customers', form.value)
+      await api.post('/customers', form.value)
     }
     closeModal()
     fetchCustomers(pagination.value.current_page)
@@ -261,7 +261,7 @@ const handleSubmit = async () => {
 const deleteCustomer = async (customer) => {
   if (!confirm('Are you sure you want to delete this customer?')) return
   try {
-    await axios.delete(`/api/v1/customers/${customer.id}`)
+    await api.delete(`/customers/${customer.id}`)
     fetchCustomers(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete customer:', error)

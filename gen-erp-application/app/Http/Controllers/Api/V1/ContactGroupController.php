@@ -36,6 +36,7 @@ class ContactGroupController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $groups = ContactGroup::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->orderBy('name')
             ->paginate($request->integer('per_page', 15));
@@ -96,11 +97,11 @@ class ContactGroupController extends BaseApiController
             'description' => ['nullable', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $group = ContactGroup::create($validated);
 
-        return $this->success($group, 'Contact group created', 201);
+        return $this->success($group, __('Contact group created'), 201);
     }
 
     /**
@@ -136,7 +137,7 @@ class ContactGroupController extends BaseApiController
 
         $contactGroup->update($validated);
 
-        return $this->success($contactGroup->fresh(), 'Contact group updated');
+        return $this->success($contactGroup->fresh(), __('Contact group updated'));
     }
 
     /**
@@ -159,6 +160,6 @@ class ContactGroupController extends BaseApiController
     {
         $contactGroup->delete();
 
-        return $this->success(null, 'Contact group deleted');
+        return $this->success(null, __('Contact group deleted'));
     }
 }

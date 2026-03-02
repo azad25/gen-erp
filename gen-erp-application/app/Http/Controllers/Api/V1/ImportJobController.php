@@ -36,7 +36,7 @@ class ImportJobController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $jobs = ImportJob::query()
-            ->where('company_id', activeCompany()?->id)
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('status'), fn ($q, $s) => $q->where('status', $s))
             ->orderBy('created_at', 'desc')
             ->paginate($request->integer('per_page', 15));

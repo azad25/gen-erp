@@ -128,7 +128,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -165,7 +165,7 @@ const columns = [
 const fetchAccounts = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/accounts', {
+    const response = await api.get('/accounts', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     accounts.value = response.data.data
@@ -215,9 +215,9 @@ const viewAccount = (account) => {
 const handleSubmit = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`/api/v1/accounts/${selectedAccount.value.id}`, form.value)
+      await api.put(`/accounts/${selectedAccount.value.id}`, form.value)
     } else {
-      await axios.post('/api/v1/accounts', form.value)
+      await api.post('/accounts', form.value)
     }
     closeModal()
     fetchAccounts(pagination.value.current_page)
@@ -229,7 +229,7 @@ const handleSubmit = async () => {
 const deleteAccount = async (account) => {
   if (!confirm('Are you sure you want to delete this account?')) return
   try {
-    await axios.delete(`/api/v1/accounts/${account.id}`)
+    await api.delete(`/accounts/${account.id}`)
     fetchAccounts(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to delete account:', error)

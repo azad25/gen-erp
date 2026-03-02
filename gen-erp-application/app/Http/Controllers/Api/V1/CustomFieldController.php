@@ -37,6 +37,7 @@ class CustomFieldController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $fields = CustomField::query()
+            ->where('company_id', activeCompany()->id)
             ->when($request->get('entity_type'), fn ($q, $s) => $q->where('entity_type', $s))
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->orderBy('name')
@@ -106,11 +107,11 @@ class CustomFieldController extends BaseApiController
             'validation_rules' => ['nullable', 'array'],
         ]);
 
-        $validated['company_id'] = activeCompany()?->id;
+        $validated['company_id'] = activeCompany()->id;
 
         $field = CustomField::create($validated);
 
-        return $this->success($field, 'Custom field created', 201);
+        return $this->success($field, __('Custom field created'), 201);
     }
 
     /**
@@ -154,7 +155,7 @@ class CustomFieldController extends BaseApiController
 
         $customField->update($validated);
 
-        return $this->success($customField->fresh(), 'Custom field updated');
+        return $this->success($customField->fresh(), __('Custom field updated'));
     }
 
     /**
@@ -177,6 +178,6 @@ class CustomFieldController extends BaseApiController
     {
         $customField->delete();
 
-        return $this->success(null, 'Custom field deleted');
+        return $this->success(null, __('Custom field deleted'));
     }
 }

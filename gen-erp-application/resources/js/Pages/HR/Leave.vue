@@ -132,7 +132,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/Services/api.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import AdminLayout from '@/Components/layout/AdminLayout.vue'
@@ -170,7 +170,7 @@ const columns = [
 const fetchLeaves = async (page = 1) => {
   loading.value = true
   try {
-    const response = await axios.get('/api/v1/leave-requests', {
+    const response = await api.get('/leave-requests', {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     leaves.value = response.data.data
@@ -184,7 +184,7 @@ const fetchLeaves = async (page = 1) => {
 
 const fetchEmployees = async () => {
   try {
-    const response = await axios.get('/api/v1/employees', { params: { per_page: 100 } })
+    const response = await api.get('/employees', { params: { per_page: 100 } })
     employees.value = response.data.data
   } catch (error) {
     console.error('Failed to fetch employees:', error)
@@ -214,7 +214,7 @@ const viewLeave = (leave) => {
 
 const handleSubmit = async () => {
   try {
-    await axios.post('/api/v1/leave-requests', form.value)
+    await api.post('/leave-requests', form.value)
     closeModal()
     fetchLeaves(pagination.value.current_page)
   } catch (error) {
@@ -225,7 +225,7 @@ const handleSubmit = async () => {
 const approveLeave = async (leave) => {
   if (!confirm('Are you sure you want to approve this leave request?')) return
   try {
-    await axios.post(`/api/v1/leave-requests/${leave.id}/approve`)
+    await api.post(`/leave-requests/${leave.id}/approve`)
     fetchLeaves(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to approve leave:', error)
@@ -235,7 +235,7 @@ const approveLeave = async (leave) => {
 const rejectLeave = async (leave) => {
   if (!confirm('Are you sure you want to reject this leave request?')) return
   try {
-    await axios.post(`/api/v1/leave-requests/${leave.id}/reject`)
+    await api.post(`/leave-requests/${leave.id}/reject`)
     fetchLeaves(pagination.value.current_page)
   } catch (error) {
     console.error('Failed to reject leave:', error)
