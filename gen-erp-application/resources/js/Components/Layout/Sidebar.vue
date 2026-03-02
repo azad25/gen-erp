@@ -1,12 +1,12 @@
 <template>
-  <aside :class="['fixed inset-y-0 z-50 flex flex-col bg-boxdark transition-transform duration-300 lg:static lg:inset-auto', open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0']">
+  <aside :class="['fixed inset-y-0 z-50 flex flex-col bg-white dark:bg-boxdark transition-transform duration-300 lg:static lg:inset-auto border-r border-gray-200 dark:border-white/8', open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0']">
     <div class="flex flex-col h-full w-[260px]">
       <!-- Logo -->
-      <div class="flex items-center gap-3 px-5 py-4 border-b border-white/8">
+      <div class="flex items-center gap-3 px-5 py-4 border-b border-gray-200 dark:border-white/8">
         <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-lg font-bold">G</div>
         <div>
-          <h1 class="text-white text-sm font-bold tracking-tight">GenERP BD</h1>
-          <p class="text-white/30 text-[10px] font-mono">Enterprise Resource Planning</p>
+          <h1 class="text-gray-900 dark:text-white text-sm font-bold tracking-tight">GenERP BD</h1>
+          <p class="text-gray-500 dark:text-white/30 text-[10px] font-mono">Enterprise Resource Planning</p>
         </div>
       </div>
 
@@ -19,7 +19,7 @@
       <nav class="flex-1 overflow-y-auto px-3 py-2 space-y-4">
         <!-- Main -->
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Main</p>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">Main</p>
           <div class="space-y-1">
             <NavItem icon="⊞" label="Dashboard" route="/dashboard" :page-url="pageUrl" />
           </div>
@@ -27,7 +27,7 @@
 
         <!-- Sales -->
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Sales</p>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">Sales</p>
           <div class="space-y-1">
             <NavItem icon="🧾" label="Invoices" route="/sales/invoices" :page-url="pageUrl" :badge="4" />
             <NavItem icon="🛒" label="Orders" route="/sales/orders" :page-url="pageUrl" />
@@ -39,7 +39,7 @@
 
         <!-- Purchase -->
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Purchase</p>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">Purchase</p>
           <div class="space-y-1">
             <NavItem icon="🚚" label="Orders" route="/purchase/orders" :page-url="pageUrl" />
             <NavItem icon="📥" label="Receipts" route="/purchase/receipts" :page-url="pageUrl" />
@@ -50,7 +50,7 @@
 
         <!-- Inventory -->
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Inventory</p>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">Inventory</p>
           <div class="space-y-1">
             <NavItem icon="📦" label="Products" route="/inventory/products" :page-url="pageUrl" />
             <NavItem icon="📊" label="Stock" route="/inventory/stock" :page-url="pageUrl" :badge="3" badge-variant="warning" />
@@ -62,7 +62,7 @@
 
         <!-- Accounting -->
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Accounting</p>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">Accounting</p>
           <div class="space-y-1">
             <NavItem icon="💵" label="Chart of Accounts" route="/accounting/chart-of-accounts" :page-url="pageUrl" />
             <NavItem icon="📒" label="Journal Entries" route="/accounting/journal-entries" :page-url="pageUrl" />
@@ -74,7 +74,7 @@
 
         <!-- HR & Payroll -->
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">HR & Payroll</p>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">HR & Payroll</p>
           <div class="space-y-1">
             <NavItem icon="👤" label="Employees" route="/hr/employees" :page-url="pageUrl" />
             <NavItem icon="📅" label="Attendance" route="/hr/attendance" :page-url="pageUrl" />
@@ -85,15 +85,23 @@
 
         <!-- POS -->
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">POS</p>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">POS</p>
           <div class="space-y-1">
             <NavItem icon="🖥" label="Session" route="/pos/session" :page-url="pageUrl" />
           </div>
         </div>
 
+        <!-- Reports -->
+        <div>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">Reports</p>
+          <div class="space-y-1">
+            <NavItem icon="📊" label="Reports" route="/reports" :page-url="pageUrl" />
+          </div>
+        </div>
+
         <!-- Settings -->
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-widest text-white/25 px-2 mb-2">Settings</p>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">Settings</p>
           <div class="space-y-1">
             <NavItem icon="⚙️" label="Company" route="/settings/company" :page-url="pageUrl" />
           </div>
@@ -101,14 +109,14 @@
       </nav>
 
       <!-- User Footer -->
-      <div class="border-t border-white/5 px-4 py-3">
+      <div class="border-t border-gray-200 dark:border-white/5 px-4 py-3">
         <div class="flex items-center gap-3">
           <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xs font-bold">
             {{ userInitial }}
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-white/90 text-xs font-semibold truncate">{{ user?.name }}</p>
-            <p class="text-white/30 text-[10px]">{{ planLabel }}</p>
+            <p class="text-gray-900 dark:text-white/90 text-xs font-semibold truncate">{{ user?.name }}</p>
+            <p class="text-gray-500 dark:text-white/30 text-[10px]">{{ planLabel }}</p>
           </div>
         </div>
       </div>

@@ -5,10 +5,10 @@
       @click.prevent="toggleDropdown"
     >
       <span class="mr-3 overflow-hidden rounded-full h-11 w-11">
-        <img src="/images/user/owner.jpg" alt="User" />
+        <img :src="userProfileImage" alt="User" />
       </span>
 
-      <span class="block mr-1 font-medium text-theme-sm">Musharof </span>
+      <span class="block mr-1 font-medium text-theme-sm">{{ userName }}</span>
 
       <ChevronDownIcon :class="{ 'rotate-180': dropdownOpen }" />
     </button>
@@ -20,10 +20,10 @@
     >
       <div>
         <span class="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-          Musharof Chowdhury
+          {{ fullName }}
         </span>
         <span class="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-          randomuser@pimjo.com
+          {{ userEmail }}
         </span>
       </div>
 
@@ -59,12 +59,25 @@
 
 <script setup>
 import { UserCircleIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, InfoCircleIcon } from '@/icons'
-import { ref, onMounted, onUnmounted } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
 import axios from 'axios'
 
+const page = usePage()
 const dropdownOpen = ref(false)
 const dropdownRef = ref(null)
+
+const userProfileImage = computed(() => {
+  const userImage = page.props.auth?.user?.profile_image
+  if (userImage) {
+    return userImage.startsWith('http') ? userImage : `/storage/${userImage}`
+  }
+  return '/user.jpg'
+})
+
+const userName = computed(() => page.props.auth?.user?.name || 'User')
+const fullName = computed(() => page.props.auth?.user?.name || 'User Name')
+const userEmail = computed(() => page.props.auth?.user?.email || 'user@example.com')
 
 const menuItems = [
   { href: '/profile', icon: UserCircleIcon, text: 'Edit profile' },

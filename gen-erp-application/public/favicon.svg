@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Base hexagon -->
+  <path d="M50 10 L85 30 L85 70 L50 90 L15 70 L15 30 Z" fill="#0F766E" stroke="#14B8A6" stroke-width="4"/>
+  
+  <!-- Left block -->
+  <path d="M15 30 L50 48 L50 90 L15 70 Z" fill="#0F766E"/>
+  
+  <!-- Right block -->
+  <path d="M50 48 L85 30 L85 60 L65 70 L50 63 Z" fill="#14B8A6"/>
+  
+  <!-- Top block -->
+  <path d="M50 10 L85 30 L50 48 L15 30 Z" fill="#16A34A"/>
+  
+  <!-- Central glowing node -->
+  <circle cx="50" cy="48" r="12" fill="#FFFFFF" fill-opacity="0.9"/>
+  <circle cx="50" cy="48" r="6" fill="#14B8A6"/>
+</svg>

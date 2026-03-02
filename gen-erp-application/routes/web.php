@@ -127,6 +127,9 @@ Route::middleware(['auth','verified','ensure.company'])->group(function () {
     // POS Routes
     Route::get('/pos/session', fn() => Inertia::render('POS/Session'))->name('pos.session');
     
+    // Reports Routes
+    Route::get('/reports', fn() => Inertia::render('Reports/Index'))->name('reports');
+
     // Settings Routes
     Route::get('/settings/company', fn() => Inertia::render('Settings/Company'))->name('settings.company');
     Route::get('/settings/users', fn() => Inertia::render('Settings/Users'))->name('settings.users');

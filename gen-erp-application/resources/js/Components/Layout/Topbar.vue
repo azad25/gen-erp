@@ -17,6 +17,13 @@
         <button class="relative h-9 w-9 flex items-center justify-center rounded-lg border border-stroke bg-white text-gray-1 hover:border-primary/40 hover:text-primary transition-all">
           🔔 <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger border-2 border-white" />
         </button>
+        <div class="flex items-center gap-2">
+          <img 
+            src="/user.jpg" 
+            alt="User Profile" 
+            class="h-9 w-9 rounded-lg object-cover border border-stroke"
+          />
+        </div>
         <div v-if="$page.props.auth?.branch" class="hidden md:flex items-center gap-1.5 bg-primary/8 text-primary text-[11px] font-semibold px-3 h-9 rounded-lg border border-primary/20">
           🏢 {{ $page.props.auth.branch.name }}
         </div>
@@ -33,4 +40,12 @@ defineEmits(['toggle'])
 
 const page = usePage()
 const title = computed(() => page.props.pageTitle || 'Dashboard')
+
+const userProfileImage = computed(() => {
+  const userImage = page.props.auth?.user?.profile_image
+  if (userImage) {
+    return userImage.startsWith('http') ? userImage : `/storage/${userImage}`
+  }
+  return '/user.jpg?v=' + Date.now()
+})
 </script>

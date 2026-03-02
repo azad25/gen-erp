@@ -37,6 +37,9 @@ class CompanySwitchController extends Controller
             abort(403, __('You do not have access to this company.'));
         }
 
+        // Set active company in session
+        session(['active_company_id' => $company->id]);
+
         CompanyContext::setActive($company);
         $user->update(['last_active_company_id' => $company->id]);
 

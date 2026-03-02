@@ -13,15 +13,20 @@ const isInitialized = ref(false)
 const isDarkMode = computed(() => theme.value === 'dark')
 
 const toggleTheme = () => {
+  console.log('toggleTheme called, current theme:', theme.value)
   theme.value = theme.value === 'light' ? 'dark' : 'light'
+  console.log('toggleTheme new theme:', theme.value)
 }
 
 const applyTheme = (newTheme: Theme) => {
+  console.log('applyTheme called with:', newTheme)
+  console.log('document.documentElement classes:', document.documentElement.classList.toString())
   if (newTheme === 'dark') {
     document.documentElement.classList.add('dark')
   } else {
     document.documentElement.classList.remove('dark')
   }
+  console.log('After applyTheme, classes:', document.documentElement.classList.toString())
 }
 
 onMounted(() => {
