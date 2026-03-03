@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Enums\BusinessType;
-use App\Enums\CompanyRole;
-use App\Models\Company;
-use App\Models\CompanyUser;
-use App\Models\User;
+use App\Support\Enums\BusinessType;
+use App\Support\Enums\CompanyRole;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Auth\Models\CompanyUser;
+use App\Domain\Auth\Models\User;
 use Database\Seeders\SampleData\ApexGarmentsSeeder;
 use Database\Seeders\SampleData\RuposhiRetailSeeder;
 use Database\Seeders\SampleData\ShifaPharmacySeeder;
@@ -48,7 +48,7 @@ class DevSampleDataSeeder extends Seeder
             $devAdmin,
             vatBin: '123456789012',
         );
-        $ruposhiSeeder = new RuposhiRetailSeeder();
+        $ruposhiSeeder = new RuposhiRetailSeeder;
         $ruposhiSeeder->setCommand($this->command);
         $ruposhiSeeder->run($ruposhi, $devAdmin);
 
@@ -61,7 +61,7 @@ class DevSampleDataSeeder extends Seeder
             $devAdmin,
             vatBin: '234567890123',
         );
-        $shifaSeeder = new ShifaPharmacySeeder();
+        $shifaSeeder = new ShifaPharmacySeeder;
         $shifaSeeder->setCommand($this->command);
         $shifaSeeder->run($shifa, $devAdmin);
 
@@ -74,7 +74,7 @@ class DevSampleDataSeeder extends Seeder
             $devAdmin,
             vatBin: '345678901234',
         );
-        $apexSeeder = new ApexGarmentsSeeder();
+        $apexSeeder = new ApexGarmentsSeeder;
         $apexSeeder->setCommand($this->command);
         $apexSeeder->run($apex, $devAdmin);
     }

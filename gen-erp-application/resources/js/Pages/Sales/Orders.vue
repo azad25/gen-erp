@@ -175,19 +175,40 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/Services/api.js'
+import { mapApiPagination } from '@/utils/pagination.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
-import AdminLayout from '@/Components/layout/AdminLayout.vue'
+import AdminLayout from '@/Components/Layout/AdminLayout.vue'
 import Card from '@/Components/ui/Card.vue'
 import Button from '@/Components/ui/Button.vue'
 import DataTable from '@/Components/UI/DataTable.vue'
 import Badge from '@/Components/UI/Badge.vue'
 import Modal from '@/Components/UI/Modal.vue'
 
-const orders = ref([])
-const customers = ref([])
-const warehouses = ref([])
-const products = ref([])
+// Accept props from server
+const props = defineProps({
+  initialOrders: {
+    type: Array,
+    default: () => []
+  },
+  initialCustomers: {
+    type: Array,
+    default: () => []
+  },
+  initialWarehouses: {
+    type: Array,
+    default: () => []
+  },
+  initialProducts: {
+    type: Array,
+    default: () => []
+  }
+})
+
+const orders = ref(props.initialOrders)
+const customers = ref(props.initialCustomers)
+const warehouses = ref(props.initialWarehouses)
+const products = ref(props.initialProducts)
 const pagination = ref({ current_page: 1, per_page: 15, total: 0 })
 const loading = ref(false)
 const showModal = ref(false)
@@ -219,7 +240,7 @@ const fetchOrders = async (page = 1) => {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     orders.value = response.data.data
-    pagination.value = response.data
+    pagination.value = mapApiPagination(response.data)
   } catch (error) {
     console.error('Failed to fetch orders:', error)
   } finally {
@@ -384,9 +405,11 @@ const formatDate = (date) => {
 }
 
 onMounted(() => {
-  fetchOrders()
-  fetchCustomers()
-  fetchWarehouses()
-  fetchProducts()
+  console.log('[Orders] Component mounted with server data')
+  console.log('[Orders] Orders:', orders.value.length)
+  console.log('[Orders] Customers:', customers.value.length)
+  console.log('[Orders] Warehouses:', warehouses.value.length)
+  console.log('[Orders] Products:', products.value.length)
+  // No API calls needed - data comes from server
 })
 </script>

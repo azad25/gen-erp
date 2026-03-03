@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\Employee;
-use App\Models\LeaveRequest;
-use App\Services\HRService;
+use App\Domain\HR\Contracts\HRServiceInterface;
+use App\Domain\HR\Models\Employee;
+use App\Domain\HR\Models\LeaveRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,21 +20,25 @@ use InvalidArgumentException;
 class LeaveRequestController extends BaseApiController
 {
     public function __construct(
-        private readonly HRService $hrService
+        private readonly HRServiceInterface $hrService
     ) {}
 
     /**
      * @OA\Get(
-     *     path="/leave-requests",
+     *     path="/api/v1/leave-requests",
      *     summary="List all leave requests",
      *     tags={"Leave Requests"},
+     *
      *     @OA\Parameter(name="employee_id", in="query", description="Employee ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="status", in="query", description="Status", @OA\Schema(type="string")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
@@ -57,10 +61,12 @@ class LeaveRequestController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/leave-requests/{id}",
+     *     path="/api/v1/leave-requests/{id}",
      *     summary="Get a specific leave request",
      *     tags={"Leave Requests"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Leave Request ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(response=200, description="Successful response")
      * )
      */
@@ -73,12 +79,15 @@ class LeaveRequestController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/leave-requests",
+     *     path="/api/v1/leave-requests",
      *     summary="Create a new leave request",
      *     tags={"Leave Requests"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="employee_id", type="integer"),
      *             @OA\Property(property="leave_type_id", type="integer"),
      *             @OA\Property(property="start_date", type="string", format="date"),
@@ -86,6 +95,7 @@ class LeaveRequestController extends BaseApiController
      *             @OA\Property(property="reason", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(response=201, description="Leave request created")
      * )
      */
@@ -152,10 +162,12 @@ class LeaveRequestController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/leave-requests/{leaveRequest}/approve",
+     *     path="/api/v1/leave-requests/{leaveRequest}/approve",
      *     summary="Approve a leave request",
      *     tags={"Leave Requests"},
+     *
      *     @OA\Parameter(name="leaveRequest", in="path", required=true, description="Leave Request ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(response=200, description="Leave request approved")
      * )
      */
@@ -180,16 +192,21 @@ class LeaveRequestController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/leave-requests/{leaveRequest}/reject",
+     *     path="/api/v1/leave-requests/{leaveRequest}/reject",
      *     summary="Reject a leave request",
      *     tags={"Leave Requests"},
+     *
      *     @OA\Parameter(name="leaveRequest", in="path", required=true, description="Leave Request ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="reason", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(response=200, description="Leave request rejected")
      * )
      */

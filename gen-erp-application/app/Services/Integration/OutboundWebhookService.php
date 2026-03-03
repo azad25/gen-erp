@@ -15,7 +15,7 @@ class OutboundWebhookService
     /**
      * Fire an event to all registered webhooks for a company.
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function dispatch(int $companyId, string $event, array $payload): int
     {
@@ -112,7 +112,7 @@ class OutboundWebhookService
      */
     public function sign(string $payload, string $secret): string
     {
-        return 'sha256=' . hash_hmac('sha256', $payload, $secret);
+        return 'sha256='.hash_hmac('sha256', $payload, $secret);
     }
 
     /**
@@ -121,6 +121,7 @@ class OutboundWebhookService
     public function verifySignature(string $payload, string $signature, string $secret): bool
     {
         $expected = $this->sign($payload, $secret);
+
         return hash_equals($expected, $signature);
     }
 }

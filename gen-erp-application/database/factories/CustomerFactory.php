@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Company;
-use App\Models\Customer;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Customer\Models\Customer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

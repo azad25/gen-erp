@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\CompanyResource;
-use App\Http\Resources\UserResource;
-use App\Models\Company;
+use App\Domain\Auth\Models\Company;
 use App\Services\CompanyContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -57,7 +56,7 @@ class CompanySwitchController extends Controller
             ->where('is_active', true)
             ->first();
 
-        if (!$company) {
+        if (! $company) {
             return response()->json([
                 'success' => false,
                 'message' => __('Company not found or inactive.'),
@@ -70,7 +69,7 @@ class CompanySwitchController extends Controller
             ->wherePivot('is_active', true)
             ->exists();
 
-        if (!$isMember) {
+        if (! $isMember) {
             return response()->json([
                 'success' => false,
                 'message' => __('You do not have access to this company.'),
@@ -79,7 +78,7 @@ class CompanySwitchController extends Controller
 
         // Set new active company in session
         session(['active_company_id' => $company->id]);
-        
+
         // Update last active company
         $user->update(['last_active_company_id' => $company->id]);
 

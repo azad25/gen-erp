@@ -21,9 +21,25 @@
         .swagger-ui .topbar {
             background-color: #1b1b1b;
         }
+        .auth-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 9999;
+            display: none;
+        }
+        .auth-status.error {
+            background: #f44336;
+        }
     </style>
 </head>
 <body>
+    <div id="auth-status" class="auth-status"></div>
     <div id="swagger-ui"></div>
     <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
@@ -49,8 +65,81 @@
                 syntaxHighlight: {
                     activate: true,
                     theme: "monokai"
+                },
+                requestInterceptor: function(request) {
+                    // Add stored token to all requests
+                    const token = localStorage.getItem('swagger_auth_token');
+                    if (token && !request.url.includes('/auth/login') && !request.url.includes('/auth/register')) {
+                        request.headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    return request;
+                },
+                responseInterceptor: function(response) {
+                    // Auto-extract token from login response
+                    if (response.url.includes('/auth/login') && response.status === 200) {
+                        try {
+                            const data = JSON.parse(response.text);
+                            if (data.success && data.data && data.data.token) {
+                                const token = data.data.token;
+                                localStorage.setItem('swagger_auth_token', token);
+                                
+                                // Auto-authorize in Swagger UI
+                                setTimeout(() => {
+                                    ui.preauthorizeApiKey('sanctum', `Bearer ${token}`);
+                                    showAuthStatus('✅ Auto-authenticated with token: ' + token.substring(0, 20) + '...', false);
+                                }, 100);
+                            }
+                        } catch (e) {
+                            console.error('Failed to parse login response:', e);
+                        }
+                    }
+                    
+                    // Handle logout
+                    if (response.url.includes('/auth/logout')) {
+                        localStorage.removeItem('swagger_auth_token');
+                        ui.preauthorizeApiKey('sanctum', '');
+                        showAuthStatus('🔓 Logged out - authentication cleared', true);
+                    }
+                    
+                    return response;
                 }
             });
+
+            // Auto-authorize if token exists
+            const existingToken = localStorage.getItem('swagger_auth_token');
+            if (existingToken) {
+                setTimeout(() => {
+                    ui.preauthorizeApiKey('sanctum', `Bearer ${existingToken}`);
+                    showAuthStatus('🔄 Restored previous authentication', false);
+                }, 1000);
+            }
+
+            function showAuthStatus(message, isError) {
+                const statusEl = document.getElementById('auth-status');
+                statusEl.textContent = message;
+                statusEl.className = 'auth-status' + (isError ? ' error' : '');
+                statusEl.style.display = 'block';
+                
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 5000);
+            }
+
+            // Add clear auth button
+            setTimeout(() => {
+                const topbar = document.querySelector('.swagger-ui .topbar');
+                if (topbar) {
+                    const clearBtn = document.createElement('button');
+                    clearBtn.textContent = 'Clear Auth';
+                    clearBtn.style.cssText = 'margin-left: 10px; padding: 5px 10px; background: #ff4444; color: white; border: none; border-radius: 3px; cursor: pointer;';
+                    clearBtn.onclick = function() {
+                        localStorage.removeItem('swagger_auth_token');
+                        ui.preauthorizeApiKey('sanctum', '');
+                        showAuthStatus('🔓 Authentication cleared manually', true);
+                    };
+                    topbar.appendChild(clearBtn);
+                }
+            }, 2000);
         };
     </script>
 </body>

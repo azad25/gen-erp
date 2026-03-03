@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Company;
-use App\Models\CompanyUser;
-use App\Models\EntityAlias;
-use App\Models\User;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Auth\Models\CompanyUser;
+use App\Domain\Shared\Models\EntityAlias;
+use App\Domain\Auth\Models\User;
 use App\Services\CompanyContext;
 
 test('company A records are not visible to company B users', function (): void {

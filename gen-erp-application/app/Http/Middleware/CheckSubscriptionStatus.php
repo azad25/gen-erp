@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\SubscriptionService;
+use App\Domain\Subscription\Services\SubscriptionService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;

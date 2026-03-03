@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\StockMovement;
-use App\Services\InventoryService;
+use App\Domain\Inventory\Services\InventoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -22,20 +22,24 @@ class StockMovementController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/stock-movements",
+     *     path="/api/v1/stock-movements",
      *     summary="List all stock movements",
      *     tags={"Stock Movements"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="movement_type", in="query", description="Movement type", @OA\Schema(type="string")),
      *     @OA\Parameter(name="product_id", in="query", description="Product ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="warehouse_id", in="query", description="Warehouse ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/StockMovement")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -54,16 +58,20 @@ class StockMovementController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/stock-movements/{id}",
+     *     path="/api/v1/stock-movements/{id}",
      *     summary="Get a specific stock movement",
      *     tags={"Stock Movements"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Stock Movement ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/StockMovement")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )

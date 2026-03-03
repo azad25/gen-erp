@@ -11,12 +11,11 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 /** Processes a bulk CSV import job in the background. */
-class ProcessImportJob implements ShouldQueue, ShouldBeUnique
+class ProcessImportJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -35,7 +34,7 @@ class ProcessImportJob implements ShouldQueue, ShouldBeUnique
 
     public function uniqueId(): string
     {
-        return 'import-' . $this->importJob->id;
+        return 'import-'.$this->importJob->id;
     }
 
     public function handle(ImportService $importService): void

@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Branch;
-use App\Models\Company;
-use App\Models\User;
+use App\Domain\Auth\Models\Branch;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Auth\Models\User;
 use Illuminate\Support\Collection;
 
 /**

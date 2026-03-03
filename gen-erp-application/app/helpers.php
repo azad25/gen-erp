@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Company;
+use App\Domain\Auth\Models\Company;
 use App\Services\BusinessTypeTemplateService;
 use App\Services\CompanyContext;
 use Illuminate\Support\Facades\Cache;
@@ -9,8 +9,6 @@ use Illuminate\Support\Str;
 if (! function_exists('activeCompany')) {
     /**
      * Get the currently active company.
-     *
-     * @return Company|null
      */
     function activeCompany(): ?Company
     {
@@ -31,9 +29,9 @@ if (! function_exists('__entity')) {
      * 2. Fall back to BusinessType static defaults
      * 3. Fall back to Str::title($key)
      *
-     * @param string $key The entity key (e.g., 'customer', 'invoice')
-     * @param bool $plural Whether to return the plural form
-     * @param Company|null $company The company context (defaults to active company)
+     * @param  string  $key  The entity key (e.g., 'customer', 'invoice')
+     * @param  bool  $plural  Whether to return the plural form
+     * @param  Company|null  $company  The company context (defaults to active company)
      * @return string The resolved entity name
      */
     function __entity(string $key, bool $plural = false, ?Company $company = null): string
@@ -42,6 +40,7 @@ if (! function_exists('__entity')) {
             $company = $company ?? CompanyContext::active();
         } catch (\App\Exceptions\NoActiveCompanyException $e) {
             $result = Str::title(str_replace('_', ' ', $key));
+
             return $plural ? Str::plural($result) : $result;
         }
 
@@ -65,7 +64,7 @@ if (! function_exists('__entity')) {
         }
 
         // Fall back to business-type static defaults
-        $businessType = $company->business_type instanceof \App\Enums\BusinessType
+        $businessType = $company->business_type instanceof \App\Support\Enums\BusinessType
             ? $company->business_type->value
             : $company->business_type;
 
@@ -86,6 +85,7 @@ if (! function_exists('__entity')) {
 
         // Fall back to title-cased key
         $result = Str::title(str_replace('_', ' ', $key));
+
         return $plural ? Str::plural($result) : $result;
     }
 }

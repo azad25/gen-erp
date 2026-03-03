@@ -51,8 +51,8 @@
 
         <div class="generp-activity-list">
             @php
-                $activities = \App\Models\AuditLog::with('user')
-                    ->where('company_id', \App\Services\CompanyContext::active()->id ?? null)
+                $activities = \App\Domain\Audit\Models\AuditLog::with('user')
+                    ->where('company_id', activeCompany()?->id ?? null)
                     ->latest()
                     ->limit(7)
                     ->get();

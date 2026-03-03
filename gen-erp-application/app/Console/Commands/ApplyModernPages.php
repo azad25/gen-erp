@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\File;
 class ApplyModernPages extends Command
 {
     protected $signature = 'ui:apply-modern-pages';
+
     protected $description = 'Apply modern UI to all Filament resource pages';
 
     private array $updated = [];
+
     private array $skipped = [];
 
     public function handle()
@@ -26,8 +28,8 @@ class ApplyModernPages extends Command
             if (basename($resource) === 'BaseResource.php') {
                 continue;
             }
-            
-            $pagesPath = $resource . '/Pages';
+
+            $pagesPath = $resource.'/Pages';
             if (File::exists($pagesPath)) {
                 $totalFiles += count(File::files($pagesPath));
             }
@@ -37,14 +39,14 @@ class ApplyModernPages extends Command
         $bar->start();
 
         foreach ($resources as $resource) {
-            $pagesPath = $resource . '/Pages';
-            
-            if (!File::exists($pagesPath)) {
+            $pagesPath = $resource.'/Pages';
+
+            if (! File::exists($pagesPath)) {
                 continue;
             }
 
             $files = File::files($pagesPath);
-            
+
             foreach ($files as $file) {
                 $this->updatePage($file->getPathname());
                 $bar->advance();
@@ -75,19 +77,21 @@ class ApplyModernPages extends Command
             $pageType = 'View';
         }
 
-        if (!$pageType) {
-            $this->skipped[] = $basename . ' (unknown type)';
+        if (! $pageType) {
+            $this->skipped[] = $basename.' (unknown type)';
+
             return;
         }
 
         // Check if already using base page
         if (str_contains($content, "extends Base{$pageType}Page")) {
-            $this->skipped[] = $basename . ' (already modern)';
+            $this->skipped[] = $basename.' (already modern)';
+
             return;
         }
 
         // Step 1: Update extends clause
-        $oldExtends = match($pageType) {
+        $oldExtends = match ($pageType) {
             'List' => 'ListRecords',
             'Create' => 'CreateRecord',
             'Edit' => 'EditRecord',
@@ -102,12 +106,12 @@ class ApplyModernPages extends Command
 
         // Step 2: Add use statement for base page
         $useStatement = "use App\Filament\Pages\Base{$pageType}Page;";
-        
-        if (!str_contains($content, $useStatement)) {
+
+        if (! str_contains($content, $useStatement)) {
             // Find the last use statement
             if (preg_match('/^use\s+[^;]+;$/m', $content, $matches, PREG_OFFSET_CAPTURE)) {
                 $lastUsePos = $matches[0][1] + strlen($matches[0][0]);
-                $content = substr_replace($content, "\n" . $useStatement, $lastUsePos, 0);
+                $content = substr_replace($content, "\n".$useStatement, $lastUsePos, 0);
             }
         }
 
@@ -121,7 +125,7 @@ class ApplyModernPages extends Command
         ];
 
         foreach ($oldUses as $oldUse) {
-            $content = str_replace("\n" . $oldUse, '', $content);
+            $content = str_replace("\n".$oldUse, '', $content);
         }
 
         // Step 4: Remove getHeaderActions if it's just the default
@@ -166,15 +170,15 @@ class ApplyModernPages extends Command
     private function displayResults(): void
     {
         if (count($this->updated) > 0) {
-            $this->info('✅ Updated ' . count($this->updated) . ' pages:');
+            $this->info('✅ Updated '.count($this->updated).' pages:');
             foreach ($this->updated as $file) {
-                $this->line('   • ' . $file);
+                $this->line('   • '.$file);
             }
             $this->newLine();
         }
 
         if (count($this->skipped) > 0) {
-            $this->warn('⏭️  Skipped ' . count($this->skipped) . ' pages (already modern or no changes needed)');
+            $this->warn('⏭️  Skipped '.count($this->skipped).' pages (already modern or no changes needed)');
         }
 
         $this->newLine();

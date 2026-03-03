@@ -10,11 +10,21 @@ import '../css/app.css'
 createInertiaApp({
   title: title => `${title} — GenERP BD`,
   resolve: name => {
-    console.log('Loading page:', name)
+    console.log('[Inertia] Resolving page:', name)
     return resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue'))
+      .then(page => {
+        console.log('[Inertia] Page resolved successfully:', name)
+        return page
+      })
+      .catch(error => {
+        console.error('[Inertia] Failed to resolve page component:', name, error)
+        throw error
+      })
   },
   setup({ el, App, props, plugin }) {
-    console.log('Inertia setup, current page:', props.initialPage.component)
+    console.log('[Inertia] Setup called, current page:', props.initialPage.component)
+    console.log('[Inertia] Page URL:', props.initialPage.url)
+    console.log('[Inertia] Page props:', props.initialPage.props)
     
     // Sync company ID from server to sessionStorage for API calls
     const companyId = props.initialPage.props.auth?.company?.id
@@ -41,4 +51,24 @@ createInertiaApp({
     app.use(plugin).use(createPinia()).use(VueApexCharts).mount(el)
   },
   progress: { color: '#14B8A6', showSpinner: false },
+})
+
+// Add Inertia error handler
+import { router } from '@inertiajs/vue3'
+
+router.on('error', (event) => {
+  console.error('[Inertia] Navigation error:', event.detail.errors)
+})
+
+router.on('navigate', (event) => {
+  console.log('[Inertia] Navigating to:', event.detail.page.url)
+})
+
+router.on('finish', (event) => {
+  console.log('[Inertia] Navigation finished:', event.detail.visit.url)
+})
+
+router.on('exception', (event) => {
+  console.error('[Inertia] Exception during navigation:', event.detail.exception)
+  event.preventDefault() // Prevent default error handling
 })

@@ -2,8 +2,8 @@
 
 namespace App\Services\Dashboard;
 
-use App\Enums\ApprovalStatus;
-use App\Models\WorkflowApproval;
+use App\Support\Enums\ApprovalStatus;
+use App\Domain\Workflow\Models\WorkflowApproval;
 
 /**
  * Pending workflow approvals for the current user.

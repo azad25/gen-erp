@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Services\ReportService;
+use App\Domain\Report\Services\ReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,13 +21,16 @@ class ReportController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/reports",
+     *     path="/api/v1/reports",
      *     summary="List available reports",
      *     tags={"Reports"},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="array")
      *         )
@@ -68,20 +71,26 @@ class ReportController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/reports/generate",
+     *     path="/api/v1/reports/generate",
      *     summary="Generate a report",
      *     tags={"Reports"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="id", type="string"),
      *             @OA\Property(property="parameters", type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Report generated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")

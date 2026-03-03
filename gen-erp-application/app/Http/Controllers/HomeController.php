@@ -10,14 +10,14 @@ class HomeController extends Controller
     {
         return view('home');
     }
-    
+
     public function setLocale(Request $request, $locale)
     {
         if (in_array($locale, ['en', 'bn'])) {
             session(['locale' => $locale]);
             app()->setLocale($locale);
         }
-        
+
         return redirect()->back();
     }
 }

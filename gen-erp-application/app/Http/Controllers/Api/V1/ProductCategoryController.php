@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\ProductCategory;
+use App\Domain\Product\Contracts\ProductServiceInterface;
+use App\Http\Resources\ProductCategoryResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,19 +16,26 @@ use Illuminate\Http\Request;
  */
 class ProductCategoryController extends BaseApiController
 {
+    public function __construct(
+        private readonly ProductServiceInterface $productService
+    ) {}
     /**
      * @OA\Get(
-     *     path="/product-categories",
+     *     path="/api/v1/product-categories",
      *     summary="List all product categories",
      *     tags={"Product Categories"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/ProductCategory")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -35,55 +43,67 @@ class ProductCategoryController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
-        $categories = ProductCategory::query()
-            ->where('company_id', activeCompany()->id)
-            ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
-            ->orderBy('name')
-            ->paginate($request->integer('per_page', 15));
+        $categories = $this->productService->getProductCategories(
+            activeCompany()->id,
+            $request->get('search'),
+            $request->integer('per_page', 15)
+        );
 
-        return $this->paginated($categories);
+        return $this->paginated($categories, ProductCategoryResource::class);
     }
 
     /**
      * @OA\Get(
-     *     path="/product-categories/{id}",
+     *     path="/api/v1/product-categories/{id}",
      *     summary="Get a specific product category",
      *     tags={"Product Categories"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Product Category ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/ProductCategory")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
      */
-    public function show(ProductCategory $productCategory): JsonResponse
+    public function show(int $id): JsonResponse
     {
-        return $this->success($productCategory);
+        $productCategory = $this->productService->getProductCategory(activeCompany()->id, $id);
+
+        return $this->success(new ProductCategoryResource($productCategory));
     }
 
     /**
      * @OA\Post(
-     *     path="/product-categories",
+     *     path="/api/v1/product-categories",
      *     summary="Create a new product category",
      *     tags={"Product Categories"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="slug", type="string"),
      *             @OA\Property(property="description", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Product category created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/ProductCategory"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -97,71 +117,82 @@ class ProductCategoryController extends BaseApiController
             'description' => ['nullable', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()->id;
-        $validated['slug'] = $validated['slug'] ?? str($validated['name'])->slug();
+        $category = $this->productService->createProductCategory(activeCompany()->id, $validated);
 
-        $category = ProductCategory::create($validated);
-
-        return $this->success($category, __('Product category created'), 201);
+        return $this->success(new ProductCategoryResource($category), __('Product category created'), 201);
     }
 
     /**
      * @OA\Put(
-     *     path="/product-categories/{id}",
+     *     path="/api/v1/product-categories/{id}",
      *     summary="Update a product category",
      *     tags={"Product Categories"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Product Category ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="slug", type="string"),
      *             @OA\Property(property="description", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product category updated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/ProductCategory"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
      * )
      */
-    public function update(Request $request, ProductCategory $productCategory): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
+        $productCategory = $this->productService->getProductCategory(activeCompany()->id, $id);
+
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
         ]);
 
-        $productCategory->update($validated);
+        $updatedCategory = $this->productService->updateProductCategory($productCategory, $validated);
 
-        return $this->success($productCategory->fresh(), __('Product category updated'));
+        return $this->success(new ProductCategoryResource($updatedCategory), __('Product category updated'));
     }
 
     /**
      * @OA\Delete(
-     *     path="/product-categories/{id}",
+     *     path="/api/v1/product-categories/{id}",
      *     summary="Delete a product category",
      *     tags={"Product Categories"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Product Category ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product category deleted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
      * )
      */
-    public function destroy(ProductCategory $productCategory): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
-        $productCategory->delete();
+        $productCategory = $this->productService->getProductCategory(activeCompany()->id, $id);
+        $this->productService->deleteProductCategory($productCategory);
 
         return $this->success(null, __('Product category deleted'));
     }

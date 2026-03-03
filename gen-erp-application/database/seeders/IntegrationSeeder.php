@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Integration;
+use App\Domain\Integration\Models\Integration;
 use Illuminate\Database\Seeder;
 
 /**

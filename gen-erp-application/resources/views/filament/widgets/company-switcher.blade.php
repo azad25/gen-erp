@@ -1,6 +1,6 @@
 @php
     $companies = auth()->user()->companies()->wherePivot('is_active', true)->where('companies.is_active', true)->get();
-    $active    = \App\Services\CompanyContext::active();
+    $active    = activeCompany();
     $branch    = \App\Services\BranchContext::active();
 @endphp
 

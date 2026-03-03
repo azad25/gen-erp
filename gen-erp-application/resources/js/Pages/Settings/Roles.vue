@@ -31,7 +31,7 @@
 <script setup>
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
-import AdminLayout from '@/Components/layout/AdminLayout.vue'
+import AdminLayout from '@/Components/Layout/AdminLayout.vue'
 import Card from '@/Components/ui/Card.vue'
 import Button from '@/Components/ui/Button.vue'
 </script>

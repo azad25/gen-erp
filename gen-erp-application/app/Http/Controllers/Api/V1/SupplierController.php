@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Customer\Contracts\ContactServiceInterface;
+use App\Domain\Purchase\Models\Supplier;
 use App\Http\Requests\Api\V1\StoreSupplierRequest;
 use App\Http\Requests\Api\V1\UpdateSupplierRequest;
-use App\Models\Supplier;
-use App\Services\ContactService;
+use App\Http\Resources\SupplierResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -20,24 +21,28 @@ use RuntimeException;
 class SupplierController extends BaseApiController
 {
     public function __construct(
-        private readonly ContactService $contactService
+        private readonly ContactServiceInterface $contactService
     ) {}
 
     /**
      * @OA\Get(
-     *     path="/suppliers",
+     *     path="/api/v1/suppliers",
      *     summary="List all suppliers",
      *     tags={"Suppliers"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="status", in="query", description="Status filter", @OA\Schema(type="string")),
      *     @OA\Parameter(name="contact_group_id", in="query", description="Contact Group ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Supplier")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -51,21 +56,25 @@ class SupplierController extends BaseApiController
             $request->integer('per_page', 15),
         );
 
-        return $this->paginated($suppliers);
+        return $this->paginated(SupplierResource::collection($suppliers));
     }
 
     /**
      * @OA\Get(
-     *     path="/suppliers/{id}",
+     *     path="/api/v1/suppliers/{id}",
      *     summary="Get a specific supplier",
      *     tags={"Suppliers"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Supplier ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Supplier")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
@@ -74,17 +83,20 @@ class SupplierController extends BaseApiController
     {
         $supplier->load(['contactGroup']);
 
-        return $this->success($supplier);
+        return $this->success(new SupplierResource($supplier));
     }
 
     /**
      * @OA\Post(
-     *     path="/suppliers",
+     *     path="/api/v1/suppliers",
      *     summary="Create a new supplier",
      *     tags={"Suppliers"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="email", type="string"),
      *             @OA\Property(property="phone", type="string"),
@@ -92,12 +104,15 @@ class SupplierController extends BaseApiController
      *             @OA\Property(property="vat_bin", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Supplier created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Supplier"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -115,18 +130,22 @@ class SupplierController extends BaseApiController
             $customFields,
         );
 
-        return $this->success($supplier, __('Supplier created'), 201);
+        return $this->success(new SupplierResource($supplier), __('Supplier created'), 201);
     }
 
     /**
      * @OA\Put(
-     *     path="/suppliers/{id}",
+     *     path="/api/v1/suppliers/{id}",
      *     summary="Update a supplier",
      *     tags={"Suppliers"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Supplier ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="email", type="string"),
      *             @OA\Property(property="phone", type="string"),
@@ -134,12 +153,15 @@ class SupplierController extends BaseApiController
      *             @OA\Property(property="vat_bin", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Supplier updated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Supplier"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -157,19 +179,23 @@ class SupplierController extends BaseApiController
             $customFields,
         );
 
-        return $this->success($supplier, __('Supplier updated'));
+        return $this->success(new SupplierResource($supplier), __('Supplier updated'));
     }
 
     /**
      * @OA\Delete(
-     *     path="/suppliers/{id}",
+     *     path="/api/v1/suppliers/{id}",
      *     summary="Delete a supplier",
      *     tags={"Suppliers"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Supplier ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Supplier deleted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="message", type="string")
      *         )

@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\Company;
+use App\Domain\Auth\DTOs\UpdateCompanyData;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Auth\Services\CompanyService;
+use App\Http\Resources\CompanyResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,23 +18,33 @@ use Illuminate\Http\Request;
  */
 class CompanyController extends BaseApiController
 {
+    public function __construct(
+        private readonly CompanyService $companyService
+    ) {}
+
     /**
      * @OA\Get(
-     *     path="/companies",
+     *     path="/api/v1/companies",
      *     summary="List all companies",
      *     tags={"Companies"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/Company")
+     *
+     *                 @OA\Items(type="object")
      *             ),
+     *
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -39,46 +52,54 @@ class CompanyController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
-        $companies = Company::query()
-            ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
-            ->orderBy('name')
-            ->paginate($request->integer('per_page', 15));
+        $companies = $this->companyService->paginateCompanies(
+            $request->only(['search']),
+            $request->integer('per_page', 15)
+        );
 
         return $this->paginated($companies);
     }
 
     /**
      * @OA\Get(
-     *     path="/companies/{id}",
+     *     path="/api/v1/companies/{id}",
      *     summary="Get a specific company",
      *     tags={"Companies"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Company ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Company")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
      */
     public function show(Company $company): JsonResponse
     {
-        $company->load(['users', 'branches', 'warehouses']);
+        $company = $this->companyService->getCompanyWithRelations($company);
 
-        return $this->success($company);
+        return $this->success(new CompanyResource($company));
     }
 
     /**
      * @OA\Put(
-     *     path="/companies/{id}",
+     *     path="/api/v1/companies/{id}",
      *     summary="Update a company",
      *     tags={"Companies"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Company ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="address", type="string"),
      *             @OA\Property(property="phone", type="string"),
@@ -88,12 +109,15 @@ class CompanyController extends BaseApiController
      *             @OA\Property(property="settings", type="array", @OA\Items(type="object"))
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Company updated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Company"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -112,8 +136,11 @@ class CompanyController extends BaseApiController
             'settings' => ['nullable', 'array'],
         ]);
 
-        $company->update($validated);
+        $company = $this->companyService->updateCompany(
+            $company,
+            UpdateCompanyData::fromRequest($request)
+        );
 
-        return $this->success($company->fresh(), 'Company updated');
+        return $this->success(new CompanyResource($company), __('Company updated'));
     }
 }

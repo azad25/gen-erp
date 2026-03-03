@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\WorkflowInstance;
-use App\Services\WorkflowService;
+use App\Domain\Workflow\Models\WorkflowInstance;
+use App\Domain\Workflow\Services\WorkflowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -22,23 +22,29 @@ class WorkflowInstanceController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/workflow-instances",
+     *     path="/api/v1/workflow-instances",
      *     summary="List all workflow instances",
      *     tags={"Workflow Instances"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="status", in="query", description="Instance status", @OA\Schema(type="string")),
      *     @OA\Parameter(name="workflow_type", in="query", description="Workflow type", @OA\Schema(type="string")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/WorkflowInstance")
+     *
+     *                 @OA\Items(type="object")
      *             ),
+     *
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -60,16 +66,20 @@ class WorkflowInstanceController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/workflow-instances/{id}",
+     *     path="/api/v1/workflow-instances/{id}",
      *     summary="Get a specific workflow instance",
      *     tags={"Workflow Instances"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Workflow Instance ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/WorkflowInstance")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
@@ -83,23 +93,29 @@ class WorkflowInstanceController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/workflow-instances",
+     *     path="/api/v1/workflow-instances",
      *     summary="Create a new workflow instance",
      *     tags={"Workflow Instances"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="document_type", type="string"),
      *             @OA\Property(property="document_id", type="integer"),
      *             @OA\Property(property="workflow_type", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Workflow instance created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/WorkflowInstance"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -122,23 +138,30 @@ class WorkflowInstanceController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/workflow-instances/{workflowInstance}/transition",
+     *     path="/api/v1/workflow-instances/{workflowInstance}/transition",
      *     summary="Transition workflow instance",
      *     tags={"Workflow Instances"},
+     *
      *     @OA\Parameter(name="workflowInstance", in="path", required=true, description="Workflow Instance ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="transition", type="string"),
      *             @OA\Property(property="notes", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Workflow transition completed",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/WorkflowInstance"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )

@@ -3,7 +3,7 @@
 return [
     'title' => 'Modern Enterprise Resource Planning',
     'meta_description' => 'GenERP is the modern, cloud-based ERP solution that streamlines your operations, boosts productivity, and drives growth.',
-    
+
     'nav' => [
         'features' => 'Features',
         'modules' => 'Modules',
@@ -13,7 +13,7 @@ return [
         'start_trial' => 'Start Free Trial',
         'dashboard' => 'Dashboard',
     ],
-    
+
     'hero' => [
         'badge' => 'Trusted by 500+ Companies Worldwide',
         'title_part1' => 'Transform Your Business with',
@@ -22,7 +22,7 @@ return [
         'cta_primary' => 'Start Free Trial',
         'cta_secondary' => 'Learn More',
     ],
-    
+
     'companies' => [
         'title' => 'Trusted by Leading Companies',
         'logos' => [
@@ -38,19 +38,19 @@ return [
             'Navana Group',
         ],
     ],
-    
+
     'stats' => [
         'companies' => 'Active Companies',
         'uptime' => 'Uptime SLA',
         'support' => 'Support',
         'integrations' => 'Integrations',
     ],
-    
+
     'features' => [
         'badge' => 'Features',
         'title' => 'Everything You Need to Run Your Business',
         'description' => 'Powerful features designed to streamline operations and accelerate growth',
-        
+
         'items' => [
             [
                 'icon' => '📊',
@@ -84,12 +84,12 @@ return [
             ],
         ],
     ],
-    
+
     'modules' => [
         'badge' => 'Modules',
         'title' => 'Complete Business Solution',
         'description' => 'Powerful modules to manage every aspect of your business',
-        
+
         'items' => [
             ['icon' => '💰', 'name' => 'Accounting'],
             ['icon' => '📦', 'name' => 'Inventory'],
@@ -106,12 +106,11 @@ return [
         ],
     ],
 
-    
     'showcase' => [
         'badge' => 'Product Showcase',
         'title' => 'Powerful Tools to Manage Your Business',
         'description' => 'Discover features designed to simplify your daily operations',
-        
+
         'items' => [
             [
                 'title' => 'Intuitive Dashboard',
@@ -148,12 +147,12 @@ return [
             ],
         ],
     ],
-    
+
     'testimonials' => [
         'badge' => 'Testimonials',
         'title' => 'What Our Customers Say',
         'description' => 'Thousands of businesses have transformed their operations with GenERP',
-        
+
         'items' => [
             [
                 'text' => 'GenERP has completely transformed our business processes. Inventory management is now so much easier and we\'ve saved 30% of our time.',
@@ -175,14 +174,14 @@ return [
             ],
         ],
     ],
-    
+
     'pricing' => [
         'badge' => 'Pricing',
         'title' => 'The Right Plan for Your Business',
         'description' => 'Flexible pricing that grows with you. No hidden fees.',
         'popular' => 'Popular',
         'get_started' => 'Get Started',
-        
+
         'plans' => [
             [
                 'name' => 'Starter',
@@ -235,17 +234,17 @@ return [
             ],
         ],
     ],
-    
+
     'cta' => [
         'title' => 'Transform Your Business Today',
         'description' => 'Join thousands of companies modernizing their operations with GenERP. No credit card required.',
         'button' => 'Start Free Trial',
         'sign_in' => 'Sign In',
     ],
-    
+
     'footer' => [
         'tagline' => 'Modern ERP solution for modern businesses. Streamline your operations and grow faster with GenERP.',
-        
+
         'product' => [
             'title' => 'Product',
             'links' => [
@@ -256,7 +255,7 @@ return [
                 'API',
             ],
         ],
-        
+
         'company' => [
             'title' => 'Company',
             'links' => [
@@ -266,7 +265,7 @@ return [
                 'Contact',
             ],
         ],
-        
+
         'support' => [
             'title' => 'Support',
             'links' => [
@@ -276,7 +275,7 @@ return [
                 'Status',
             ],
         ],
-        
+
         'copyright' => '© :year GenERP BD. All rights reserved.',
     ],
 ];

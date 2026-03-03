@@ -8,7 +8,7 @@ return [
     'profile' => 'Profile',
     'logout' => 'Logout',
     'settings' => 'Settings',
-    
+
     // Navigation Groups
     'navigation' => [
         'dashboard' => 'Dashboard',
@@ -20,7 +20,7 @@ return [
         'reports' => 'Reports',
         'settings' => 'Settings',
     ],
-    
+
     // Common Actions
     'actions' => [
         'create' => 'Create',
@@ -34,7 +34,7 @@ return [
         'filter' => 'Filter',
         'search' => 'Search',
     ],
-    
+
     // Stats
     'stats' => [
         'total_revenue' => 'Total Revenue',

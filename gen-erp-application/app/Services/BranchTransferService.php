@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Branch;
+use App\Domain\Auth\Models\Branch;
 use App\Models\StockTransfer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;

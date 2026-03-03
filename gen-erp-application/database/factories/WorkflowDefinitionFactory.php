@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Enums\WorkflowDocumentType;
-use App\Models\Company;
-use App\Models\WorkflowDefinition;
+use App\Support\Enums\WorkflowDocumentType;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Workflow\Models\WorkflowDefinition;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Requests\Api\V1\StoreCustomerRequest;
 use App\Http\Requests\Api\V1\UpdateCustomerRequest;
-use App\Models\Customer;
-use App\Services\ContactService;
+use App\Domain\Customer\Models\Customer;
+use App\Domain\Customer\Services\ContactService;
+use App\Domain\Customer\DTOs\CreateCustomerData;
+use App\Http\Resources\CustomerResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -25,19 +27,23 @@ class CustomerController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/customers",
+     *     path="/api/v1/customers",
      *     summary="List all customers",
      *     tags={"Customers"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="status", in="query", description="Status filter", @OA\Schema(type="string")),
      *     @OA\Parameter(name="contact_group_id", in="query", description="Contact Group ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Customer")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -56,16 +62,20 @@ class CustomerController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/customers/{id}",
+     *     path="/api/v1/customers/{id}",
      *     summary="Get a specific customer",
      *     tags={"Customers"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Customer ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Customer")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
@@ -74,17 +84,20 @@ class CustomerController extends BaseApiController
     {
         $customer->load(['contactGroup']);
 
-        return $this->success($customer);
+        return $this->success(new CustomerResource($customer));
     }
 
     /**
      * @OA\Post(
-     *     path="/customers",
+     *     path="/api/v1/customers",
      *     summary="Create a new customer",
      *     tags={"Customers"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="email", type="string"),
      *             @OA\Property(property="phone", type="string"),
@@ -93,12 +106,15 @@ class CustomerController extends BaseApiController
      *             @OA\Property(property="credit_limit", type="integer")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Customer created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Customer"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -106,28 +122,26 @@ class CustomerController extends BaseApiController
      */
     public function store(StoreCustomerRequest $request): JsonResponse
     {
-        $validated = $request->validated();
-        $customFields = $validated['custom_fields'] ?? [];
-        unset($validated['custom_fields']);
-
         $customer = $this->contactService->createCustomer(
-            activeCompany(),
-            $validated,
-            $customFields,
+            CreateCustomerData::fromRequest($request)
         );
 
-        return $this->success($customer, __('Customer created'), 201);
+        return $this->success(new CustomerResource($customer), __('Customer created'), 201);
     }
 
     /**
      * @OA\Put(
-     *     path="/customers/{id}",
+     *     path="/api/v1/customers/{id}",
      *     summary="Update a customer",
      *     tags={"Customers"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Customer ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="email", type="string"),
      *             @OA\Property(property="phone", type="string"),
@@ -136,12 +150,15 @@ class CustomerController extends BaseApiController
      *             @OA\Property(property="credit_limit", type="integer")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer updated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Customer"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -149,29 +166,28 @@ class CustomerController extends BaseApiController
      */
     public function update(UpdateCustomerRequest $request, Customer $customer): JsonResponse
     {
-        $validated = $request->validated();
-        $customFields = $validated['custom_fields'] ?? [];
-        unset($validated['custom_fields']);
-
         $customer = $this->contactService->updateCustomer(
             $customer,
-            $validated,
-            $customFields,
+            CreateCustomerData::fromRequest($request)
         );
 
-        return $this->success($customer, __('Customer updated'));
+        return $this->success(new CustomerResource($customer), __('Customer updated'));
     }
 
     /**
      * @OA\Delete(
-     *     path="/customers/{id}",
+     *     path="/api/v1/customers/{id}",
      *     summary="Delete a customer",
      *     tags={"Customers"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Customer ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Customer deleted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="message", type="string")
      *         )

@@ -33,7 +33,11 @@
                     id="email"
                     name="email"
                     placeholder="info@gmail.com"
-                    class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-primary focus:outline-none focus:ring-3 focus:ring-primary/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                    :class="[
+                      'h-11 w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-3 dark:bg-gray-900 dark:text-white/90',
+                      error ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : 'border-gray-300 focus:border-primary focus:ring-primary/10 dark:border-gray-700'
+                    ]"
+                    @input="error = ''"
                   />
                 </div>
                 <!-- Password -->
@@ -47,7 +51,11 @@
                       :type="showPassword ? 'text' : 'password'"
                       id="password"
                       placeholder="আপনার পাসওয়ার্ড লিখুন"
-                      class="h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-4 pr-11 text-sm text-gray-800 focus:border-primary focus:outline-none focus:ring-3 focus:ring-primary/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                      :class="[
+                        'h-11 w-full rounded-lg border bg-transparent py-2.5 pl-4 pr-11 text-sm text-gray-800 focus:outline-none focus:ring-3 dark:bg-gray-900 dark:text-white/90',
+                        error ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : 'border-gray-300 focus:border-primary focus:ring-primary/10 dark:border-gray-700'
+                      ]"
+                      @input="error = ''"
                     />
                     <span @click="togglePasswordVisibility" class="absolute z-30 text-gray-500 -translate-y-1/2 cursor-pointer right-4 top-1/2 dark:text-gray-400">
                       <svg v-if="!showPassword" class="fill-current" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -87,8 +95,11 @@
                 </div>
 
                 <!-- Error Message -->
-                <div v-if="error" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                  {{ error }}
+                <div v-if="error" class="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm animate-shake">
+                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>{{ error }}</span>
                 </div>
               </div>
             </form>
@@ -138,8 +149,16 @@ const togglePasswordVisibility = () => {
 }
 
 const handleSubmit = async () => {
-  loading.value = true
+  // Clear previous error
   error.value = ''
+  
+  // Basic validation
+  if (!email.value || !password.value) {
+    error.value = 'ইমেইল এবং পাসওয়ার্ড প্রয়োজন'
+    return
+  }
+  
+  loading.value = true
   
   try {
     // Step 1: Get CSRF cookie (use plain axios to avoid baseURL prefix)
@@ -153,7 +172,7 @@ const handleSubmit = async () => {
     })
     
     // Check if 2FA is required
-    if (response.data.data.two_factor_required) {
+    if (response.data.two_factor_required) {
       // Store email for 2FA page
       sessionStorage.setItem('pending_2fa_email', email.value)
       // Redirect to 2FA page
@@ -161,26 +180,58 @@ const handleSubmit = async () => {
       return
     }
     
+    // Company is already set in session by the login endpoint
     // Store active company ID in sessionStorage for API calls
-    if (response.data.data.user?.companies?.length === 1) {
+    if (response.data.data?.user?.companies?.length === 1) {
       const companyId = response.data.data.user.companies[0].id
       sessionStorage.setItem('active_company_id', companyId)
-      
-      // Also set it on the server session by calling the switch API
-      try {
-        await axios.post(`/app/switch-company/${companyId}`)
-      } catch (err) {
-        console.error('Failed to set company context:', err)
-      }
     }
     
-    // Redirect to dashboard or home
-    const redirectUrl = response.data.data.user ? '/dashboard' : '/'
-    router.visit(redirectUrl)
+    // Use window.location for full page reload to ensure session is loaded
+    // This prevents the "Company not found" error that can occur with Inertia visits
+    const redirectUrl = response.data.data?.user ? '/dashboard' : '/'
+    window.location.href = redirectUrl
   } catch (err) {
-    error.value = err.response?.data?.message || 'Login failed. Please try again.'
+    // Handle different error scenarios
+    if (err.response) {
+      const status = err.response.status
+      const data = err.response.data
+      
+      if (status === 401) {
+        error.value = 'ইমেইল বা পাসওয়ার্ড ভুল হয়েছে'
+      } else if (status === 403) {
+        if (data.requires_verification) {
+          error.value = 'আপনার ইমেইল যাচাই করুন'
+        } else {
+          error.value = data.message || 'আপনার অ্যাকাউন্ট লক করা হয়েছে'
+        }
+      } else if (status === 429) {
+        const retryAfter = data.retry_after || 60
+        error.value = `অনেক বেশি চেষ্টা করা হয়েছে। ${retryAfter} সেকেন্ড পরে আবার চেষ্টা করুন`
+      } else {
+        error.value = data.message || 'লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন'
+      }
+    } else if (err.request) {
+      error.value = 'সার্ভারের সাথে সংযোগ করতে ব্যর্থ। আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন'
+    } else {
+      error.value = 'একটি ত্রুটি ঘটেছে। আবার চেষ্টা করুন'
+    }
+    
+    console.error('Login error:', err)
   } finally {
     loading.value = false
   }
 }
 </script>
+
+<style scoped>
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+</style>

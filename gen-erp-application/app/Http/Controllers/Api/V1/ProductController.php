@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Requests\Api\V1\StoreProductRequest;
 use App\Http\Requests\Api\V1\UpdateProductRequest;
-use App\Models\Product;
-use App\Services\ProductService;
+use App\Domain\Product\Models\Product;
+use App\Domain\Product\Services\ProductService;
+use App\Domain\Product\Actions\CreateProductAction;
+use App\Domain\Product\DTOs\CreateProductData;
+use App\Http\Resources\ProductResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -20,24 +23,29 @@ use RuntimeException;
 class ProductController extends BaseApiController
 {
     public function __construct(
-        private readonly ProductService $productService
+        private readonly ProductService $productService,
+        private readonly CreateProductAction $createProductAction,
     ) {}
 
     /**
      * @OA\Get(
-     *     path="/products",
+     *     path="/api/v1/products",
      *     summary="List all products",
      *     tags={"Products"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="product_type", in="query", description="Product type", @OA\Schema(type="string")),
      *     @OA\Parameter(name="category_id", in="query", description="Category ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Product")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -56,16 +64,20 @@ class ProductController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/products/{id}",
+     *     path="/api/v1/products/{id}",
      *     summary="Get a specific product",
      *     tags={"Products"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Product ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Product")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
@@ -79,12 +91,15 @@ class ProductController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/products",
+     *     path="/api/v1/products",
      *     summary="Create a new product",
      *     tags={"Products"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="sku", type="string"),
      *             @OA\Property(property="product_type", type="string"),
@@ -93,12 +108,15 @@ class ProductController extends BaseApiController
      *             @OA\Property(property="purchase_price", type="integer")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Product created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Product"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -106,40 +124,41 @@ class ProductController extends BaseApiController
      */
     public function store(StoreProductRequest $request): JsonResponse
     {
-        $validated = $request->validated();
-        $customFields = $validated['custom_fields'] ?? [];
-        unset($validated['custom_fields']);
-
-        $product = $this->productService->create(
-            activeCompany(),
-            $validated,
-            $customFields,
+        $product = $this->createProductAction->execute(
+            CreateProductData::fromRequest($request)
         );
 
-        return $this->success($product->load(['category', 'taxGroup']), __('Product created'), 201);
+        return $this->success(new ProductResource($product->load(['category', 'taxGroup'])), __('Product created'), 201);
     }
 
     /**
      * @OA\Put(
-     *     path="/products/{id}",
+     *     path="/api/v1/products/{id}",
      *     summary="Update a product",
      *     tags={"Products"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Product ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="sku", type="string"),
      *             @OA\Property(property="selling_price", type="integer"),
      *             @OA\Property(property="purchase_price", type="integer")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product updated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Product"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -147,14 +166,9 @@ class ProductController extends BaseApiController
      */
     public function update(UpdateProductRequest $request, Product $product): JsonResponse
     {
-        $validated = $request->validated();
-        $customFields = $validated['custom_fields'] ?? [];
-        unset($validated['custom_fields']);
-
         $product = $this->productService->update(
             $product,
-            $validated,
-            $customFields,
+            CreateProductData::fromRequest($request)
         );
 
         return $this->success($product->load(['category', 'taxGroup']), __('Product updated'));
@@ -162,14 +176,18 @@ class ProductController extends BaseApiController
 
     /**
      * @OA\Delete(
-     *     path="/products/{id}",
+     *     path="/api/v1/products/{id}",
      *     summary="Delete a product",
      *     tags={"Products"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Product ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Product deleted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="message", type="string")
      *         )

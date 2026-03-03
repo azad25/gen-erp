@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Company;
-use App\Models\User;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Auth\Models\User;
 
 // ═══════════════════════════════════════════════════
 // Company Switch Tests
@@ -12,8 +12,8 @@ test('user can switch to a company they belong to', function (): void {
     $company1 = Company::factory()->create(['name' => 'Company 1']);
     $company2 = Company::factory()->create(['name' => 'Company 2']);
 
-    $user->companies()->attach($company1->id, ['is_active' => true]);
-    $user->companies()->attach($company2->id, ['is_active' => true]);
+    $user->companies()->attach($company1->id, ['is_active' => true, 'role' => 'member']);
+    $user->companies()->attach($company2->id, ['is_active' => true, 'role' => 'member']);
 
     session(['active_company_id' => $company1->id]);
     $this->actingAs($user);
@@ -48,7 +48,7 @@ test('user cannot switch to company they do not belong to', function (): void {
     $company1 = Company::factory()->create();
     $company2 = Company::factory()->create();
 
-    $user->companies()->attach($company1->id, ['is_active' => true]);
+    $user->companies()->attach($company1->id, ['is_active' => true, 'role' => 'member']);
     // User is NOT a member of company2
 
     session(['active_company_id' => $company1->id]);
@@ -71,8 +71,8 @@ test('user cannot switch to inactive company', function (): void {
     $company1 = Company::factory()->create(['is_active' => true]);
     $company2 = Company::factory()->create(['is_active' => false]); // Inactive
 
-    $user->companies()->attach($company1->id, ['is_active' => true]);
-    $user->companies()->attach($company2->id, ['is_active' => true]);
+    $user->companies()->attach($company1->id, ['is_active' => true, 'role' => 'member']);
+    $user->companies()->attach($company2->id, ['is_active' => true, 'role' => 'member']);
 
     session(['active_company_id' => $company1->id]);
     $this->actingAs($user);
@@ -93,7 +93,7 @@ test('user cannot switch to non-existent company', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
     $company = Company::factory()->create();
 
-    $user->companies()->attach($company->id, ['is_active' => true]);
+    $user->companies()->attach($company->id, ['is_active' => true, 'role' => 'member']);
 
     session(['active_company_id' => $company->id]);
     $this->actingAs($user);
@@ -112,8 +112,8 @@ test('company switch regenerates session', function (): void {
     $company1 = Company::factory()->create();
     $company2 = Company::factory()->create();
 
-    $user->companies()->attach($company1->id, ['is_active' => true]);
-    $user->companies()->attach($company2->id, ['is_active' => true]);
+    $user->companies()->attach($company1->id, ['is_active' => true, 'role' => 'member']);
+    $user->companies()->attach($company2->id, ['is_active' => true, 'role' => 'member']);
 
     session(['active_company_id' => $company1->id]);
     $this->actingAs($user);
@@ -139,8 +139,8 @@ test('company switch returns user permissions for new company', function (): voi
     $company1 = Company::factory()->create();
     $company2 = Company::factory()->create();
 
-    $user->companies()->attach($company1->id, ['is_active' => true]);
-    $user->companies()->attach($company2->id, ['is_active' => true]);
+    $user->companies()->attach($company1->id, ['is_active' => true, 'role' => 'member']);
+    $user->companies()->attach($company2->id, ['is_active' => true, 'role' => 'member']);
 
     session(['active_company_id' => $company1->id]);
     $this->actingAs($user);
@@ -163,8 +163,8 @@ test('user cannot switch to company with inactive membership', function (): void
     $company1 = Company::factory()->create();
     $company2 = Company::factory()->create();
 
-    $user->companies()->attach($company1->id, ['is_active' => true]);
-    $user->companies()->attach($company2->id, ['is_active' => false]); // Inactive membership
+    $user->companies()->attach($company1->id, ['is_active' => true, 'role' => 'member']);
+    $user->companies()->attach($company2->id, ['is_active' => false, 'role' => 'member']); // Inactive membership
 
     session(['active_company_id' => $company1->id]);
     $this->actingAs($user);

@@ -5,10 +5,9 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\FailedLoginAttempt;
-use App\Models\User;
+use App\Domain\Auth\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 /**
@@ -63,7 +62,30 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended('/');
+        // Set active company in session
+        $authenticatedUser = Auth::user();
+        if ($authenticatedUser) {
+            $companies = $authenticatedUser->companies;
+
+            // Determine active company
+            if ($companies->count() === 1) {
+                // Single company - auto-select it
+                $activeCompany = $companies->first();
+                session(['active_company_id' => $activeCompany->id]);
+                $authenticatedUser->update(['last_active_company_id' => $activeCompany->id]);
+            } elseif ($authenticatedUser->last_active_company_id) {
+                // Multiple companies - use last active
+                session(['active_company_id' => $authenticatedUser->last_active_company_id]);
+            } elseif ($companies->count() > 0) {
+                // Multiple companies but no last active - use first one
+                $activeCompany = $companies->first();
+                session(['active_company_id' => $activeCompany->id]);
+                $authenticatedUser->update(['last_active_company_id' => $activeCompany->id]);
+            }
+            // If no companies, the EnsureActiveCompany middleware will redirect to setup
+        }
+
+        return redirect()->intended('/dashboard');
     }
 
     public function logout(\Illuminate\Http\Request $request): RedirectResponse

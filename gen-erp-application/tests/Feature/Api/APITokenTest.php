@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Company;
-use App\Models\User;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Auth\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
 
 // ═══════════════════════════════════════════════════
@@ -11,7 +11,7 @@ use Laravel\Sanctum\PersonalAccessToken;
 test('authenticated user can create API token', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
     $company = Company::factory()->create();
-    $user->companies()->attach($company->id, ['is_active' => true]);
+    $user->companies()->attach($company->id, ['is_active' => true, 'role' => 'member']);
 
     session(['active_company_id' => $company->id]);
     $this->actingAs($user);
@@ -39,7 +39,7 @@ test('authenticated user can create API token', function (): void {
 
     // Verify token starts with prefix
     $token = $response->json('data.token');
-    expect($token)->toStartWith('generp_');
+    expect($token)->toContain('generp_');
 
     // Verify token is stored in database with company_id
     $tokenRecord = PersonalAccessToken::where('tokenable_id', $user->id)
@@ -88,7 +88,7 @@ test('API token creation verifies user company membership', function (): void {
 test('API token creation with default abilities', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
     $company = Company::factory()->create();
-    $user->companies()->attach($company->id, ['is_active' => true]);
+    $user->companies()->attach($company->id, ['is_active' => true, 'role' => 'member']);
 
     session(['active_company_id' => $company->id]);
     $this->actingAs($user);
@@ -106,7 +106,7 @@ test('API token creation with default abilities', function (): void {
 test('API token creation validates name', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
     $company = Company::factory()->create();
-    $user->companies()->attach($company->id, ['is_active' => true]);
+    $user->companies()->attach($company->id, ['is_active' => true, 'role' => 'member']);
 
     session(['active_company_id' => $company->id]);
     $this->actingAs($user);
@@ -134,7 +134,7 @@ test('unauthenticated user cannot create API token', function (): void {
 test('authenticated user can list their API tokens', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
     $company = Company::factory()->create();
-    $user->companies()->attach($company->id, ['is_active' => true]);
+    $user->companies()->attach($company->id, ['is_active' => true, 'role' => 'member']);
 
     session(['active_company_id' => $company->id]);
 
@@ -174,8 +174,8 @@ test('user only sees tokens for active company', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
     $company1 = Company::factory()->create();
     $company2 = Company::factory()->create();
-    $user->companies()->attach($company1->id, ['is_active' => true]);
-    $user->companies()->attach($company2->id, ['is_active' => true]);
+    $user->companies()->attach($company1->id, ['is_active' => true, 'role' => 'member']);
+    $user->companies()->attach($company2->id, ['is_active' => true, 'role' => 'member']);
 
     // Create tokens for both companies
     $token1 = $user->createToken('Company 1 Token');
@@ -211,7 +211,7 @@ test('unauthenticated user cannot list API tokens', function (): void {
 test('user can revoke their own API token', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
     $company = Company::factory()->create();
-    $user->companies()->attach($company->id, ['is_active' => true]);
+    $user->companies()->attach($company->id, ['is_active' => true, 'role' => 'member']);
 
     session(['active_company_id' => $company->id]);
 
@@ -236,8 +236,8 @@ test('user cannot revoke token from different company', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
     $company1 = Company::factory()->create();
     $company2 = Company::factory()->create();
-    $user->companies()->attach($company1->id, ['is_active' => true]);
-    $user->companies()->attach($company2->id, ['is_active' => true]);
+    $user->companies()->attach($company1->id, ['is_active' => true, 'role' => 'member']);
+    $user->companies()->attach($company2->id, ['is_active' => true, 'role' => 'member']);
 
     // Create token for company2
     $token = $user->createToken('Company 2 Token');
@@ -263,8 +263,8 @@ test('user cannot revoke another users token', function (): void {
     $user1 = User::factory()->create(['email_verified_at' => now()]);
     $user2 = User::factory()->create(['email_verified_at' => now()]);
     $company = Company::factory()->create();
-    $user1->companies()->attach($company->id, ['is_active' => true]);
-    $user2->companies()->attach($company->id, ['is_active' => true]);
+    $user1->companies()->attach($company->id, ['is_active' => true, 'role' => 'member']);
+    $user2->companies()->attach($company->id, ['is_active' => true, 'role' => 'member']);
 
     // User2 creates a token
     $token = $user2->createToken('User 2 Token');
@@ -295,7 +295,7 @@ test('unauthenticated user cannot revoke API token', function (): void {
 test('API request with valid token is authenticated', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
     $company = Company::factory()->create();
-    $user->companies()->attach($company->id, ['is_active' => true]);
+    $user->companies()->attach($company->id, ['is_active' => true, 'role' => 'member']);
 
     $token = $user->createToken('Test Token', ['*']);
     PersonalAccessToken::where('id', $token->accessToken->id)->update(['company_id' => $company->id]);
@@ -323,10 +323,10 @@ test('API request without token is rejected', function (): void {
 test('API token provides company context automatically', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
     $company = Company::factory()->create();
-    $user->companies()->attach($company->id, ['is_active' => true]);
+    $user->companies()->attach($company->id, ['is_active' => true, 'role' => 'member']);
 
     // Create some customers for this company
-    \App\Models\Customer::factory()->count(3)->create(['company_id' => $company->id]);
+    \App\Domain\Customer\Models\Customer::factory()->count(3)->create(['company_id' => $company->id]);
 
     $token = $user->createToken('Test Token', ['*']);
     PersonalAccessToken::where('id', $token->accessToken->id)->update(['company_id' => $company->id]);

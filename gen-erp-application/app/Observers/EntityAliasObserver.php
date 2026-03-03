@@ -2,7 +2,7 @@
 
 namespace App\Observers;
 
-use App\Models\EntityAlias;
+use App\Domain\Shared\Models\EntityAlias;
 use Illuminate\Support\Facades\Cache;
 
 /**

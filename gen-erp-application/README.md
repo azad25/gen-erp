@@ -1,59 +1,227 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Gen-ERP - Enterprise Resource Planning SaaS
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="https://img.shields.io/badge/Laravel-12.x-red?style=for-the-badge&logo=laravel" alt="Laravel">
+  <img src="https://img.shields.io/badge/Vue.js-3.x-green?style=for-the-badge&logo=vue.js" alt="Vue.js">
+  <img src="https://img.shields.io/badge/API-REST-blue?style=for-the-badge" alt="REST API">
+  <img src="https://img.shields.io/badge/Architecture-DDD-purple?style=for-the-badge" alt="Domain Driven Design">
 </p>
 
-## About Laravel
+Gen-ERP is a comprehensive, multi-tenant SaaS Enterprise Resource Planning system built with modern technologies and Domain-Driven Design principles. It provides complete business management capabilities for small to medium enterprises.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Key Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 👥 **Multi-Tenant Architecture**
+- **Company Management**: Multi-company support with isolated data
+- **User Management**: Role-based access control and team invitations
+- **Branch Management**: Multiple branch/location support per company
+- **Two-Factor Authentication**: Enhanced security with TOTP support
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 💰 **Financial Management**
+- **Chart of Accounts**: Comprehensive accounting structure with account groups
+- **Journal Entries**: Double-entry bookkeeping system
+- **Financial Reports**: Trial Balance, Profit & Loss, Balance Sheet
+- **Expense Management**: Track and categorize business expenses
+- **Payment Methods**: Multiple payment method configurations
+- **Credit Notes**: Customer credit note management
 
-## Learning Laravel
+### 🛒 **Sales & Customer Management**
+- **Customer Management**: Complete customer database with contact groups
+- **Sales Orders**: Create, confirm, and convert to invoices
+- **Invoice Management**: Generate, send, and track invoices
+- **Payment Processing**: Record and allocate customer payments
+- **Credit Management**: Customer credit limits and balance tracking
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### 🏭 **Purchase & Supplier Management**
+- **Supplier Management**: Comprehensive supplier database
+- **Purchase Orders**: Create, confirm, and receive goods
+- **Goods Receipt**: Track received items and update inventory
+- **Supplier Payments**: TDS/VDS calculations and payment processing
+- **Purchase Returns**: Handle returned goods and adjustments
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 📦 **Inventory Management**
+- **Product Management**: Complete product catalog with categories
+- **Warehouse Management**: Multi-warehouse inventory tracking
+- **Stock Movements**: Real-time inventory tracking and adjustments
+- **Stock Levels**: Available, reserved, and reorder level management
+- **Tax Groups**: VAT/Tax configuration and calculations
 
-## Laravel Sponsors
+### 👨‍💼 **Human Resources**
+- **Employee Management**: Complete employee database with departments
+- **Attendance Tracking**: Daily attendance with bulk operations
+- **Leave Management**: Leave types, requests, approval workflow
+- **Payroll Processing**: Salary calculations and payslip generation
+- **Department & Designations**: Organizational structure management
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 📄 **Document Management**
+- **Document Storage**: Secure file upload and management
+- **Document Folders**: Organized folder structure
+- **File Operations**: Download, preview, and thumbnail generation
+- **Document Linking**: Attach documents to various entities
 
-### Premium Partners
+### 🔄 **Workflow Management**
+- **Approval Workflows**: Configurable approval processes
+- **Workflow Instances**: Track document approval status
+- **Approval Requests**: Multi-level approval system
+- **Status Transitions**: Automated workflow state management
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 📊 **Reporting & Analytics**
+- **Dashboard**: Real-time business metrics and KPIs
+- **Financial Reports**: Comprehensive financial statements
+- **Custom Reports**: Flexible report builder with filters
+- **Data Export**: Export reports in multiple formats
+- **Chart Visualizations**: Interactive charts and graphs
 
-## Contributing
+### 🔧 **System Administration**
+- **Custom Fields**: Flexible field definitions for entities
+- **Import Jobs**: Bulk data import with progress tracking
+- **Notifications**: Real-time system notifications
+- **Audit Trails**: Complete activity logging and tracking
+- **Multi-tenancy**: Isolated data per company
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🏗️ **Technical Architecture**
 
-## Code of Conduct
+### **Backend Technologies**
+- **Laravel 12.x**: Modern PHP framework with latest features
+- **Domain-Driven Design**: Clean architecture with 22 business domains
+- **RESTful API**: 182 documented endpoints with OpenAPI 3.0
+- **Multi-tenancy**: Stancl/Tenancy for data isolation
+- **Authentication**: Laravel Sanctum with API tokens
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### **Frontend Technologies**
+- **Vue.js 3.x**: Modern reactive frontend framework
+- **Inertia.js**: Server-side rendering with SPA experience
+- **Tailwind CSS 4.x**: Utility-first CSS framework
+- **ApexCharts**: Interactive data visualizations
+- **Pinia**: State management for Vue.js
 
-## Security Vulnerabilities
+### **Database & Storage**
+- **MySQL/PostgreSQL**: Robust relational database support
+- **Eloquent ORM**: Laravel's powerful database abstraction
+- **File Storage**: Local and cloud storage support
+- **Migrations**: Version-controlled database schema
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### **Development & Testing**
+- **PHPUnit/Pest**: Comprehensive test suite (198 tests)
+- **Swagger UI**: Interactive API documentation
+- **Vite**: Modern build tool for assets
+- **Docker**: Containerized development environment
 
-## License
+## 📚 **API Documentation**
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The system provides comprehensive API documentation with interactive testing capabilities:
+
+- **Swagger UI**: Available at `/swagger.html`
+- **OpenAPI 3.0**: Complete API specification at `/openapi.json`
+- **182 Endpoints**: Full CRUD operations for all entities
+- **Authentication**: Token-based API access
+- **Request/Response Examples**: Complete documentation with schemas
+
+## 🚦 **Getting Started**
+
+### **Prerequisites**
+- PHP 8.2+
+- Composer
+- Node.js 18+
+- MySQL 8.0+ or PostgreSQL 13+
+
+### **Installation**
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd gen-erp-application
+   ```
+
+2. **Install dependencies**
+   ```bash
+   composer install
+   npm install
+   ```
+
+3. **Environment setup**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+4. **Database setup**
+   ```bash
+   php artisan migrate
+   php artisan db:seed
+   ```
+
+5. **Build assets**
+   ```bash
+   npm run build
+   ```
+
+6. **Start the application**
+   ```bash
+   php artisan serve
+   ```
+
+### **Development**
+
+For development with hot reloading:
+```bash
+npm run dev
+php artisan serve
+```
+
+## 🧪 **Testing**
+
+Run the comprehensive test suite:
+```bash
+php artisan test
+```
+
+**Test Coverage:**
+- 198 tests with 609 assertions
+- Feature tests for all major functionality
+- API endpoint testing
+- Multi-tenancy isolation tests
+
+## 📖 **Domain Structure**
+
+The application follows Domain-Driven Design with these business domains:
+
+- **Accounting**: Financial management and reporting
+- **Auth**: Authentication and authorization
+- **Customer**: Customer relationship management
+- **HR**: Human resources and payroll
+- **Inventory**: Stock and warehouse management
+- **Invoice**: Billing and invoicing
+- **Product**: Product catalog management
+- **Purchase**: Procurement and supplier management
+- **Sales**: Sales order management
+- **System**: System administration
+- **Workflow**: Business process automation
+
+## 🔒 **Security Features**
+
+- **Multi-factor Authentication**: TOTP-based 2FA
+- **Role-based Access Control**: Granular permissions
+- **API Rate Limiting**: Protection against abuse
+- **Data Encryption**: Sensitive data protection
+- **Audit Logging**: Complete activity tracking
+- **CSRF Protection**: Cross-site request forgery prevention
+
+## 📄 **License**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 **Contributing**
+
+We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## 📞 **Support**
+
+For support and questions:
+- **Documentation**: Check the API documentation at `/swagger.html`
+- **Issues**: Report bugs via GitHub Issues
+- **Email**: support@gen-erp.com
+
+---
+
+**Gen-ERP** - Empowering businesses with comprehensive ERP solutions.

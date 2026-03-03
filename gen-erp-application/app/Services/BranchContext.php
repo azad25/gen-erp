@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Branch;
+use App\Domain\Auth\Models\Branch;
 
 /**
  * Thread-safe branch context — stores active branch for request lifecycle.

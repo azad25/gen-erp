@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Company;
-use App\Models\User;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Auth\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -17,7 +17,7 @@ class DevAdminSeeder extends Seeder
         // Check if dev admin already exists
         $devAdmin = User::where('email', 'dev@generp.test')->first();
 
-        if (!$devAdmin) {
+        if (! $devAdmin) {
             $devAdmin = User::create([
                 'name' => 'Dev Admin',
                 'email' => 'dev@generp.test',
@@ -42,7 +42,7 @@ class DevAdminSeeder extends Seeder
         // Create or get dev company
         $devCompany = Company::where('name', 'Dev Company')->first();
 
-        if (!$devCompany) {
+        if (! $devCompany) {
             $devCompany = Company::create([
                 'uuid' => \Illuminate\Support\Str::uuid(),
                 'name' => 'Dev Company',
@@ -61,7 +61,7 @@ class DevAdminSeeder extends Seeder
         }
 
         // Attach dev admin to dev company if not already attached
-        if (!$devAdmin->companies()->where('company_id', $devCompany->id)->exists()) {
+        if (! $devAdmin->companies()->where('company_id', $devCompany->id)->exists()) {
             $devAdmin->companies()->attach($devCompany->id, [
                 'role' => 'owner',
                 'is_owner' => true,

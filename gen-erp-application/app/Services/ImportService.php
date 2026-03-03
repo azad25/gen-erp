@@ -114,7 +114,7 @@ class ImportService
      */
     private function generateExcelTemplate(string $path, array $headers): void
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
         // Write headers
@@ -123,7 +123,7 @@ class ImportService
         }
 
         // Style header row
-        $headerRange = 'A1:' . \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers)) . '1';
+        $headerRange = 'A1:'.\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers)).'1';
         $sheet->getStyle($headerRange)->getFont()->setBold(true);
 
         $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
@@ -135,7 +135,7 @@ class ImportService
      */
     private function generateTxtTemplate(string $path, array $headers): void
     {
-        file_put_contents($path, implode('|', $headers) . "\n");
+        file_put_contents($path, implode('|', $headers)."\n");
     }
 
     /**

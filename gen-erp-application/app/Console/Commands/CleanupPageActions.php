@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\File;
 class CleanupPageActions extends Command
 {
     protected $signature = 'ui:cleanup-page-actions';
+
     protected $description = 'Remove default getHeaderActions from pages (now in base classes)';
 
     private array $cleaned = [];
+
     private array $skipped = [];
 
     public function handle()
@@ -23,7 +25,7 @@ class CleanupPageActions extends Command
 
         $totalFiles = 0;
         foreach ($resources as $resource) {
-            $pagesPath = $resource . '/Pages';
+            $pagesPath = $resource.'/Pages';
             if (File::exists($pagesPath)) {
                 $totalFiles += count(File::files($pagesPath));
             }
@@ -33,14 +35,14 @@ class CleanupPageActions extends Command
         $bar->start();
 
         foreach ($resources as $resource) {
-            $pagesPath = $resource . '/Pages';
-            
-            if (!File::exists($pagesPath)) {
+            $pagesPath = $resource.'/Pages';
+
+            if (! File::exists($pagesPath)) {
                 continue;
             }
 
             $files = File::files($pagesPath);
-            
+
             foreach ($files as $file) {
                 $this->cleanupPage($file->getPathname());
                 $bar->advance();
@@ -130,12 +132,12 @@ class CleanupPageActions extends Command
     private function displayResults(): void
     {
         if (count($this->cleaned) > 0) {
-            $this->info('✅ Cleaned ' . count($this->cleaned) . ' pages');
+            $this->info('✅ Cleaned '.count($this->cleaned).' pages');
             $this->newLine();
         }
 
         if (count($this->skipped) > 0) {
-            $this->comment('⏭️  Skipped ' . count($this->skipped) . ' pages (no default actions or custom actions)');
+            $this->comment('⏭️  Skipped '.count($this->skipped).' pages (no default actions or custom actions)');
         }
 
         $this->newLine();

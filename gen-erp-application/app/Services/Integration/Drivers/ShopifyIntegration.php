@@ -20,9 +20,9 @@ class ShopifyIntegration extends BaseNativeIntegration
 
     public function install(CompanyIntegration $ci): void
     {
-        $this->registerHook($ci, 'product.created', self::class . '@onProductCreated');
-        $this->registerHook($ci, 'product.updated', self::class . '@onProductUpdated');
-        $this->registerHook($ci, 'inventory.adjusted', self::class . '@onInventoryAdjusted');
+        $this->registerHook($ci, 'product.created', self::class.'@onProductCreated');
+        $this->registerHook($ci, 'product.updated', self::class.'@onProductUpdated');
+        $this->registerHook($ci, 'inventory.adjusted', self::class.'@onInventoryAdjusted');
         $this->createSyncSchedule($ci, 'orders', 'pull', 'every_15_minutes');
         $this->createSyncSchedule($ci, 'products', 'push', 'hourly');
         $this->createInboundWebhook($ci, 'orders', [
@@ -46,7 +46,7 @@ class ShopifyIntegration extends BaseNativeIntegration
         $clientId = config('services.shopify.client_id', '');
         $scopes = 'read_products,write_products,read_orders,read_inventory,write_inventory';
 
-        return "https://{$shop}/admin/oauth/authorize?" . http_build_query([
+        return "https://{$shop}/admin/oauth/authorize?".http_build_query([
             'client_id' => $clientId,
             'scope' => $scopes,
             'redirect_uri' => $redirectUri,
@@ -56,7 +56,7 @@ class ShopifyIntegration extends BaseNativeIntegration
     /**
      * Push a product to Shopify.
      *
-     * @param array<string, mixed> $productData
+     * @param  array<string, mixed>  $productData
      */
     public function pushProduct(CompanyIntegration $ci, array $productData): ?array
     {
@@ -73,6 +73,7 @@ class ShopifyIntegration extends BaseNativeIntegration
             return $response->successful() ? $response->json('product') : null;
         } catch (\Throwable $e) {
             Log::error('Shopify: Push product failed', ['error' => $e->getMessage()]);
+
             return null;
         }
     }
@@ -100,6 +101,7 @@ class ShopifyIntegration extends BaseNativeIntegration
             return $response->successful() ? ($response->json('orders') ?? []) : [];
         } catch (\Throwable $e) {
             Log::error('Shopify: Pull orders failed', ['error' => $e->getMessage()]);
+
             return [];
         }
     }

@@ -41,7 +41,7 @@ class SeedDevSampleData extends Command
         ]);
         $this->newLine();
 
-        $seeder = new DevSampleDataSeeder();
+        $seeder = new DevSampleDataSeeder;
         $seeder->setCommand($this);
         $seeder->run();
 

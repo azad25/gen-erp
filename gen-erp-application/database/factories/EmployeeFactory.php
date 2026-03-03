@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Enums\EmployeeStatus;
-use App\Enums\EmploymentType;
-use App\Models\Company;
-use App\Models\Employee;
+use App\Support\Enums\EmployeeStatus;
+use App\Support\Enums\EmploymentType;
+use App\Domain\Auth\Models\Company;
+use App\Domain\HR\Models\Employee;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<Employee> */

@@ -19,7 +19,7 @@
                     <label for="invite_role" style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem;">{{ __('Role') }}</label>
                     <select id="invite_role" wire:model="invite_role" required style="width: 100%; padding: 0.5rem; border: 1px solid var(--filament-gray-300); border-radius: 0.375rem;">
                         <option value="">{{ __('Select role...') }}</option>
-                        @foreach (\App\Enums\CompanyRole::options() as $value => $label)
+                        @foreach (\App\Support\Enums\CompanyRole::options() as $value => $label)
                             @if ($value !== 'owner')
                                 <option value="{{ $value }}">{{ $label }}</option>
                             @endif
@@ -51,7 +51,7 @@
                     @foreach ($this->pendingInvitations as $invitation)
                         <tr style="border-bottom: 1px solid var(--filament-gray-100);">
                             <td style="padding: 0.5rem;">{{ $invitation->email }}</td>
-                            <td style="padding: 0.5rem;">{{ \App\Enums\CompanyRole::tryFrom($invitation->role)?->label() ?? $invitation->role }}</td>
+                            <td style="padding: 0.5rem;">{{ \App\Support\Enums\CompanyRole::tryFrom($invitation->role)?->label() ?? $invitation->role }}</td>
                             <td style="padding: 0.5rem;">{{ $invitation->expires_at->diffForHumans() }}</td>
                         </tr>
                     @endforeach

@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\CreditNote;
-use App\Services\PaymentService;
+use App\Domain\Customer\Contracts\PaymentServiceInterface;
+use App\Domain\Customer\Models\CreditNote;
+use App\Domain\Invoice\Models\Invoice;
+use App\Http\Resources\CreditNoteResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * @OA\Tag(
@@ -17,23 +20,27 @@ use Illuminate\Http\Request;
 class CreditNoteController extends BaseApiController
 {
     public function __construct(
-        private PaymentService $paymentService
+        private readonly PaymentServiceInterface $paymentService
     ) {}
 
     /**
      * @OA\Get(
-     *     path="/credit-notes",
+     *     path="/api/v1/credit-notes",
      *     summary="List all credit notes",
      *     tags={"Credit Notes"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="status", in="query", description="Status", @OA\Schema(type="string")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/CreditNote")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -49,21 +56,25 @@ class CreditNoteController extends BaseApiController
             ->orderBy('note_date', 'desc')
             ->paginate($request->integer('per_page', 15));
 
-        return $this->paginated($creditNotes);
+        return $this->paginated($creditNotes, CreditNoteResource::class);
     }
 
     /**
      * @OA\Get(
-     *     path="/credit-notes/{id}",
+     *     path="/api/v1/credit-notes/{id}",
      *     summary="Get a specific credit note",
      *     tags={"Credit Notes"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Credit Note ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/CreditNote")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
@@ -72,17 +83,20 @@ class CreditNoteController extends BaseApiController
     {
         $creditNote->load(['customer', 'invoice', 'items']);
 
-        return $this->success($creditNote);
+        return $this->success(new CreditNoteResource($creditNote));
     }
 
     /**
      * @OA\Post(
-     *     path="/credit-notes",
+     *     path="/api/v1/credit-notes",
      *     summary="Create a new credit note",
      *     tags={"Credit Notes"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="customer_id", type="integer"),
      *             @OA\Property(property="invoice_id", type="integer"),
      *             @OA\Property(property="note_date", type="string", format="date"),
@@ -94,12 +108,15 @@ class CreditNoteController extends BaseApiController
      *             @OA\Property(property="items", type="array")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Credit note created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/CreditNote"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -107,27 +124,30 @@ class CreditNoteController extends BaseApiController
      */
     public function store(Request $request): JsonResponse
     {
+        $companyId = activeCompany()->id;
+
         $validated = $request->validate([
-            'customer_id' => ['required', 'exists:customers,id'],
-            'invoice_id' => ['required', 'exists:invoices,id'],
+            'invoice_id' => ['required', Rule::exists('invoices', 'id')->where('company_id', $companyId)],
             'note_date' => ['required', 'date'],
-            'subtotal' => ['required', 'integer', 'min:0'],
-            'discount_amount' => ['nullable', 'integer', 'min:0'],
-            'tax_amount' => ['nullable', 'integer', 'min:0'],
-            'total_amount' => ['required', 'integer', 'min:0'],
             'reason' => ['required', 'string', 'max:1000'],
             'items' => ['required', 'array'],
-            'items.*.invoice_item_id' => ['required', 'exists:invoice_items,id'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.product_id' => ['nullable', 'integer'],
+            'items.*.description' => ['required', 'string', 'max:255'],
+            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'items.*.unit_price' => ['required', 'integer', 'min:0'],
+            'items.*.tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
-        $validated['company_id'] = activeCompany()->id;
-        $validated['status'] = 'pending';
+        $invoice = Invoice::where('company_id', $companyId)->findOrFail($validated['invoice_id']);
+        
+        $data = [
+            'note_date' => $validated['note_date'],
+            'reason' => $validated['reason'],
+        ];
 
-        $creditNote = $this->paymentService->issueCreditNote($validated);
+        $creditNote = $this->paymentService->issueCreditNote($invoice, $data, $validated['items']);
 
-        return $this->success($creditNote->load(['customer', 'invoice', 'items']), 'Credit note created', 201);
+        return $this->success(new CreditNoteResource($creditNote->load(['customer', 'invoice', 'items'])), 'Credit note created', 201);
     }
 
     public function update(Request $request, CreditNote $creditNote): JsonResponse
@@ -143,7 +163,7 @@ class CreditNoteController extends BaseApiController
 
         $creditNote->update($validated);
 
-        return $this->success($creditNote->fresh(), 'Credit note updated');
+        return $this->success(new CreditNoteResource($creditNote->fresh()), 'Credit note updated');
     }
 
     public function destroy(CreditNote $creditNote): JsonResponse

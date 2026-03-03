@@ -20,13 +20,16 @@ class DashboardController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/dashboard",
+     *     path="/api/v1/dashboard",
      *     summary="Get dashboard statistics",
      *     tags={"Dashboard"},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="total_sales", type="integer"),

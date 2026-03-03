@@ -2,7 +2,7 @@
 
 namespace App\Observers;
 
-use App\Models\CustomFieldDefinition;
+use App\Domain\Shared\Models\CustomFieldDefinition;
 use Illuminate\Support\Facades\Cache;
 
 /**

@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', 
+    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS',
         'app.generp.bd,localhost,localhost:3000,localhost:5173,127.0.0.1,127.0.0.1:8000,::1'
     )),
 

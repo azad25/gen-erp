@@ -3,7 +3,7 @@
 
 **{{ $invitation->invitedBy?->name }}** {{ __('has invited you to join') }} **{{ $invitation->company->name }}** {{ __('on GenERP BD.') }}
 
-**{{ __('Role:') }}** {{ \App\Enums\CompanyRole::tryFrom($invitation->role)?->label() ?? $invitation->role }}
+**{{ __('Role:') }}** {{ \App\Support\Enums\CompanyRole::tryFrom($invitation->role)?->label() ?? $invitation->role }}
 
 <x-mail::button :url="$acceptUrl">
 {{ __('Accept Invitation') }}

@@ -11,7 +11,7 @@ class FieldMapper
      * Map source data using field mappings.
      *
      * @param  array  $sourceData  Flat or nested associative array of source data
-     * @param  array  $fieldMaps   Array of mapping definitions: [{generpbd_field, external_field, transform}]
+     * @param  array  $fieldMaps  Array of mapping definitions: [{generpbd_field, external_field, transform}]
      * @return array Mapped data for the external system
      */
     public function mapOutbound(array $sourceData, array $fieldMaps): array
@@ -31,7 +31,7 @@ class FieldMapper
      * Map external data back into GenERP BD fields (inbound).
      *
      * @param  array  $externalData  Data from external system
-     * @param  array  $fieldMaps     Array of mapping definitions
+     * @param  array  $fieldMaps  Array of mapping definitions
      * @return array Mapped data for GenERP BD
      */
     public function mapInbound(array $externalData, array $fieldMaps): array

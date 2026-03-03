@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\CustomerPayment;
-use App\Services\PaymentService;
+use App\Domain\Customer\Contracts\PaymentServiceInterface;
+use App\Domain\Customer\Models\Customer;
+use App\Domain\Customer\Models\CustomerPayment;
+use App\Http\Resources\CustomerPaymentResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,21 +21,25 @@ use InvalidArgumentException;
 class PaymentController extends BaseApiController
 {
     public function __construct(
-        private readonly PaymentService $paymentService
+        private readonly PaymentServiceInterface $paymentService
     ) {}
 
     /**
      * @OA\Get(
-     *     path="/payments",
+     *     path="/api/v1/payments",
      *     summary="List all customer payments",
      *     tags={"Payments"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="customer_id", in="query", description="Customer ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
@@ -53,19 +59,23 @@ class PaymentController extends BaseApiController
             ->orderBy('payment_date', 'desc')
             ->paginate($request->integer('per_page', 15));
 
-        return $this->paginated($payments);
+        return $this->paginated($payments, CustomerPaymentResource::class);
     }
 
     /**
      * @OA\Get(
-     *     path="/payments/{id}",
+     *     path="/api/v1/payments/{id}",
      *     summary="Get a specific customer payment",
      *     tags={"Payments"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Payment ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="object")
      *         )
@@ -79,17 +89,20 @@ class PaymentController extends BaseApiController
             ->with(['customer', 'allocations.invoice'])
             ->findOrFail($id);
 
-        return $this->success($payment);
+        return $this->success(new CustomerPaymentResource($payment));
     }
 
     /**
      * @OA\Post(
-     *     path="/payments",
+     *     path="/api/v1/payments",
      *     summary="Receive a customer payment",
      *     tags={"Payments"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="customer_id", type="integer"),
      *             @OA\Property(property="payment_date", type="string", format="date"),
      *             @OA\Property(property="amount", type="integer"),
@@ -99,10 +112,13 @@ class PaymentController extends BaseApiController
      *             @OA\Property(property="allocations", type="array", @OA\Items(type="object"))
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Payment received",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
@@ -137,7 +153,7 @@ class PaymentController extends BaseApiController
             return $this->error($e->getMessage(), 422);
         }
 
-        return $this->success($payment->load(['customer', 'allocations.invoice']), __('Payment received'), 201);
+        return $this->success(new CustomerPaymentResource($payment->load(['customer', 'allocations.invoice'])), __('Payment received'), 201);
     }
 
     /**
@@ -156,7 +172,7 @@ class PaymentController extends BaseApiController
 
         $payment->update($validated);
 
-        return $this->success($payment->fresh(), __('Payment notes updated'));
+        return $this->success(new CustomerPaymentResource($payment->fresh()), __('Payment notes updated'));
     }
 
     /**
@@ -169,21 +185,28 @@ class PaymentController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/payments/{payment}/allocate",
+     *     path="/api/v1/payments/{payment}/allocate",
      *     summary="Allocate payment to invoice",
      *     tags={"Payments"},
+     *
      *     @OA\Parameter(name="payment", in="path", required=true, description="Payment ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="invoice_id", type="integer"),
      *             @OA\Property(property="amount", type="integer")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Payment allocated to invoice",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
@@ -205,6 +228,6 @@ class PaymentController extends BaseApiController
 
         $this->paymentService->allocatePayment($payment, $validated['invoice_id'], $validated['amount']);
 
-        return $this->success($payment->fresh()->load(['allocations.invoice']), __('Payment allocated to invoice'));
+        return $this->success(new CustomerPaymentResource($payment->fresh()->load(['allocations.invoice'])), __('Payment allocated to invoice'));
     }
 }

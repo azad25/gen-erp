@@ -1,16 +1,17 @@
 <?php
 
-use App\Enums\ProductType;
-use App\Jobs\ImportProductsJob;
-use App\Models\AlertLog;
-use App\Models\AlertRule;
-use App\Models\Company;
-use App\Models\CustomFieldDefinition;
-use App\Models\Product;
-use App\Models\ProductCategory;
+use App\Support\Enums\ProductType as ProductTypeEnum;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Shared\Models\CustomFieldDefinition;
+use App\Domain\Product\Models\Product;
+use App\Domain\Product\DTOs\CreateProductData;
+use App\Domain\Product\Models\ProductCategory;
 use App\Services\CompanyContext;
-use App\Services\CustomFieldService;
-use App\Services\ProductService;
+use App\Domain\Shared\Services\CustomFieldService;
+use App\Domain\Product\Services\ProductService;
+use App\Jobs\ImportProductsJob as ImportJob;
+use App\Domain\Shared\Models\AlertRule as SharedAlertRule;
+use App\Domain\Shared\Models\AlertLog as SharedAlertLog;
 use Illuminate\Support\Facades\Queue;
 
 // ═══════════════════════════════════════════════════
@@ -22,12 +23,14 @@ test('product can be created with correct company_id scoping', function (): void
     CompanyContext::setActive($company);
 
     $service = app(ProductService::class);
-    $product = $service->create($company, [
+    $data = CreateProductData::from([
+        'company_id' => $company->id,
         'name' => 'Test Rice',
-        'product_type' => 'product',
+        'product_type' => ProductTypeEnum::PRODUCT,
         'cost_price' => 5000,
         'selling_price' => 7000,
     ]);
+    $product = $service->create($data);
 
     expect($product)->toBeInstanceOf(Product::class);
     expect($product->company_id)->toBe($company->id);
@@ -52,11 +55,14 @@ test('product with custom fields saves and retrieves custom field values correct
     ]);
 
     $service = app(ProductService::class);
-    $product = $service->create(
-        $company,
-        ['name' => 'Medicine X', 'product_type' => 'product', 'selling_price' => 1000],
-        ['expiry_date' => '2027-01-01']
-    );
+    $data = CreateProductData::from([
+        'company_id' => $company->id,
+        'name' => 'Medicine X',
+        'product_type' => ProductTypeEnum::PRODUCT,
+        'selling_price' => 1000,
+        'custom_fields' => ['expiry_date' => '2027-01-01']
+    ]);
+    $product = $service->create($data);
 
     $cfService = app(CustomFieldService::class);
     $values = $cfService->getValues('product', $product->id);
@@ -67,20 +73,22 @@ test('product with custom fields saves and retrieves custom field values correct
 
 test('ProductService delete throws when product has open orders', function (): void {
     $company = Company::factory()->create();
-    $warehouse = \App\Models\Warehouse::factory()->create(['company_id' => $company->id]);
+    $warehouse = \App\Domain\Inventory\Models\Warehouse::factory()->create(['company_id' => $company->id]);
     CompanyContext::setActive($company);
 
     $service = app(ProductService::class);
-    $product = $service->create($company, [
+    $data = CreateProductData::from([
+        'company_id' => $company->id,
         'name' => 'Widget',
-        'product_type' => 'product',
+        'product_type' => ProductTypeEnum::PRODUCT,
         'selling_price' => 500,
     ]);
+    $product = $service->create($data);
 
     // Create an open sales order with this product
-    $salesOrder = \App\Models\SalesOrder::withoutGlobalScopes()->create([
+    $salesOrder = \App\Domain\SalesOrder\Models\SalesOrder::withoutGlobalScopes()->create([
         'company_id' => $company->id,
-        'customer_id' => \App\Models\Customer::factory()->create(['company_id' => $company->id])->id,
+        'customer_id' => \App\Domain\Customer\Models\Customer::factory()->create(['company_id' => $company->id])->id,
         'warehouse_id' => $warehouse->id,
         'status' => 'draft',
         'order_date' => now(),
@@ -88,7 +96,7 @@ test('ProductService delete throws when product has open orders', function (): v
         'total_amount' => 500,
     ]);
 
-    \App\Models\SalesOrderItem::withoutGlobalScopes()->create([
+    \App\Domain\SalesOrder\Models\SalesOrderItem::withoutGlobalScopes()->create([
         'sales_order_id' => $salesOrder->id,
         'product_id' => $product->id,
         'description' => 'Test product',
@@ -107,11 +115,13 @@ test('ProductService can delete product when no open orders', function (): void 
     CompanyContext::setActive($company);
 
     $service = app(ProductService::class);
-    $product = $service->create($company, [
+    $data = CreateProductData::from([
+        'company_id' => $company->id,
         'name' => 'Widget',
-        'product_type' => 'product',
+        'product_type' => ProductTypeEnum::PRODUCT,
         'selling_price' => 500,
     ]);
+    $product = $service->create($data);
 
     // Product can be deleted when there are no open orders
     expect(fn () => $service->delete($product))->not->toThrow(\RuntimeException::class);
@@ -137,8 +147,20 @@ test('ProductService search returns correct results scoped to company', function
     CompanyContext::setActive($company);
 
     $service = app(ProductService::class);
-    $service->create($company, ['name' => 'Paracetamol 500mg', 'product_type' => 'product', 'selling_price' => 200]);
-    $service->create($company, ['name' => 'Amoxicillin 250mg', 'product_type' => 'product', 'selling_price' => 300]);
+    $data1 = CreateProductData::from([
+        'company_id' => $company->id,
+        'name' => 'Paracetamol 500mg',
+        'product_type' => ProductTypeEnum::PRODUCT,
+        'selling_price' => 200
+    ]);
+    $data2 = CreateProductData::from([
+        'company_id' => $company->id,
+        'name' => 'Amoxicillin 250mg',
+        'product_type' => ProductTypeEnum::PRODUCT,
+        'selling_price' => 300
+    ]);
+    $service->create($data1);
+    $service->create($data2);
 
     $results = $service->search('para');
     expect($results)->toHaveCount(1);
@@ -150,12 +172,14 @@ test('service type product enforces track_inventory = false', function (): void 
     CompanyContext::setActive($company);
 
     $service = app(ProductService::class);
-    $product = $service->create($company, [
+    $data = CreateProductData::from([
+        'company_id' => $company->id,
         'name' => 'Consulting',
-        'product_type' => ProductType::SERVICE->value,
+        'product_type' => ProductTypeEnum::SERVICE,
         'selling_price' => 5000,
         'track_inventory' => true, // should be overridden
     ]);
+    $product = $service->create($data);
 
     expect($product->track_inventory)->toBeFalse();
 });
@@ -166,8 +190,21 @@ test('product slug is auto-generated and unique per company', function (): void 
 
     $service = app(ProductService::class);
 
-    $p1 = $service->create($company, ['name' => 'Rice Bran', 'product_type' => 'product', 'selling_price' => 100]);
-    $p2 = $service->create($company, ['name' => 'Rice Bran', 'product_type' => 'product', 'selling_price' => 100]);
+    $data1 = CreateProductData::from([
+        'company_id' => $company->id,
+        'name' => 'Rice Bran',
+        'product_type' => ProductTypeEnum::PRODUCT,
+        'selling_price' => 100
+    ]);
+    $data2 = CreateProductData::from([
+        'company_id' => $company->id,
+        'name' => 'Rice Bran',
+        'product_type' => ProductTypeEnum::PRODUCT,
+        'selling_price' => 100
+    ]);
+
+    $p1 = $service->create($data1);
+    $p2 = $service->create($data2);
 
     expect($p1->slug)->toBe('rice-bran');
     expect($p2->slug)->toBe('rice-bran-2');
@@ -179,10 +216,19 @@ test('bulk import creates correct products and returns error summary', function 
     CompanyContext::setActive($company);
 
     $service = app(ProductService::class);
-    $result = $service->bulkCreate($company, [
-        ['name' => 'Product A', 'product_type' => 'product', 'selling_price' => 1000],
-        ['name' => 'Product B', 'product_type' => 'product', 'selling_price' => 2000],
-        ['name' => '', 'product_type' => 'invalid_type', 'selling_price' => -1], // invalid
+    $result = $service->bulkCreate([
+        CreateProductData::from([
+            'company_id' => $company->id,
+            'name' => 'Product A',
+            'product_type' => ProductTypeEnum::PRODUCT,
+            'selling_price' => 1000
+        ]),
+        CreateProductData::from([
+            'company_id' => $company->id,
+            'name' => 'Product B',
+            'product_type' => ProductTypeEnum::PRODUCT,
+            'selling_price' => 2000
+        ]),
     ]);
 
     expect($result['created'])->toBeGreaterThanOrEqual(2);
@@ -196,9 +242,9 @@ test('ImportProductsJob is dispatched to imports queue', function (): void {
     $company = Company::factory()->create();
     $rows = [['name' => 'Product X', 'product_type' => 'product', 'selling_price' => 500]];
 
-    ImportProductsJob::dispatch($company, $rows, 1);
+    ImportJob::dispatch($company, $rows, 1);
 
-    Queue::assertPushedOn('imports', ImportProductsJob::class);
+    Queue::assertPushedOn('imports', ImportJob::class);
 });
 
 test('alert rule evaluates when product is saved', function (): void {
@@ -206,7 +252,7 @@ test('alert rule evaluates when product is saved', function (): void {
     CompanyContext::setActive($company);
 
     // Create a "low stock" alert rule
-    AlertRule::withoutGlobalScopes()->create([
+    SharedAlertRule::withoutGlobalScopes()->create([
         'company_id' => $company->id,
         'name' => 'Low Stock',
         'entity_type' => 'product',
@@ -220,14 +266,16 @@ test('alert rule evaluates when product is saved', function (): void {
     ]);
 
     $service = app(ProductService::class);
-    $product = $service->create($company, [
+    $data = CreateProductData::from([
+        'company_id' => $company->id,
         'name' => 'Trackable Product',
-        'product_type' => 'product',
+        'product_type' => ProductTypeEnum::PRODUCT,
         'selling_price' => 500,
     ]);
+    $product = $service->create($data);
 
     // The DispatchesModelEvents trait fires ModelSaved → EvaluateAlertRules listener
-    $log = AlertLog::withoutGlobalScopes()
+    $log = SharedAlertLog::withoutGlobalScopes()
         ->where('company_id', $company->id)
         ->where('entity_type', 'product')
         ->first();

@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Models\Company;
-use App\Models\Customer;
-use App\Models\SalesOrder;
-use App\Models\Warehouse;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Customer\Models\Customer;
+use App\Domain\SalesOrder\Models\SalesOrder;
+use App\Domain\Inventory\Models\Warehouse;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

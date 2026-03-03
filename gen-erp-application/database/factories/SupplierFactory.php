@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Company;
-use App\Models\Supplier;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Purchase\Models\Supplier;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class SupplierFactory extends Factory
 {
-    protected $model = Supplier::class;
+    protected $model = \App\Domain\Purchase\Models\Supplier::class;
 
     /**
      * @return array<string, mixed>

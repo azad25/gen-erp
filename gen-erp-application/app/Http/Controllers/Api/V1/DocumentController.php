@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\Document;
-use App\Services\DocumentService;
+use App\Domain\Document\Models\Document;
+use App\Domain\Document\Services\DocumentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @OA\Tag(
@@ -23,19 +22,23 @@ class DocumentController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/documents",
+     *     path="/api/v1/documents",
      *     summary="List all documents",
      *     tags={"Documents"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="mime_type", in="query", description="MIME type", @OA\Schema(type="string")),
      *     @OA\Parameter(name="folder_id", in="query", description="Folder ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Document")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -57,16 +60,20 @@ class DocumentController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/documents/{id}",
+     *     path="/api/v1/documents/{id}",
      *     summary="Get a specific document",
      *     tags={"Documents"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Document ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Document")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
@@ -80,19 +87,24 @@ class DocumentController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/documents",
+     *     path="/api/v1/documents",
      *     summary="Upload a new document",
      *     tags={"Documents"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\MediaType(mediaType="multipart/form-data", @OA\Schema(type="object"))
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Document uploaded",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Document"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -137,14 +149,18 @@ class DocumentController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/documents/{document}/download",
+     *     path="/api/v1/documents/{document}/download",
      *     summary="Download document",
      *     tags={"Documents"},
+     *
      *     @OA\Parameter(name="document", in="path", required=true, description="Document ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Download URL generated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="object", @OA\Property(property="download_url", type="string")),
      *             @OA\Property(property="message", type="string")
@@ -161,14 +177,18 @@ class DocumentController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/documents/{document}/thumbnail",
+     *     path="/api/v1/documents/{document}/thumbnail",
      *     summary="Get document thumbnail",
      *     tags={"Documents"},
+     *
      *     @OA\Parameter(name="document", in="path", required=true, description="Document ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Thumbnail URL generated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="object", @OA\Property(property="thumbnail_url", type="string")),
      *             @OA\Property(property="message", type="string")
@@ -185,14 +205,18 @@ class DocumentController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/documents/{document}/preview",
+     *     path="/api/v1/documents/{document}/preview",
      *     summary="Get document preview",
      *     tags={"Documents"},
+     *
      *     @OA\Parameter(name="document", in="path", required=true, description="Document ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Preview URL generated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="object", @OA\Property(property="preview_url", type="string")),
      *             @OA\Property(property="message", type="string")

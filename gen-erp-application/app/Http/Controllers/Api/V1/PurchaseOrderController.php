@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\PurchaseOrder;
-use App\Services\PurchaseService;
+use App\Domain\Purchase\Contracts\PurchaseServiceInterface;
+use App\Domain\Purchase\Models\PurchaseOrder;
+use App\Http\Resources\PurchaseOrderResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,24 +20,28 @@ use RuntimeException;
 class PurchaseOrderController extends BaseApiController
 {
     public function __construct(
-        private readonly PurchaseService $purchaseService
+        private readonly PurchaseServiceInterface $purchaseService
     ) {}
 
     /**
      * @OA\Get(
-     *     path="/purchase-orders",
+     *     path="/api/v1/purchase-orders",
      *     summary="List all purchase orders",
      *     tags={"Purchase Orders"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="status", in="query", description="Order status", @OA\Schema(type="string")),
      *     @OA\Parameter(name="supplier_id", in="query", description="Supplier ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/PurchaseOrder")),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -50,21 +55,25 @@ class PurchaseOrderController extends BaseApiController
             $request->integer('per_page', 15),
         );
 
-        return $this->paginated($orders);
+        return $this->paginated(PurchaseOrderResource::collection($orders));
     }
 
     /**
      * @OA\Get(
-     *     path="/purchase-orders/{id}",
+     *     path="/api/v1/purchase-orders/{id}",
      *     summary="Get a specific purchase order",
      *     tags={"Purchase Orders"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Purchase Order ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/PurchaseOrder")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
@@ -73,29 +82,35 @@ class PurchaseOrderController extends BaseApiController
     {
         $purchaseOrder->load(['supplier', 'warehouse', 'items.product']);
 
-        return $this->success($purchaseOrder);
+        return $this->success(new PurchaseOrderResource($purchaseOrder));
     }
 
     /**
      * @OA\Post(
-     *     path="/purchase-orders",
+     *     path="/api/v1/purchase-orders",
      *     summary="Create a new purchase order",
      *     tags={"Purchase Orders"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="supplier_id", type="integer"),
      *             @OA\Property(property="warehouse_id", type="integer"),
      *             @OA\Property(property="order_date", type="string", format="date"),
      *             @OA\Property(property="items", type="array", @OA\Items(type="object"))
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Purchase order created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/PurchaseOrder"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -137,25 +152,32 @@ class PurchaseOrderController extends BaseApiController
 
     /**
      * @OA\Put(
-     *     path="/purchase-orders/{id}",
+     *     path="/api/v1/purchase-orders/{id}",
      *     summary="Update a purchase order",
      *     tags={"Purchase Orders"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Purchase Order ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="supplier_id", type="integer"),
      *             @OA\Property(property="warehouse_id", type="integer"),
      *             @OA\Property(property="order_date", type="string", format="date"),
      *             @OA\Property(property="items", type="array", @OA\Items(type="object"))
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Purchase order updated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/PurchaseOrder"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -192,14 +214,18 @@ class PurchaseOrderController extends BaseApiController
 
     /**
      * @OA\Delete(
-     *     path="/purchase-orders/{id}",
+     *     path="/api/v1/purchase-orders/{id}",
      *     summary="Delete a purchase order",
      *     tags={"Purchase Orders"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Purchase Order ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Purchase order deleted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="message", type="string")
      *         )
@@ -219,16 +245,20 @@ class PurchaseOrderController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/purchase-orders/{purchaseOrder}/confirm",
+     *     path="/api/v1/purchase-orders/{purchaseOrder}/confirm",
      *     summary="Confirm a purchase order",
      *     tags={"Purchase Orders"},
+     *
      *     @OA\Parameter(name="purchaseOrder", in="path", required=true, description="Purchase Order ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Purchase order confirmed",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/PurchaseOrder"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -243,22 +273,29 @@ class PurchaseOrderController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/purchase-orders/{purchaseOrder}/receive",
+     *     path="/api/v1/purchase-orders/{purchaseOrder}/receive",
      *     summary="Receive goods from purchase order",
      *     tags={"Purchase Orders"},
+     *
      *     @OA\Parameter(name="purchaseOrder", in="path", required=true, description="Purchase Order ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="items", type="array", @OA\Items(type="object"))
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Goods receipt created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/GoodsReceipt"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -279,16 +316,20 @@ class PurchaseOrderController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/purchase-orders/{purchaseOrder}/cancel",
+     *     path="/api/v1/purchase-orders/{purchaseOrder}/cancel",
      *     summary="Cancel a purchase order",
      *     tags={"Purchase Orders"},
+     *
      *     @OA\Parameter(name="purchaseOrder", in="path", required=true, description="Purchase Order ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Purchase order cancelled",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/PurchaseOrder"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )

@@ -2,15 +2,15 @@
 
 namespace App\Services;
 
-use App\Enums\BusinessType;
+use App\Support\Enums\BusinessType;
 use App\Models\Account;
 use App\Models\AlertRule;
 use App\Models\Company;
 use App\Models\EntityAlias;
 use App\Models\LeaveType;
-use App\Models\WorkflowDefinition;
-use App\Models\WorkflowStatus;
-use App\Models\WorkflowTransition;
+use App\Domain\Workflow\Models\WorkflowDefinition;
+use App\Domain\Workflow\Models\WorkflowStatus;
+use App\Domain\Workflow\Models\WorkflowTransition;
 use Database\Seeders\DefaultUnitsSeeder;
 
 /**

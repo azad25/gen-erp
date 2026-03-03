@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\Employee;
-use App\Services\HRService;
+use App\Domain\HR\Models\Employee;
+use App\Domain\HR\Services\HRService;
+use App\Http\Resources\EmployeeResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -23,19 +24,23 @@ class EmployeeController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/employees",
+     *     path="/api/v1/employees",
      *     summary="List all employees",
      *     tags={"Employees"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="department_id", in="query", description="Department ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="status", in="query", description="Employee status", @OA\Schema(type="string")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Employee")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -48,7 +53,7 @@ class EmployeeController extends BaseApiController
             ->when($request->get('search'), fn ($q, $s) => $q->where(function ($q) use ($s): void {
                 $q->where('first_name', 'LIKE', "%{$s}%")
                     ->orWhere('last_name', 'LIKE', "%{$s}%")
-                    ->orWhere('employee_id_number', 'LIKE', "%{$s}%");
+                    ->orWhere('employee_code', 'LIKE', "%{$s}%");
             }))
             ->when($request->get('department_id'), fn ($q, $d) => $q->where('department_id', $d))
             ->when($request->get('status'), fn ($q, $s) => $q->where('status', $s))
@@ -61,33 +66,42 @@ class EmployeeController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/employees/{id}",
+     *     path="/api/v1/employees/{id}",
      *     summary="Get a specific employee",
      *     tags={"Employees"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Employee ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Employee")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
      */
     public function show(Employee $employee): JsonResponse
     {
-        return $this->success($employee->load(['department', 'designation']));
+        return $this->success(
+            new EmployeeResource($employee->load(['department', 'designation']))
+        );
     }
 
     /**
      * @OA\Post(
-     *     path="/employees",
+     *     path="/api/v1/employees",
      *     summary="Create a new employee",
      *     tags={"Employees"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="first_name", type="string"),
      *             @OA\Property(property="last_name", type="string"),
      *             @OA\Property(property="email", type="string"),
@@ -98,12 +112,15 @@ class EmployeeController extends BaseApiController
      *             @OA\Property(property="basic_salary", type="integer")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Employee created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Employee"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -136,22 +153,31 @@ class EmployeeController extends BaseApiController
             $customFields,
         );
 
-        return $this->success($employee->load(['department', 'designation']), __('Employee created'), 201);
+        return $this->success(
+            new EmployeeResource($employee->load(['department', 'designation'])), 
+            __('Employee created'), 
+            201
+        );
     }
 
     /**
      * @OA\Put(
-     *     path="/employees/{id}",
+     *     path="/api/v1/employees/{id}",
      *     summary="Update an employee",
      *     tags={"Employees"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Employee ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(required=true, @OA\JsonContent()),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Employee updated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Employee"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -182,7 +208,10 @@ class EmployeeController extends BaseApiController
             $customFields,
         );
 
-        return $this->success($employee->load(['department', 'designation']), __('Employee updated'));
+        return $this->success(
+            new EmployeeResource($employee->load(['department', 'designation'])), 
+            __('Employee updated')
+        );
     }
 
     /**
@@ -195,17 +224,22 @@ class EmployeeController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/employees/{employee}/terminate",
+     *     path="/api/v1/employees/{employee}/terminate",
      *     summary="Terminate an employee",
      *     tags={"Employees"},
+     *
      *     @OA\Parameter(name="employee", in="path", required=true, description="Employee ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="termination_date", type="string", format="date"),
      *             @OA\Property(property="reason", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(response=200, description="Employee terminated")
      * )
      */
@@ -222,6 +256,9 @@ class EmployeeController extends BaseApiController
             $validated['reason'],
         );
 
-        return $this->success($employee->fresh(), __('Employee terminated'));
+        return $this->success(
+            new EmployeeResource($employee->fresh()), 
+            __('Employee terminated')
+        );
     }
 }

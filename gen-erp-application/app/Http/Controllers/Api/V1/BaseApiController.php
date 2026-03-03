@@ -10,9 +10,11 @@ use Illuminate\Routing\Controller;
  *     title="Gen-ERP API",
  *     version="1.0.0",
  *     description="Gen-ERP REST API documentation",
+ *
  *     @OA\Contact(
  *         email="support@gen-erp.com"
  *     ),
+ *
  *     @OA\Server(
  *         url="/api/v1",
  *         description="API Server"

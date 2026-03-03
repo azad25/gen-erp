@@ -1,11 +1,12 @@
 <?php
 
-use App\Models\Company;
-use App\Models\Customer;
-use App\Models\CustomerTransaction;
-use App\Models\Supplier;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Customer\Models\Customer;
+use App\Domain\Customer\Models\CustomerTransaction;
+use App\Domain\Purchase\Models\Supplier;
+use App\Domain\Shared\Models\CustomFieldDefinition;
 use App\Services\CompanyContext;
-use App\Services\ContactService;
+use App\Domain\Customer\Services\ContactService;
 use Carbon\Carbon;
 
 // ═══════════════════════════════════════════════════
@@ -17,7 +18,7 @@ test('customer created with correct company_id and auto-generated customer_code'
     CompanyContext::setActive($company);
 
     $service = app(ContactService::class);
-    $customer = $service->createCustomer($company, ['name' => 'Rahim Traders']);
+    $customer = $service->createCustomerLegacy($company, ['name' => 'Rahim Traders']);
 
     expect($customer->company_id)->toBe($company->id);
     expect($customer->customer_code)->toStartWith('CUST-');
@@ -28,7 +29,7 @@ test('customer custom fields save and retrieve correctly', function (): void {
     $company = Company::factory()->create();
     CompanyContext::setActive($company);
 
-    \App\Models\CustomFieldDefinition::withoutGlobalScopes()->create([
+    CustomFieldDefinition::withoutGlobalScopes()->create([
         'company_id' => $company->id,
         'entity_type' => 'customer',
         'label' => 'NID Number',
@@ -40,13 +41,13 @@ test('customer custom fields save and retrieve correctly', function (): void {
     ]);
 
     $service = app(ContactService::class);
-    $customer = $service->createCustomer(
+    $customer = $service->createCustomerLegacy(
         $company,
         ['name' => 'Karim Supplies'],
         ['nid_number' => '1234567890']
     );
 
-    $cfService = app(\App\Services\CustomFieldService::class);
+    $cfService = app(\App\Domain\Shared\Services\CustomFieldService::class);
     $values = $cfService->getValues('customer', $customer->id);
 
     expect($values)->toHaveKey('nid_number');

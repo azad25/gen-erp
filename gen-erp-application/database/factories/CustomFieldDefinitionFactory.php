@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Enums\CustomFieldType;
-use App\Models\Company;
+use App\Support\Enums\CustomFieldType;
+use App\Domain\Auth\Models\Company;
 use App\Models\CustomFieldDefinition;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

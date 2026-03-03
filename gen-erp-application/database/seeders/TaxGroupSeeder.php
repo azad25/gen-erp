@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\TaxGroup;
+use App\Domain\Product\Models\TaxGroup;
 use Illuminate\Database\Seeder;
 
 /**

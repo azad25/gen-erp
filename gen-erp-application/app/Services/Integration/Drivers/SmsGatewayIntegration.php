@@ -20,7 +20,7 @@ class SmsGatewayIntegration extends BaseNativeIntegration
 
     public function install(CompanyIntegration $ci): void
     {
-        $this->registerHook($ci, 'order.confirmed', self::class . '@onOrderConfirmed');
+        $this->registerHook($ci, 'order.confirmed', self::class.'@onOrderConfirmed');
     }
 
     public function uninstall(CompanyIntegration $ci): void
@@ -57,6 +57,7 @@ class SmsGatewayIntegration extends BaseNativeIntegration
             return $response->successful();
         } catch (\Throwable $e) {
             Log::error('SMS SSL: Send failed', ['error' => $e->getMessage()]);
+
             return false;
         }
     }
@@ -75,6 +76,7 @@ class SmsGatewayIntegration extends BaseNativeIntegration
             return $response->successful();
         } catch (\Throwable $e) {
             Log::error('SMS Twilio: Send failed', ['error' => $e->getMessage()]);
+
             return false;
         }
     }

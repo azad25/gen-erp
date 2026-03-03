@@ -169,19 +169,36 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/Services/api.js'
+import { mapApiPagination } from '@/utils/pagination.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
-import AdminLayout from '@/Components/layout/AdminLayout.vue'
+import AdminLayout from '@/Components/Layout/AdminLayout.vue'
 import Card from '@/Components/ui/Card.vue'
 import Button from '@/Components/ui/Button.vue'
 import DataTable from '@/Components/UI/DataTable.vue'
 import Badge from '@/Components/UI/Badge.vue'
 import Modal from '@/Components/UI/Modal.vue'
 
-const invoices = ref([])
-const customers = ref([])
-const products = ref([])
-const pagination = ref({ current_page: 1, per_page: 15, total: 0 })
+// Accept props from server
+const props = defineProps({
+  initialInvoices: {
+    type: Array,
+    default: () => []
+  },
+  initialCustomers: {
+    type: Array,
+    default: () => []
+  },
+  initialProducts: {
+    type: Array,
+    default: () => []
+  }
+})
+
+const invoices = ref(props.initialInvoices)
+const customers = ref(props.initialCustomers)
+const products = ref(props.initialProducts)
+const pagination = ref({ current_page: 1, per_page: 15, total: 0, from: 0, to: 0, links: [] })
 const loading = ref(false)
 const showModal = ref(false)
 const showViewModal = ref(false)
@@ -213,7 +230,7 @@ const fetchInvoices = async (page = 1) => {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     invoices.value = response.data.data
-    pagination.value = response.data
+    pagination.value = mapApiPagination(response.data)
   } catch (error) {
     console.error('Failed to fetch invoices:', error)
   } finally {
@@ -360,8 +377,9 @@ const formatDate = (date) => {
 }
 
 onMounted(() => {
-  fetchInvoices()
-  fetchCustomers()
-  fetchProducts()
+  console.log('[Invoices] Component mounted with server data')
+  console.log('[Invoices] Customers:', customers.value.length)
+  console.log('[Invoices] Products:', products.value.length)
+  // No API calls needed - data comes from server
 })
 </script>

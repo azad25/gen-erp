@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Setup;
 
-use App\Enums\BusinessType;
+use App\Support\Enums\BusinessType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

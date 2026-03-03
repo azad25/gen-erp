@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\NoActiveCompanyException;
-use App\Models\Company;
+use App\Domain\Auth\Models\Company;
 
 /**
  * Manages the currently active company context for tenant-scoped operations.

@@ -36,8 +36,14 @@ const isActive = computed(() => {
 })
 
 const handleClick = () => {
+  console.log('[NavItem] Clicked:', props.label, 'Route:', props.route)
   if (props.route) {
-    router.visit(props.route)
+    console.log('[NavItem] Navigating to:', props.route)
+    router.visit(props.route, {
+      onStart: () => console.log('[NavItem] Navigation started'),
+      onFinish: () => console.log('[NavItem] Navigation finished'),
+      onError: (errors) => console.error('[NavItem] Navigation error:', errors)
+    })
   }
 }
 </script>

@@ -1,15 +1,15 @@
 <?php
 
-use App\Enums\AccountSubType;
-use App\Enums\JournalEntryStatus;
-use App\Models\Account;
-use App\Models\Company;
-use App\Models\Customer;
-use App\Models\Expense;
-use App\Models\Invoice;
-use App\Models\PayrollRun;
-use App\Models\Warehouse;
-use App\Services\AccountingService;
+use App\Support\Enums\AccountSubType;
+use App\Support\Enums\JournalEntryStatus;
+use App\Domain\Accounting\Models\Account;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Customer\Models\Customer;
+use App\Domain\Accounting\Models\Expense;
+use App\Domain\Invoice\Models\Invoice;
+use App\Domain\HR\Models\PayrollRun;
+use App\Domain\Inventory\Models\Warehouse;
+use App\Domain\Accounting\Services\AccountingService;
 use App\Services\CompanyContext;
 
 // ═══════════════════════════════════════════════════
@@ -119,7 +119,7 @@ test('journalForPayment creates correct DR Bank / CR Receivable entry', function
         'name' => 'Test Customer',
     ]);
 
-    $payment = \App\Models\CustomerPayment::withoutGlobalScopes()->create([
+    $payment = \App\Domain\Customer\Models\CustomerPayment::withoutGlobalScopes()->create([
         'company_id' => $company->id,
         'customer_id' => $customer->id,
         'receipt_number' => 'REC-001',

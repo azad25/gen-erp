@@ -19,8 +19,8 @@ class GoogleDriveIntegration extends BaseNativeIntegration
 
     public function install(CompanyIntegration $ci): void
     {
-        $this->registerHook($ci, 'invoice.finalized', self::class . '@onInvoiceFinalized');
-        $this->registerHook($ci, 'payroll.processed', self::class . '@onPayrollProcessed');
+        $this->registerHook($ci, 'invoice.finalized', self::class.'@onInvoiceFinalized');
+        $this->registerHook($ci, 'payroll.processed', self::class.'@onPayrollProcessed');
     }
 
     public function uninstall(CompanyIntegration $ci): void
@@ -47,6 +47,7 @@ class GoogleDriveIntegration extends BaseNativeIntegration
             return $response->successful() ? $response->json('id') : null;
         } catch (\Throwable $e) {
             Log::error('GoogleDrive: Upload failed', ['error' => $e->getMessage()]);
+
             return null;
         }
     }

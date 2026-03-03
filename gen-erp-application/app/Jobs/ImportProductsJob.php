@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Models\Company;
-use App\Services\ProductService;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Product\Services\ProductService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -49,7 +49,7 @@ class ImportProductsJob implements ShouldBeUnique, ShouldQueue
         $user = \App\Models\User::find($this->userId);
         $company = $this->company;
         if ($user && $company) {
-            $event = \App\Enums\NotificationEvent::tryFrom('import_complete');
+            $event = \App\Support\Enums\NotificationEvent::tryFrom('import_complete');
             if ($event) {
                 $variables = [
                     'created' => $result['created'],

@@ -2,12 +2,11 @@
 
 namespace App\Services;
 
-use App\Enums\NotificationEvent;
+use App\Support\Enums\NotificationEvent;
 use App\Models\Company;
 use App\Models\NotificationTemplate;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 
 /**

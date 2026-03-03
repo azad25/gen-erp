@@ -1,14 +1,14 @@
 <?php
 
-use App\Enums\AttendanceStatus;
-use App\Enums\EmployeeStatus;
-use App\Models\Attendance;
-use App\Models\Company;
-use App\Models\Employee;
-use App\Models\LeaveBalance;
-use App\Models\LeaveType;
+use App\Support\Enums\AttendanceStatus;
+use App\Support\Enums\EmployeeStatus;
+use App\Domain\HR\Models\Attendance;
+use App\Domain\Auth\Models\Company;
+use App\Domain\HR\Models\Employee;
+use App\Domain\HR\Models\LeaveBalance;
+use App\Domain\HR\Models\LeaveType;
 use App\Services\CompanyContext;
-use App\Services\HRService;
+use App\Domain\HR\Services\HRService;
 
 // ═══════════════════════════════════════════════════
 // HRTest — 10 tests

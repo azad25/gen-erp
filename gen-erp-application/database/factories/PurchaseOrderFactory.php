@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Models\Company;
-use App\Models\PurchaseOrder;
-use App\Models\Supplier;
-use App\Models\Warehouse;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Purchase\Models\PurchaseOrder;
+use App\Domain\Purchase\Models\Supplier;
+use App\Domain\Inventory\Models\Warehouse;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class PurchaseOrderFactory extends Factory
 {
-    protected $model = PurchaseOrder::class;
+    protected $model = \App\Domain\Purchase\Models\PurchaseOrder::class;
 
     /**
      * @return array<string, mixed>

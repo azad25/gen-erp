@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\ContactGroup;
+use App\Domain\Customer\Contracts\ContactServiceInterface;
+use App\Http\Resources\ContactGroupResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,19 +16,26 @@ use Illuminate\Http\Request;
  */
 class ContactGroupController extends BaseApiController
 {
+    public function __construct(
+        private readonly ContactServiceInterface $contactService
+    ) {}
     /**
      * @OA\Get(
-     *     path="/contact-groups",
+     *     path="/api/v1/contact-groups",
      *     summary="List all contact groups",
      *     tags={"Contact Groups"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/ContactGroup")),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -35,56 +43,67 @@ class ContactGroupController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
-        $groups = ContactGroup::query()
-            ->where('company_id', activeCompany()->id)
-            ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
-            ->orderBy('name')
-            ->paginate($request->integer('per_page', 15));
+        $groups = $this->contactService->getContactGroups(
+            activeCompany()->id,
+            $request->get('search'),
+            $request->integer('per_page', 15)
+        );
 
-        return $this->paginated($groups);
+        return $this->paginated($groups, ContactGroupResource::class);
     }
 
     /**
      * @OA\Get(
-     *     path="/contact-groups/{id}",
+     *     path="/api/v1/contact-groups/{id}",
      *     summary="Get a specific contact group",
      *     tags={"Contact Groups"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Contact Group ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/ContactGroup")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
      */
-    public function show(ContactGroup $contactGroup): JsonResponse
+    public function show(int $id): JsonResponse
     {
+        $contactGroup = $this->contactService->getContactGroup(activeCompany()->id, $id);
         $contactGroup->load(['customers', 'suppliers']);
 
-        return $this->success($contactGroup);
+        return $this->success(new ContactGroupResource($contactGroup));
     }
 
     /**
      * @OA\Post(
-     *     path="/contact-groups",
+     *     path="/api/v1/contact-groups",
      *     summary="Create a new contact group",
      *     tags={"Contact Groups"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="description", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Contact group created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/ContactGroup"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -97,68 +116,80 @@ class ContactGroupController extends BaseApiController
             'description' => ['nullable', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()->id;
+        $group = $this->contactService->createContactGroup(activeCompany()->id, $validated);
 
-        $group = ContactGroup::create($validated);
-
-        return $this->success($group, __('Contact group created'), 201);
+        return $this->success(new ContactGroupResource($group), __('Contact group created'), 201);
     }
 
     /**
      * @OA\Put(
-     *     path="/contact-groups/{id}",
+     *     path="/api/v1/contact-groups/{id}",
      *     summary="Update a contact group",
      *     tags={"Contact Groups"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Contact Group ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="name", type="string"),
      *             @OA\Property(property="description", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Contact group updated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/ContactGroup"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
      * )
      */
-    public function update(Request $request, ContactGroup $contactGroup): JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
+        $contactGroup = $this->contactService->getContactGroup(activeCompany()->id, $id);
+
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
         ]);
 
-        $contactGroup->update($validated);
+        $updatedGroup = $this->contactService->updateContactGroup($contactGroup, $validated);
 
-        return $this->success($contactGroup->fresh(), __('Contact group updated'));
+        return $this->success(new ContactGroupResource($updatedGroup), __('Contact group updated'));
     }
 
     /**
      * @OA\Delete(
-     *     path="/contact-groups/{id}",
+     *     path="/api/v1/contact-groups/{id}",
      *     summary="Delete a contact group",
      *     tags={"Contact Groups"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Contact Group ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Contact group deleted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
      * )
      */
-    public function destroy(ContactGroup $contactGroup): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
-        $contactGroup->delete();
+        $contactGroup = $this->contactService->getContactGroup(activeCompany()->id, $id);
+        $this->contactService->deleteContactGroup($contactGroup);
 
         return $this->success(null, __('Contact group deleted'));
     }

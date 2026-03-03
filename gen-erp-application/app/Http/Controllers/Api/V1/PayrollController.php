@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Services\PayrollService;
+use App\Domain\HR\Services\PayrollService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,18 +21,22 @@ class PayrollController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/payroll",
+     *     path="/api/v1/payroll",
      *     summary="List payslips for a month",
      *     tags={"Payroll"},
+     *
      *     @OA\Parameter(name="month", in="query", description="Month (1-12)", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="year", in="query", description="Year", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Payslip")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -50,21 +54,27 @@ class PayrollController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/payroll/run",
+     *     path="/api/v1/payroll/run",
      *     summary="Run payroll for a month",
      *     tags={"Payroll"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="month", type="integer"),
      *             @OA\Property(property="year", type="integer"),
      *             @OA\Property(property="employee_ids", type="array")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Payroll run completed",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="array"),
      *             @OA\Property(property="message", type="string")

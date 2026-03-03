@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\WidgetType;
+use App\Support\Enums\WidgetType;
 use App\Models\Company;
 use App\Models\DashboardWidget;
 use App\Models\User;

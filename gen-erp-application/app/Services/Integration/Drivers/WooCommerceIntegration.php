@@ -20,8 +20,8 @@ class WooCommerceIntegration extends BaseNativeIntegration
 
     public function install(CompanyIntegration $ci): void
     {
-        $this->registerHook($ci, 'product.created', self::class . '@onProductCreated');
-        $this->registerHook($ci, 'product.updated', self::class . '@onProductUpdated');
+        $this->registerHook($ci, 'product.created', self::class.'@onProductCreated');
+        $this->registerHook($ci, 'product.updated', self::class.'@onProductUpdated');
         $this->createSyncSchedule($ci, 'orders', 'pull', 'every_15_minutes');
         $this->createSyncSchedule($ci, 'products', 'push', 'hourly');
     }
@@ -41,7 +41,7 @@ class WooCommerceIntegration extends BaseNativeIntegration
 
         try {
             $response = Http::withBasicAuth($config['consumer_key'] ?? '', $config['consumer_secret'] ?? '')
-                ->get(rtrim($config['store_url'] ?? '', '/') . '/wp-json/wc/v3/orders', [
+                ->get(rtrim($config['store_url'] ?? '', '/').'/wp-json/wc/v3/orders', [
                     'page' => $page,
                     'per_page' => 50,
                     'orderby' => 'date',
@@ -51,6 +51,7 @@ class WooCommerceIntegration extends BaseNativeIntegration
             return $response->successful() ? $response->json() : [];
         } catch (\Throwable $e) {
             Log::error('WooCommerce: Pull orders failed', ['error' => $e->getMessage()]);
+
             return [];
         }
     }

@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Setup;
 
-use App\Enums\BusinessType;
+use App\Support\Enums\BusinessType;
 use App\Models\Company;
 use App\Models\CompanyUser;
 use App\Services\BusinessTypeTemplateService;

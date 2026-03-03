@@ -2,40 +2,63 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\Invoice;
-use App\Services\SalesService;
+use App\Domain\Invoice\Models\Invoice;
+use App\Domain\Invoice\Services\InvoiceService;
+use App\Domain\Invoice\Actions\SendInvoiceAction;
+use App\Domain\Invoice\Actions\CancelInvoiceAction;
+use App\Http\Requests\Invoice\CreateInvoiceRequest;
+use App\Http\Requests\Invoice\UpdateInvoiceRequest;
+use App\Domain\Invoice\DTOs\CreateInvoiceData;
+use App\Http\Resources\InvoiceResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+
+// CQRS Components
+use App\Domain\Shared\Bus\CommandBus;
+use App\Domain\Shared\Bus\QueryBus;
+use App\Domain\Shared\Cache\CacheService;
+use App\Domain\Invoice\Commands\CreateInvoiceCommand;
+use App\Domain\Invoice\Commands\SendInvoiceCommand;
+use App\Domain\Invoice\Queries\GetInvoiceQuery;
+use App\Domain\Invoice\Queries\GetInvoicesQuery;
 
 /**
  * @OA\Tag(
  *     name="Invoices",
  *     description="Invoice management"
  * )
- * REST API v1 controller for Invoice operations.
+ * REST API v1 controller for Invoice operations with CQRS pattern.
  */
 class InvoiceController extends BaseApiController
 {
     public function __construct(
-        private readonly SalesService $salesService
+        private readonly InvoiceService $invoiceService,
+        private readonly SendInvoiceAction $sendInvoiceAction,
+        private readonly CancelInvoiceAction $cancelInvoiceAction,
+        private readonly CommandBus $commandBus,
+        private readonly QueryBus $queryBus,
+        private readonly CacheService $cache,
     ) {}
 
     /**
      * @OA\Get(
-     *     path="/invoices",
+     *     path="/api/v1/invoices",
      *     summary="List all invoices",
      *     tags={"Invoices"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="status", in="query", description="Invoice status", @OA\Schema(type="string")),
      *     @OA\Parameter(name="customer_id", in="query", description="Customer ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Invoice")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -43,151 +66,160 @@ class InvoiceController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
-        $invoices = $this->salesService->paginateInvoices(
-            activeCompany(),
-            $request->only(['search', 'status', 'customer_id']),
-            $request->integer('per_page', 15),
-        );
+        $filters = $request->only(['search', 'status', 'customer_id']);
+        $perPage = $request->integer('per_page', 15);
+        
+        // Use CQRS Query with caching
+        $cacheKey = CacheService::invoiceListKey($filters + ['per_page' => $perPage]);
+        
+        $invoices = $this->cache->remember($cacheKey, function () use ($filters, $perPage) {
+            $query = new GetInvoicesQuery(
+                companyId: activeCompany()->id,
+                filters: $filters,
+                perPage: $perPage
+            );
+            
+            return $this->queryBus->execute($query);
+        }, 300); // 5 minutes cache
 
         return $this->paginated($invoices);
     }
 
     /**
      * @OA\Get(
-     *     path="/invoices/{id}",
+     *     path="/api/v1/invoices/{id}",
      *     summary="Get a specific invoice",
      *     tags={"Invoices"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Invoice ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Invoice")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
      */
     public function show(Invoice $invoice): JsonResponse
     {
-        return $this->success($invoice->load(['customer', 'items.product']));
+        // Use CQRS Query with caching
+        $cacheKey = CacheService::invoiceKey($invoice->id);
+        
+        $cachedInvoice = $this->cache->remember($cacheKey, function () use ($invoice) {
+            $query = new GetInvoiceQuery(
+                invoiceId: $invoice->id,
+                companyId: $invoice->company_id
+            );
+            
+            return $this->queryBus->execute($query);
+        }, 600); // 10 minutes cache
+
+        return $this->success(new InvoiceResource($cachedInvoice));
     }
 
     /**
      * @OA\Post(
-     *     path="/invoices",
+     *     path="/api/v1/invoices",
      *     summary="Create a new direct invoice",
      *     tags={"Invoices"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="customer_id", type="integer"),
      *             @OA\Property(property="warehouse_id", type="integer"),
      *             @OA\Property(property="invoice_date", type="string", format="date"),
      *             @OA\Property(property="items", type="array", @OA\Items(type="object"))
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Invoice created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Invoice"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
      * )
      */
-    public function store(Request $request): JsonResponse
+    public function store(CreateInvoiceRequest $request): JsonResponse
     {
-        $companyId = activeCompany()->id;
-
-        $validated = $request->validate([
-            'customer_id' => ['required', Rule::exists('customers', 'id')->where('company_id', $companyId)],
-            'warehouse_id' => ['nullable', Rule::exists('warehouses', 'id')->where('company_id', $companyId)],
-            'invoice_date' => ['nullable', 'date'],
-            'due_date' => ['nullable', 'date', 'after_or_equal:invoice_date'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-            'terms_conditions' => ['nullable', 'string', 'max:5000'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['nullable', Rule::exists('products', 'id')->where('company_id', $companyId)],
-            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
-            'items.*.unit_price' => ['required', 'integer', 'min:0'],
-            'items.*.description' => ['nullable', 'string'],
-            'items.*.unit' => ['nullable', 'string'],
-            'items.*.discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'items.*.tax_rate' => ['nullable', 'numeric', 'min:0'],
-            'items.*.tax_group_id' => ['nullable', Rule::exists('tax_groups', 'id')->where('company_id', $companyId)],
-        ]);
-
-        $items = $validated['items'];
-        unset($validated['items']);
-
-        $invoice = $this->salesService->createInvoice(
-            activeCompany(),
-            $validated,
-            $items,
+        // Use CQRS Command
+        $command = new CreateInvoiceCommand(
+            companyId: activeCompany()->id,
+            customerId: $request->integer('customer_id'),
+            warehouseId: $request->integer('warehouse_id'),
+            invoiceDate: $request->string('invoice_date', now()->toDateString()),
+            dueDate: $request->string('due_date'),
+            notes: $request->string('notes'),
+            items: $request->array('items'),
+            initiatedBy: auth()->id()
         );
 
-        return $this->success($invoice->load(['customer', 'items.product']), __('Invoice created'), 201);
+        $invoice = $this->commandBus->execute($command);
+
+        // Invalidate related caches
+        $this->invalidateInvoiceCaches();
+
+        return $this->success(new InvoiceResource($invoice->load(['customer', 'items.product'])), __('Invoice created'), 201);
     }
 
     /**
      * @OA\Put(
-     *     path="/invoices/{id}",
+     *     path="/api/v1/invoices/{id}",
      *     summary="Update a draft invoice",
      *     tags={"Invoices"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Invoice ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="customer_id", type="integer"),
      *             @OA\Property(property="items", type="array", @OA\Items(type="object"))
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Invoice updated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Invoice"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
      * )
      */
-    public function update(Request $request, Invoice $invoice): JsonResponse
+    public function update(UpdateInvoiceRequest $request, Invoice $invoice): JsonResponse
     {
-        if ($invoice->status->value !== 'draft') {
-            return $this->error(__('Only draft invoices can be updated.'), 422);
-        }
+        // For now, use existing service (could be converted to CQRS command later)
+        $updatedInvoice = $this->invoiceService->updateInvoice(
+            $invoice, 
+            CreateInvoiceData::fromRequest($request)->toArray(), 
+            $request->array('items')
+        );
 
-        $companyId = activeCompany()->id;
+        // Invalidate caches
+        $this->cache->forget(CacheService::invoiceKey($invoice->id));
+        $this->invalidateInvoiceCaches();
 
-        $validated = $request->validate([
-            'customer_id' => ['sometimes', Rule::exists('customers', 'id')->where('company_id', $companyId)],
-            'warehouse_id' => ['nullable', Rule::exists('warehouses', 'id')->where('company_id', $companyId)],
-            'invoice_date' => ['sometimes', 'date'],
-            'due_date' => ['nullable', 'date'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-            'terms_conditions' => ['nullable', 'string', 'max:5000'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['nullable', Rule::exists('products', 'id')->where('company_id', $companyId)],
-            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
-            'items.*.unit_price' => ['required', 'integer', 'min:0'],
-            'items.*.description' => ['nullable', 'string'],
-            'items.*.unit' => ['nullable', 'string'],
-            'items.*.discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'items.*.tax_rate' => ['nullable', 'numeric', 'min:0'],
-            'items.*.tax_group_id' => ['nullable', Rule::exists('tax_groups', 'id')->where('company_id', $companyId)],
-        ]);
-
-        $items = $validated['items'];
-        unset($validated['items']);
-
-        $invoice = $this->salesService->updateInvoice($invoice, $validated, $items);
-
-        return $this->success($invoice->load(['customer', 'items.product']), __('Invoice updated'));
+        return $this->success(new InvoiceResource($updatedInvoice->load(['customer', 'items.product'])), __('Invoice updated'));
     }
 
     /**
@@ -201,16 +233,20 @@ class InvoiceController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/invoices/{invoice}/send",
+     *     path="/api/v1/invoices/{invoice}/send",
      *     summary="Send an invoice",
      *     tags={"Invoices"},
+     *
      *     @OA\Parameter(name="invoice", in="path", required=true, description="Invoice ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Invoice sent",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Invoice"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -218,23 +254,39 @@ class InvoiceController extends BaseApiController
      */
     public function send(Invoice $invoice): JsonResponse
     {
-        $this->salesService->sendInvoice($invoice);
+        $this->authorize('send', $invoice);
+        
+        // Use CQRS Command
+        $command = new SendInvoiceCommand(
+            invoiceId: $invoice->id,
+            initiatedBy: auth()->id()
+        );
 
-        return $this->success($invoice->fresh()->load(['customer', 'items.product']), __('Invoice sent'));
+        $this->commandBus->execute($command);
+
+        // Invalidate caches
+        $this->cache->forget(CacheService::invoiceKey($invoice->id));
+        $this->invalidateInvoiceCaches();
+
+        return $this->success(new InvoiceResource($invoice->fresh()->load(['customer', 'items.product'])), __('Invoice sent'));
     }
 
     /**
      * @OA\Post(
-     *     path="/invoices/{invoice}/cancel",
+     *     path="/api/v1/invoices/{invoice}/cancel",
      *     summary="Cancel an invoice",
      *     tags={"Invoices"},
+     *
      *     @OA\Parameter(name="invoice", in="path", required=true, description="Invoice ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Invoice cancelled",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Invoice"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -242,8 +294,24 @@ class InvoiceController extends BaseApiController
      */
     public function cancel(Invoice $invoice): JsonResponse
     {
-        $this->salesService->cancelInvoice($invoice);
+        $this->authorize('cancel', $invoice);
+        
+        // Use existing Action (could be converted to CQRS command later)
+        $this->cancelInvoiceAction->execute($invoice);
 
-        return $this->success($invoice->fresh(), __('Invoice cancelled'));
+        // Invalidate caches
+        $this->cache->forget(CacheService::invoiceKey($invoice->id));
+        $this->invalidateInvoiceCaches();
+
+        return $this->success(new InvoiceResource($invoice->fresh()), __('Invoice cancelled'));
+    }
+
+    /**
+     * Invalidate invoice-related caches.
+     */
+    private function invalidateInvoiceCaches(): void
+    {
+        // Use cache tags if available, otherwise could implement pattern-based invalidation
+        $this->cache->forgetByTags(['invoices', 'company:' . activeCompany()->id]);
     }
 }

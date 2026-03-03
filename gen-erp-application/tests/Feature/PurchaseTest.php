@@ -1,17 +1,17 @@
 <?php
 
-use App\Enums\GoodsReceiptStatus;
-use App\Enums\PurchaseOrderStatus;
-use App\Models\Company;
-use App\Models\GoodsReceipt;
-use App\Models\Product;
-use App\Models\PurchaseOrder;
-use App\Models\StockLevel;
-use App\Models\Supplier;
-use App\Models\Warehouse;
+use App\Support\Enums\GoodsReceiptStatus;
+use App\Support\Enums\PurchaseOrderStatus;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Purchase\Models\GoodsReceipt;
+use App\Domain\Product\Models\Product;
+use App\Domain\Purchase\Models\PurchaseOrder;
+use App\Domain\Inventory\Models\StockLevel;
+use App\Domain\Purchase\Models\Supplier;
+use App\Domain\Inventory\Models\Warehouse;
 use App\Services\CompanyContext;
-use App\Services\Mushak61ReportService;
-use App\Services\PurchaseService;
+use App\Domain\Report\Services\Mushak61ReportService;
+use App\Domain\Purchase\Services\PurchaseService;
 
 // ═══════════════════════════════════════════════════
 // PurchaseTest — 12 tests

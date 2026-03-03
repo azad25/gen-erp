@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\InvoiceStatus;
-use App\Models\Company;
-use App\Models\Invoice;
+use App\Support\Enums\InvoiceStatus;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Invoice\Models\Invoice;
 use Illuminate\Console\Command;
 
 /**

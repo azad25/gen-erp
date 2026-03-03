@@ -4,7 +4,6 @@ namespace App\Services\Integration\Drivers;
 
 use App\Models\CompanyIntegration;
 use App\Services\Integration\BaseNativeIntegration;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -63,9 +62,11 @@ class CustomSmtpIntegration extends BaseNativeIntegration
             }
 
             Log::info('CustomSMTP: Connection test passed', ['company_id' => $ci->company_id]);
+
             return true;
         } catch (\Throwable $e) {
             Log::error('CustomSMTP: Connection test failed', ['error' => $e->getMessage()]);
+
             return false;
         }
     }

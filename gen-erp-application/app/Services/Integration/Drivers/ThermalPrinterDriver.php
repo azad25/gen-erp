@@ -19,7 +19,7 @@ class ThermalPrinterDriver extends BaseNativeIntegration
 
     public function install(CompanyIntegration $ci): void
     {
-        $this->registerHook($ci, 'pos.sale.completed', self::class . '@onSaleCompleted');
+        $this->registerHook($ci, 'pos.sale.completed', self::class.'@onSaleCompleted');
     }
 
     public function uninstall(CompanyIntegration $ci): void
@@ -30,7 +30,7 @@ class ThermalPrinterDriver extends BaseNativeIntegration
     /**
      * Send raw ESC/POS commands to a network printer.
      *
-     * @param array<string, mixed> $config ['ip' => string, 'port' => int]
+     * @param  array<string, mixed>  $config  ['ip' => string, 'port' => int]
      */
     public function printRaw(array $config, string $escPosData): bool
     {
@@ -39,6 +39,7 @@ class ThermalPrinterDriver extends BaseNativeIntegration
 
         if (! $ip) {
             Log::warning('ThermalPrinter: No IP configured');
+
             return false;
         }
 
@@ -46,6 +47,7 @@ class ThermalPrinterDriver extends BaseNativeIntegration
             $socket = @fsockopen($ip, $port, $errno, $errstr, 5);
             if (! $socket) {
                 Log::error("ThermalPrinter: Connection failed — {$errstr}");
+
                 return false;
             }
 
@@ -55,6 +57,7 @@ class ThermalPrinterDriver extends BaseNativeIntegration
             return true;
         } catch (\Throwable $e) {
             Log::error('ThermalPrinter: Print failed', ['error' => $e->getMessage()]);
+
             return false;
         }
     }
@@ -62,12 +65,13 @@ class ThermalPrinterDriver extends BaseNativeIntegration
     /**
      * Open the cash drawer via ESC/POS kick command.
      *
-     * @param array<string, mixed> $config
+     * @param  array<string, mixed>  $config
      */
     public function openCashDrawer(array $config): bool
     {
         // ESC/POS cash drawer kick: ESC p 0 25 250
         $kickCommand = "\x1B\x70\x00\x19\xFA";
+
         return $this->printRaw($config, $kickCommand);
     }
 
@@ -75,12 +79,12 @@ class ThermalPrinterDriver extends BaseNativeIntegration
     public function onSaleCompleted(array $payload): void
     {
         $saleId = $payload['sale_id'] ?? null;
-        if (!$saleId) {
+        if (! $saleId) {
             return;
         }
 
         $sale = \App\Models\POSSale::withoutGlobalScopes()->find($saleId);
-        if (!$sale) {
+        if (! $sale) {
             return;
         }
 
@@ -89,11 +93,12 @@ class ThermalPrinterDriver extends BaseNativeIntegration
         $port = $config['port'] ?? 9100;
         $width = $config['width'] ?? 80; // 80mm or 58mm
 
-        if (!$ip) {
+        if (! $ip) {
             Log::warning('ThermalPrinter: No IP configured for branch', [
                 'sale_id' => $saleId,
                 'branch_id' => $sale->branch_id,
             ]);
+
             return;
         }
 
@@ -125,30 +130,30 @@ class ThermalPrinterDriver extends BaseNativeIntegration
         $data .= "\x1B\x61\x01";
 
         // Company name
-        $data .= $this->centerText($company->name, $width) . "\n\n";
+        $data .= $this->centerText($company->name, $width)."\n\n";
 
         // Branch info
-        $data .= $this->centerText($branch->name, $width) . "\n";
-        $data .= $this->centerText($branch->address ?? '', $width) . "\n";
-        $data .= $this->centerText('Phone: ' . ($branch->phone ?? ''), $width) . "\n\n";
+        $data .= $this->centerText($branch->name, $width)."\n";
+        $data .= $this->centerText($branch->address ?? '', $width)."\n";
+        $data .= $this->centerText('Phone: '.($branch->phone ?? ''), $width)."\n\n";
 
         // Separator line
-        $data .= $this->separatorLine($width) . "\n";
+        $data .= $this->separatorLine($width)."\n";
 
         // Receipt header
-        $data .= $this->centerText("RECEIPT", $width) . "\n";
-        $data .= $this->centerText("#{$sale->receipt_number}", $width) . "\n";
-        $data .= $this->centerText($sale->sale_date->format('d M Y H:i'), $width) . "\n\n";
+        $data .= $this->centerText('RECEIPT', $width)."\n";
+        $data .= $this->centerText("#{$sale->receipt_number}", $width)."\n";
+        $data .= $this->centerText($sale->sale_date->format('d M Y H:i'), $width)."\n\n";
 
         // Separator line
-        $data .= $this->separatorLine($width) . "\n";
+        $data .= $this->separatorLine($width)."\n";
 
         // Left align for items
         $data .= "\x1B\x61\x00";
 
         // Table header
-        $data .= $this->padRight("ITEM", 30) . $this->padLeft("QTY", 5) . $this->padLeft("PRICE", 10) . $this->padLeft("TOTAL", 10) . "\n";
-        $data .= $this->separatorLine($width) . "\n";
+        $data .= $this->padRight('ITEM', 30).$this->padLeft('QTY', 5).$this->padLeft('PRICE', 10).$this->padLeft('TOTAL', 10)."\n";
+        $data .= $this->separatorLine($width)."\n";
 
         // Items
         foreach ($items as $item) {
@@ -157,11 +162,11 @@ class ThermalPrinterDriver extends BaseNativeIntegration
             $price = number_format($item->unit_price / 100, 2);
             $total = number_format($item->line_total / 100, 2);
 
-            $data .= $this->padRight($name, 30) . $this->padLeft($qty, 5) . $this->padLeft($price, 10) . $this->padLeft($total, 10) . "\n";
+            $data .= $this->padRight($name, 30).$this->padLeft($qty, 5).$this->padLeft($price, 10).$this->padLeft($total, 10)."\n";
         }
 
         // Separator line
-        $data .= $this->separatorLine($width) . "\n\n";
+        $data .= $this->separatorLine($width)."\n\n";
 
         // Totals
         $subtotal = number_format($sale->subtotal / 100, 2);
@@ -170,17 +175,17 @@ class ThermalPrinterDriver extends BaseNativeIntegration
         $paid = number_format($sale->paid_amount / 100, 2);
         $change = number_format($sale->change_amount / 100, 2);
 
-        $data .= $this->padRight("SUBTOTAL", 40) . $this->padLeft("৳{$subtotal}", 10) . "\n";
-        $data .= $this->padRight("TAX", 40) . $this->padLeft("৳{$tax}", 10) . "\n";
-        $data .= $this->separatorLine($width) . "\n";
-        $data .= $this->padRight("TOTAL", 40) . $this->padLeft("৳{$total}", 10) . "\n";
-        $data .= $this->padRight("PAID", 40) . $this->padLeft("৳{$paid}", 10) . "\n";
-        $data .= $this->padRight("CHANGE", 40) . $this->padLeft("৳{$change}", 10) . "\n\n";
+        $data .= $this->padRight('SUBTOTAL', 40).$this->padLeft("৳{$subtotal}", 10)."\n";
+        $data .= $this->padRight('TAX', 40).$this->padLeft("৳{$tax}", 10)."\n";
+        $data .= $this->separatorLine($width)."\n";
+        $data .= $this->padRight('TOTAL', 40).$this->padLeft("৳{$total}", 10)."\n";
+        $data .= $this->padRight('PAID', 40).$this->padLeft("৳{$paid}", 10)."\n";
+        $data .= $this->padRight('CHANGE', 40).$this->padLeft("৳{$change}", 10)."\n\n";
 
         // Footer
         $data .= "\x1B\x61\x01"; // Center align
-        $data .= $this->centerText("Thank you for shopping with us!", $width) . "\n\n";
-        $data .= $this->centerText("Powered by GenERP BD", $width) . "\n\n\n";
+        $data .= $this->centerText('Thank you for shopping with us!', $width)."\n\n";
+        $data .= $this->centerText('Powered by GenERP BD', $width)."\n\n\n";
 
         // Cut paper
         $data .= "\x1D\x56\x66\x00"; // Cut paper with partial cut
@@ -198,7 +203,8 @@ class ThermalPrinterDriver extends BaseNativeIntegration
             return mb_substr($text, 0, $width);
         }
         $padding = ($width - $textLength) / 2;
-        return str_repeat(' ', (int) $padding) . $text;
+
+        return str_repeat(' ', (int) $padding).$text;
     }
 
     /**

@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\CompanyResource;
 use App\Http\Resources\UserResource;
-use App\Models\FailedLoginAttempt;
-use App\Models\User;
+use App\Domain\Auth\Models\FailedLoginAttempt;
+use App\Domain\Auth\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,17 +24,17 @@ class AuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         $email = $request->validated('email');
-        
+
         // Rate limiting — 5 attempts per IP per minute
-        $key = 'login:' . $request->ip();
-        
+        $key = 'login:'.$request->ip();
+
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => __('Too many login attempts. Please try again in :seconds seconds.', [
-                    'seconds' => $seconds
+                    'seconds' => $seconds,
                 ]),
                 'retry_after' => $seconds,
             ], 429);
@@ -56,7 +56,7 @@ class AuthController extends Controller
         }
 
         // Attempt authentication
-        if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+        if (! Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
             RateLimiter::hit($key, 60);
 
             // Record failed attempt
@@ -82,10 +82,10 @@ class AuthController extends Controller
 
         // Email verification check (bypass for dev admin)
         $isDevAdmin = $user->email === 'dev@generp.test';
-        
-        if (!$user->hasVerifiedEmail() && !$isDevAdmin) {
+
+        if (! $user->hasVerifiedEmail() && ! $isDevAdmin) {
             Auth::logout();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => __('Please verify your email address first.'),
@@ -114,18 +114,29 @@ class AuthController extends Controller
 
         // If user only has one company, set it as active automatically
         if ($companies->count() === 1) {
-            session(['active_company_id' => $companies->first()->id]);
-            $user->update(['last_active_company_id' => $companies->first()->id]);
+            $companyId = $companies->first()->id;
+            session(['active_company_id' => $companyId]);
+            $user->update(['last_active_company_id' => $companyId]);
+            \Log::info('[AuthController] Set single company in session', [
+                'user_id' => $user->id,
+                'company_id' => $companyId,
+                'session_id' => session()->getId(),
+            ]);
         } elseif ($user->last_active_company_id) {
             // Restore last active company
             session(['active_company_id' => $user->last_active_company_id]);
+            \Log::info('[AuthController] Restored last active company', [
+                'user_id' => $user->id,
+                'company_id' => $user->last_active_company_id,
+                'session_id' => session()->getId(),
+            ]);
         }
 
         return response()->json([
             'success' => true,
             'data' => [
                 'user' => new UserResource($user),
-                'requires_company_selection' => $companies->count() > 1 && !$user->last_active_company_id,
+                'requires_company_selection' => $companies->count() > 1 && ! $user->last_active_company_id,
             ],
             'message' => __('Login successful.'),
         ]);
@@ -152,8 +163,8 @@ class AuthController extends Controller
     public function user(Request $request): JsonResponse
     {
         $user = $request->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => __('Unauthenticated.'),
@@ -186,7 +197,7 @@ class AuthController extends Controller
             'target_email' => $email,
         ]);
 
-        if (!$user) {
+        if (! $user) {
             return;
         }
 

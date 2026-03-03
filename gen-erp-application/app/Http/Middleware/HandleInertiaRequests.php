@@ -37,43 +37,70 @@ class HandleInertiaRequests extends Middleware
     {
         return array_merge(parent::share($request), [
             'auth' => [
-                'user'        => $request->user() ? array_merge(
-                    $request->user()->only('id','name','email'),
+                'user' => $request->user() ? array_merge(
+                    $request->user()->only('id', 'name', 'email'),
                     ['companies' => $request->user()->companies()->get(['companies.id', 'companies.name'])]
                 ) : null,
-                'company'     => \App\Services\CompanyContext::hasActive() ? \App\Services\CompanyContext::active()->only('id','name','plan','vat_registered') : null,
-                'branch'      => \App\Services\BranchContext::active()?->only('id','name'),
+                'company' => $this->getActiveCompany(),
+                'branch' => $this->getActiveBranch(),
                 'permissions' => $request->user() ? $this->getUserPermissions($request->user()) : [],
             ],
             'flash' => ['success' => session('success'), 'error' => session('error')],
         ]);
     }
 
+    private function getActiveCompany(): ?array
+    {
+        try {
+            return \App\Services\CompanyContext::hasActive()
+                ? \App\Services\CompanyContext::active()->only('id', 'name', 'plan', 'vat_registered')
+                : null;
+        } catch (\App\Exceptions\NoActiveCompanyException $e) {
+            return null;
+        }
+    }
+
+    private function getActiveBranch(): ?array
+    {
+        try {
+            $branch = \App\Services\BranchContext::active();
+
+            return $branch ? $branch->only('id', 'name') : null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
     private function getUserPermissions($user): array
     {
-        $activeCompany = \App\Services\CompanyContext::hasActive() ? \App\Services\CompanyContext::active() : null;
+        try {
+            $activeCompany = \App\Services\CompanyContext::hasActive() ? \App\Services\CompanyContext::active() : null;
 
-        if (!$activeCompany) {
+            if (! $activeCompany) {
+                return [];
+            }
+
+            $pivot = $user->companies()->where('companies.id', $activeCompany->id)->first()?->pivot;
+
+            if (! $pivot) {
+                return [];
+            }
+
+            $role = $pivot->role ?? null;
+
+            return match ($role) {
+                'owner' => ['create', 'edit', 'delete', 'view'],
+                'admin' => ['create', 'edit', 'delete', 'view'],
+                'manager' => ['create', 'edit', 'view'],
+                'sales' => ['create', 'view'],
+                'warehouse' => ['view'],
+                'finance' => ['view'],
+                'hr' => ['view'],
+                default => ['view'],
+            };
+        } catch (\App\Exceptions\NoActiveCompanyException $e) {
+            // User doesn't have an active company (e.g., on login page or needs company setup)
             return [];
         }
-
-        $pivot = $user->companies()->where('companies.id', $activeCompany->id)->first()?->pivot;
-
-        if (!$pivot) {
-            return [];
-        }
-
-        $role = $pivot->role ?? null;
-
-        return match ($role) {
-            'owner' => ['create', 'edit', 'delete', 'view'],
-            'admin' => ['create', 'edit', 'delete', 'view'],
-            'manager' => ['create', 'edit', 'view'],
-            'sales' => ['create', 'view'],
-            'warehouse' => ['view'],
-            'finance' => ['view'],
-            'hr' => ['view'],
-            default => ['view'],
-        };
     }
 }

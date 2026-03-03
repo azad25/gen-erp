@@ -291,7 +291,7 @@
 
     <div class="stats-grid">
         @php
-            $company = \App\Services\CompanyContext::active();
+            $company = activeCompany();
             $companyId = $company ? $company->id : null;
             $revenueThisMonth = 0;
             $outstanding = 0;
@@ -318,8 +318,8 @@
                         ->count();
                 }
 
-                if (class_exists(\App\Models\WorkflowApproval::class)) {
-                    $pendingApprovals = \App\Models\WorkflowApproval::where('company_id', $companyId)
+                if (class_exists(\App\Domain\Workflow\Models\WorkflowApproval::class)) {
+                    $pendingApprovals = \App\Domain\Workflow\Models\WorkflowApproval::where('company_id', $companyId)
                         ->where('status', 'pending')
                         ->count();
                 }
@@ -402,7 +402,7 @@
                     <tbody>
                         @php
                             $invoices = \App\Models\Invoice::with('customer')
-                                ->where('company_id', \App\Services\CompanyContext::active()->id ?? null)
+                                ->where('company_id', activeCompany()?->id ?? null)
                                 ->latest()
                                 ->limit(5)
                                 ->get();
@@ -454,8 +454,8 @@
             </div>
             <div class="activity-list">
                 @php
-                    $activities = \App\Models\AuditLog::with('user')
-                        ->where('company_id', \App\Services\CompanyContext::active()->id ?? null)
+                    $activities = \App\Domain\Audit\Models\AuditLog::with('user')
+                        ->where('company_id', activeCompany()?->id ?? null)
                         ->latest()
                         ->limit(7)
                         ->get();

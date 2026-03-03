@@ -8,7 +8,7 @@ return [
     'profile' => 'প্রোফাইল',
     'logout' => 'লগআউট',
     'settings' => 'সেটিংস',
-    
+
     // Navigation Groups
     'navigation' => [
         'dashboard' => 'ড্যাশবোর্ড',
@@ -20,7 +20,7 @@ return [
         'reports' => 'রিপোর্ট',
         'settings' => 'সেটিংস',
     ],
-    
+
     // Common Actions
     'actions' => [
         'create' => 'তৈরি করুন',
@@ -34,7 +34,7 @@ return [
         'filter' => 'ফিল্টার',
         'search' => 'অনুসন্ধান',
     ],
-    
+
     // Stats
     'stats' => [
         'total_revenue' => 'মোট আয়',

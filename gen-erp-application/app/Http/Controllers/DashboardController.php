@@ -2,29 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\CompanyContext;
+use App\Domain\Invoice\Models\Invoice;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Services\CompanyContext;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $c = CompanyContext::active();
+        try {
+            $c = CompanyContext::active();
+        } catch (\App\Exceptions\NoActiveCompanyException $e) {
+            // Redirect to company setup if no active company
+            return redirect()->route('company.setup');
+        }
 
         return Inertia::render('Dashboard/Index', [
             'stats' => [
-                'revenue'      => (int) \App\Models\Invoice::where('company_id', $c->id)->whereMonth('invoice_date', now()->month)->sum('total_amount'),
+                'revenue' => (int) Invoice::where('company_id', $c->id)->whereMonth('invoice_date', now()->month)->sum('total_amount'),
                 'revenueDelta' => 12,
-                'outstanding'  => (int) \App\Models\Invoice::where('company_id', $c->id)->whereIn('status', ['sent', 'partial', 'overdue'])->sum('balance_due'),
-                'lowStock'     => \App\Models\StockLevel::where('company_id', $c->id)->lowStock()->count(),
-                'pending'      => \App\Models\WorkflowApproval::where('company_id', $c->id)->where('status', 'pending')->count(),
+                'outstanding' => (int) Invoice::where('company_id', $c->id)->whereIn('status', ['sent', 'partial', 'overdue'])->sum('balance_due'),
+                'lowStock' => \App\Domain\Inventory\Models\StockLevel::where('company_id', $c->id)->lowStock()->count(),
+                'pending' => \App\Domain\Workflow\Models\WorkflowApproval::where('company_id', $c->id)->where('status', 'pending')->count(),
             ],
-            'invoices' => \App\Models\Invoice::where('company_id', $c->id)
+            'invoices' => Invoice::where('company_id', $c->id)
                 ->with('customer:id,name')->latest('invoice_date')->limit(6)
                 ->get(['id', 'invoice_number', 'customer_id', 'total_amount', 'status'])
                 ->map(fn ($i) => [...$i->toArray(), 'customer_name' => $i->customer?->name ?? '—']),
-            'activity' => \App\Models\AuditLog::where('company_id', $c->id)
+            'activity' => \App\Domain\Audit\Models\AuditLog::where('company_id', $c->id)
                 ->with('user:id,name')
                 ->latest()
                 ->limit(8)
@@ -47,15 +53,15 @@ class DashboardController extends Controller
     private function formatAuditDescription(\App\Models\AuditLog $log): string
     {
         $userName = $log->user?->name ?? 'System';
-        $action = match($log->event) {
+        $action = match ($log->event) {
             'created' => 'created',
             'updated' => 'updated',
             'deleted' => 'deleted',
             default => $log->event,
         };
-        
+
         $modelName = class_basename($log->auditable_type);
-        
+
         return "{$userName} {$action} {$modelName}";
     }
 
@@ -64,7 +70,7 @@ class DashboardController extends Controller
      */
     private function getAuditColor(string $event): string
     {
-        return match($event) {
+        return match ($event) {
             'created' => 'green',
             'updated' => 'blue',
             'deleted' => 'red',
@@ -78,7 +84,7 @@ class DashboardController extends Controller
     private function getRevenueByType(int $companyId): array
     {
         // Get invoices for the current month grouped by customer
-        $invoices = \App\Models\Invoice::where('company_id', $companyId)
+        $invoices = Invoice::where('company_id', $companyId)
             ->whereMonth('invoice_date', now()->month)
             ->where('status', '!=', 'draft')
             ->with('customer:id,name,group_id')
@@ -88,7 +94,7 @@ class DashboardController extends Controller
             // Return placeholder data if no revenue
             return [
                 'series' => [44, 30, 15, 11],
-                'labels' => ['Retail', 'Wholesale', 'Service', 'Other']
+                'labels' => ['Retail', 'Wholesale', 'Service', 'Other'],
             ];
         }
 
@@ -97,14 +103,14 @@ class DashboardController extends Controller
         $totalRevenue = 0;
 
         foreach ($invoices as $invoice) {
-            $groupName = $invoice->customer?->group_id 
-                ? 'Group ' . $invoice->customer->group_id 
+            $groupName = $invoice->customer?->group_id
+                ? 'Group '.$invoice->customer->group_id
                 : 'Ungrouped';
-            
-            if (!isset($groupRevenue[$groupName])) {
+
+            if (! isset($groupRevenue[$groupName])) {
                 $groupRevenue[$groupName] = 0;
             }
-            
+
             $groupRevenue[$groupName] += $invoice->total_amount;
             $totalRevenue += $invoice->total_amount;
         }
@@ -113,19 +119,19 @@ class DashboardController extends Controller
         if (count($groupRevenue) > 1 && $totalRevenue > 0) {
             arsort($groupRevenue);
             $top4 = array_slice($groupRevenue, 0, 4, true);
-            
+
             $series = [];
             $labels = [];
-            
+
             foreach ($top4 as $group => $revenue) {
                 $percentage = round(($revenue / $totalRevenue) * 100);
                 $series[] = $percentage;
                 $labels[] = $group;
             }
-            
+
             return [
                 'series' => $series,
-                'labels' => $labels
+                'labels' => $labels,
             ];
         }
 
@@ -137,7 +143,7 @@ class DashboardController extends Controller
 
         foreach ($invoices as $invoice) {
             $amount = $invoice->total_amount;
-            
+
             if ($amount < 5000000) { // < 50,000 BDT (in paisa)
                 $small += $amount;
             } elseif ($amount < 20000000) { // < 200,000 BDT
@@ -158,7 +164,7 @@ class DashboardController extends Controller
 
         return [
             'series' => $series,
-            'labels' => ['Small Orders', 'Medium Orders', 'Large Orders', 'Enterprise']
+            'labels' => ['Small Orders', 'Medium Orders', 'Large Orders', 'Enterprise'],
         ];
     }
 
@@ -168,23 +174,23 @@ class DashboardController extends Controller
     private function getRevenueChartData(int $companyId): array
     {
         $data = [];
-        
+
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
-            $revenue = \App\Models\Invoice::where('company_id', $companyId)
+            $revenue = Invoice::where('company_id', $companyId)
                 ->whereDate('invoice_date', $date)
                 ->where('status', '!=', 'draft')
                 ->sum('total_amount');
-            
+
             // Convert from paisa to display value (keep in paisa for chart)
             $data[] = (int) $revenue;
         }
-        
+
         // If all zeros, return sample data for better visualization
         if (array_sum($data) === 0) {
             return [120000, 190000, 150000, 220000, 180000, 250000, 310000];
         }
-        
+
         return $data;
     }
 }

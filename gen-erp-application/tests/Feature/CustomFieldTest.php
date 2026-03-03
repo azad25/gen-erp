@@ -1,14 +1,14 @@
 <?php
 
-use App\Enums\CustomFieldType;
+use App\Support\Enums\CustomFieldType;
 use App\Jobs\FilterableCustomFieldJob;
-use App\Models\Company;
-use App\Models\CompanyUser;
-use App\Models\CustomFieldDefinition;
-use App\Models\CustomFieldValue;
-use App\Models\User;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Auth\Models\CompanyUser;
+use App\Domain\Shared\Models\CustomFieldDefinition;
+use App\Domain\Shared\Models\CustomFieldValue;
+use App\Domain\Auth\Models\User;
 use App\Services\CompanyContext;
-use App\Services\CustomFieldService;
+use App\Domain\Shared\Services\CustomFieldService;
 use Illuminate\Support\Facades\Queue;
 
 // ── 1. Company can create a custom field definition for products ──

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Document;
-use App\Services\DocumentService;
+use App\Domain\Document\Models\Document;
+use App\Domain\Document\Services\DocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 
@@ -31,7 +31,7 @@ class DocumentController extends Controller
 
         return Response::make($contents, 200, [
             'Content-Type' => $doc->mime_type,
-            'Content-Disposition' => 'attachment; filename="' . $doc->name . '"',
+            'Content-Disposition' => 'attachment; filename="'.$doc->name.'"',
         ]);
     }
 
@@ -46,7 +46,7 @@ class DocumentController extends Controller
             abort(403);
         }
 
-        $thumbPath = "thumbnails/{$document}_thumb." . $doc->extension();
+        $thumbPath = "thumbnails/{$document}_thumb.".$doc->extension();
         $fullThumbPath = storage_path("app/private/{$thumbPath}");
 
         if (! file_exists($fullThumbPath)) {
@@ -83,7 +83,7 @@ class DocumentController extends Controller
 
         return Response::make($contents, 200, [
             'Content-Type' => $doc->mime_type,
-            'Content-Disposition' => 'inline; filename="' . $doc->name . '"',
+            'Content-Disposition' => 'inline; filename="'.$doc->name.'"',
         ]);
     }
 }

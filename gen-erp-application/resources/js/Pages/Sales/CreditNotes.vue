@@ -139,9 +139,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/Services/api.js'
+import { mapApiPagination } from '@/utils/pagination.js'
 import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
-import AdminLayout from '@/Components/layout/AdminLayout.vue'
+import AdminLayout from '@/Components/Layout/AdminLayout.vue'
 import Card from '@/Components/ui/Card.vue'
 import Button from '@/Components/ui/Button.vue'
 import DataTable from '@/Components/UI/DataTable.vue'
@@ -182,7 +183,7 @@ const fetchCreditNotes = async (page = 1) => {
       params: { page, per_page: 15, search: searchQuery.value }
     })
     creditNotes.value = response.data.data
-    pagination.value = response.data
+    pagination.value = mapApiPagination(response.data)
   } catch (error) {
     console.error('Failed to fetch credit notes:', error)
   } finally {

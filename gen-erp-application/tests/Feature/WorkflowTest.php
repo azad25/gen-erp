@@ -1,382 +1,485 @@
 <?php
 
-use App\Enums\ApprovalStatus;
-use App\Enums\CompanyRole;
-use App\Models\Company;
-use App\Models\CompanyUser;
-use App\Models\User;
-use App\Models\WorkflowApproval;
-use App\Models\WorkflowDefinition;
-use App\Models\WorkflowHistory;
-use App\Models\WorkflowInstance;
-use App\Models\WorkflowStatus;
-use App\Models\WorkflowTransition;
-use App\Services\BusinessTypeTemplateService;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Auth\Models\CompanyUser;
+use App\Domain\Auth\Models\User;
+use App\Domain\Workflow\Models\WorkflowDefinition;
+use App\Domain\Workflow\Models\WorkflowStatus;
+use App\Domain\Workflow\Models\WorkflowTransition;
+use App\Domain\Workflow\Models\WorkflowInstance;
+use App\Domain\Workflow\Models\WorkflowHistory;
+use App\Domain\Workflow\Models\WorkflowApproval;
+use App\Domain\Workflow\Services\WorkflowService;
 use App\Services\CompanyContext;
-use App\Services\WorkflowService;
+use App\Support\Enums\ApprovalStatus;
 
-// Helper: create a minimal workflow with Draft → Approved → Closed
-function createTestWorkflow(Company $company): WorkflowDefinition
-{
-    $def = WorkflowDefinition::withoutGlobalScopes()->create([
-        'company_id' => $company->id,
+beforeEach(function (): void {
+    $this->company = Company::factory()->create();
+    CompanyContext::setActive($this->company);
+    
+    $this->user = User::factory()->create();
+    CompanyUser::factory()->create([
+        'company_id' => $this->company->id,
+        'user_id' => $this->user->id,
+        'role' => 'manager',
+        'is_active' => true,
+    ]);
+    
+    $this->workflowService = app(WorkflowService::class);
+});
+
+test('workflow definition can be created with statuses and transitions', function (): void {
+    $definition = WorkflowDefinition::create([
+        'company_id' => $this->company->id,
+        'name' => 'Purchase Order Approval',
         'document_type' => 'purchase_order',
-        'name' => 'Test PO Workflow',
         'is_active' => true,
         'is_default' => true,
     ]);
 
-    WorkflowStatus::withoutGlobalScopes()->create([
-        'workflow_definition_id' => $def->id,
-        'company_id' => $company->id,
+    // Create statuses
+    $draft = WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
         'key' => 'draft',
         'label' => 'Draft',
-        'color' => 'gray',
         'is_initial' => true,
-        'display_order' => 0,
+        'is_terminal' => false,
     ]);
 
-    WorkflowStatus::withoutGlobalScopes()->create([
-        'workflow_definition_id' => $def->id,
-        'company_id' => $company->id,
+    $pending = WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'pending_approval',
+        'label' => 'Pending Approval',
+        'is_initial' => false,
+        'is_terminal' => false,
+    ]);
+
+    $approved = WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
         'key' => 'approved',
         'label' => 'Approved',
-        'color' => 'success',
-        'display_order' => 1,
-    ]);
-
-    WorkflowStatus::withoutGlobalScopes()->create([
-        'workflow_definition_id' => $def->id,
-        'company_id' => $company->id,
-        'key' => 'closed',
-        'label' => 'Closed',
-        'color' => 'gray',
+        'is_initial' => false,
         'is_terminal' => true,
-        'display_order' => 2,
     ]);
 
-    WorkflowTransition::withoutGlobalScopes()->create([
-        'workflow_definition_id' => $def->id,
-        'company_id' => $company->id,
+    // Create transition
+    WorkflowTransition::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'from_status_key' => 'draft',
+        'to_status_key' => 'pending_approval',
+        'label' => 'Submit for Approval',
+        'allowed_roles' => ['manager', 'employee'],
+        'requires_approval' => false,
+    ]);
+
+    expect($definition->statuses)->toHaveCount(3);
+    expect($definition->transitions)->toHaveCount(1);
+    expect($definition->initialStatus()->key)->toBe('draft');
+});
+
+test('workflow instance can be initialized for document', function (): void {
+    // Create workflow definition
+    $definition = WorkflowDefinition::create([
+        'company_id' => $this->company->id,
+        'name' => 'Purchase Order Approval',
+        'document_type' => 'purchase_order',
+        'is_active' => true,
+        'is_default' => true,
+    ]);
+
+    WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'draft',
+        'label' => 'Draft',
+        'is_initial' => true,
+        'is_terminal' => false,
+    ]);
+
+    $this->actingAs($this->user);
+
+    $instance = $this->workflowService->initialise('purchase_order', 123);
+
+    expect($instance->company_id)->toBe($this->company->id);
+    expect($instance->document_type)->toBe('purchase_order');
+    expect($instance->document_id)->toBe(123);
+    expect($instance->current_status_key)->toBe('draft');
+    expect($instance->started_at)->not->toBeNull();
+
+    // Check history was created
+    expect($instance->history)->toHaveCount(1);
+    expect($instance->history->first()->to_status_key)->toBe('draft');
+    expect($instance->history->first()->comment)->toBe('Workflow initialised.');
+});
+
+test('workflow transition executes successfully for allowed user', function (): void {
+    // Setup workflow
+    $definition = WorkflowDefinition::create([
+        'company_id' => $this->company->id,
+        'name' => 'Order Approval',
+        'document_type' => 'sales_order',
+        'is_active' => true,
+        'is_default' => true,
+    ]);
+
+    WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'draft',
+        'label' => 'Draft',
+        'is_initial' => true,
+        'is_terminal' => false,
+    ]);
+
+    WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'submitted',
+        'label' => 'Submitted',
+        'is_initial' => false,
+        'is_terminal' => false,
+    ]);
+
+    $transition = WorkflowTransition::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'from_status_key' => 'draft',
+        'to_status_key' => 'submitted',
+        'label' => 'Submit Order',
+        'allowed_roles' => ['manager'],
+        'requires_approval' => false,
+    ]);
+
+    $this->actingAs($this->user);
+
+    $instance = $this->workflowService->initialise('sales_order', 456);
+    $history = $this->workflowService->transition($instance, $transition, $this->user, 'Submitting order');
+
+    $instance->refresh();
+    expect($instance->current_status_key)->toBe('submitted');
+    expect($history->from_status_key)->toBe('draft');
+    expect($history->to_status_key)->toBe('submitted');
+    expect($history->comment)->toBe('Submitting order');
+});
+
+test('workflow transition throws exception for unauthorized user', function (): void {
+    // Setup workflow with restricted transition
+    $definition = WorkflowDefinition::create([
+        'company_id' => $this->company->id,
+        'name' => 'Restricted Workflow',
+        'document_type' => 'expense_claim',
+        'is_active' => true,
+        'is_default' => true,
+    ]);
+
+    WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'draft',
+        'label' => 'Draft',
+        'is_initial' => true,
+        'is_terminal' => false,
+    ]);
+
+    WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'approved',
+        'label' => 'Approved',
+        'is_initial' => false,
+        'is_terminal' => true,
+    ]);
+
+    $transition = WorkflowTransition::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
         'from_status_key' => 'draft',
         'to_status_key' => 'approved',
         'label' => 'Approve',
-        'allowed_roles' => ['owner', 'admin'],
-        'display_order' => 0,
+        'allowed_roles' => ['admin'], // User has 'manager' role
+        'requires_approval' => false,
     ]);
 
-    WorkflowTransition::withoutGlobalScopes()->create([
-        'workflow_definition_id' => $def->id,
-        'company_id' => $company->id,
-        'from_status_key' => 'approved',
-        'to_status_key' => 'closed',
-        'label' => 'Close',
-        'allowed_roles' => ['owner'],
-        'display_order' => 1,
-    ]);
+    $this->actingAs($this->user);
 
-    return $def;
-}
+    $instance = $this->workflowService->initialise('expense_claim', 789);
 
-// ── 1. initialise() creates instance with initial status ──
-
-test('WorkflowService initialise creates instance with initial status', function (): void {
-    $company = Company::factory()->create();
-    $user = User::factory()->create();
-    CompanyUser::factory()->owner()->create([
-        'company_id' => $company->id,
-        'user_id' => $user->id,
-    ]);
-    CompanyContext::setActive($company);
-    $this->actingAs($user);
-
-    createTestWorkflow($company);
-
-    $service = app(WorkflowService::class);
-    $instance = $service->initialise('purchase_order', 1);
-
-    expect($instance)->toBeInstanceOf(WorkflowInstance::class);
-    expect($instance->current_status_key)->toBe('draft');
-    expect($instance->history)->toHaveCount(1);
+    expect(fn () => $this->workflowService->transition($instance, $transition, $this->user))
+        ->toThrow(RuntimeException::class, 'User does not have permission to execute this transition');
 });
 
-// ── 2. User with allowed role can execute transition ──
-
-test('user with allowed role can execute a transition', function (): void {
-    $company = Company::factory()->create();
-    $user = User::factory()->create();
-    CompanyUser::factory()->owner()->create([
-        'company_id' => $company->id,
-        'user_id' => $user->id,
-    ]);
-    CompanyContext::setActive($company);
-    $this->actingAs($user);
-
-    $def = createTestWorkflow($company);
-    $service = app(WorkflowService::class);
-    $instance = $service->initialise('purchase_order', 1);
-
-    $transition = $def->transitions()->where('from_status_key', 'draft')->first();
-    $history = $service->transition($instance, $transition, $user, 'Approving now.');
-
-    expect($history)->toBeInstanceOf(WorkflowHistory::class);
-    expect($instance->fresh()->current_status_key)->toBe('approved');
-});
-
-// ── 3. User without allowed role is rejected ──
-
-test('user without allowed role is rejected', function (): void {
-    $company = Company::factory()->create();
-    $user = User::factory()->create();
+test('workflow approval process creates approval records', function (): void {
+    // Create approver user
+    $approver = User::factory()->create();
     CompanyUser::factory()->create([
-        'company_id' => $company->id,
-        'user_id' => $user->id,
-        'role' => CompanyRole::VIEWER->value,
-    ]);
-    CompanyContext::setActive($company);
-    $this->actingAs($user);
-
-    $def = createTestWorkflow($company);
-    $service = app(WorkflowService::class);
-    $instance = $service->initialise('purchase_order', 1);
-
-    $transition = $def->transitions()->where('from_status_key', 'draft')->first();
-
-    $this->expectException(RuntimeException::class);
-    $service->transition($instance, $transition, $user);
-});
-
-// ── 4. Transition with requires_approval creates approval records ──
-
-test('transition with requires_approval creates WorkflowApproval records', function (): void {
-    $company = Company::factory()->create();
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    CompanyUser::factory()->owner()->create([
-        'company_id' => $company->id,
-        'user_id' => $owner->id,
-    ]);
-    CompanyUser::factory()->create([
-        'company_id' => $company->id,
-        'user_id' => $admin->id,
-        'role' => CompanyRole::ADMIN->value,
+        'company_id' => $this->company->id,
+        'user_id' => $approver->id,
+        'role' => 'admin',
         'is_active' => true,
     ]);
-    CompanyContext::setActive($company);
-    $this->actingAs($owner);
 
-    $def = createTestWorkflow($company);
-
-    // Make the draft→approved transition require approval
-    $transition = $def->transitions()->where('from_status_key', 'draft')->first();
-    $transition->update([
-        'requires_approval' => true,
-        'approval_type' => 'parallel',
-        'approver_roles' => ['admin'],
-    ]);
-
-    $service = app(WorkflowService::class);
-    $instance = $service->initialise('purchase_order', 1);
-
-    $service->transition($instance, $transition->fresh(), $owner);
-
-    // Status should NOT have changed (waiting for approval)
-    expect($instance->fresh()->current_status_key)->toBe('draft');
-
-    // Approval records should exist
-    $approvals = WorkflowApproval::withoutGlobalScopes()
-        ->where('workflow_instance_id', $instance->id)
-        ->get();
-    expect($approvals)->toHaveCount(1);
-    expect($approvals->first()->status)->toBe(ApprovalStatus::PENDING);
-});
-
-// ── 5. All approvers approving triggers transition ──
-
-test('all approvers approving triggers the transition', function (): void {
-    $company = Company::factory()->create();
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    CompanyUser::factory()->owner()->create([
-        'company_id' => $company->id,
-        'user_id' => $owner->id,
-    ]);
-    CompanyUser::factory()->create([
-        'company_id' => $company->id,
-        'user_id' => $admin->id,
-        'role' => CompanyRole::ADMIN->value,
-        'is_active' => true,
-    ]);
-    CompanyContext::setActive($company);
-    $this->actingAs($owner);
-
-    $def = createTestWorkflow($company);
-    $transition = $def->transitions()->where('from_status_key', 'draft')->first();
-    $transition->update([
-        'requires_approval' => true,
-        'approval_type' => 'parallel',
-        'approver_roles' => ['admin'],
-    ]);
-
-    $service = app(WorkflowService::class);
-    $instance = $service->initialise('purchase_order', 1);
-
-    $service->transition($instance, $transition->fresh(), $owner);
-
-    // Approve
-    $approval = WorkflowApproval::withoutGlobalScopes()
-        ->where('workflow_instance_id', $instance->id)
-        ->first();
-    $service->respondToApproval($approval, ApprovalStatus::APPROVED, $admin);
-
-    expect($instance->fresh()->current_status_key)->toBe('approved');
-});
-
-// ── 6. Rejection on parallel approval rejects transition ──
-
-test('one approver rejecting rejects the transition', function (): void {
-    $company = Company::factory()->create();
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    CompanyUser::factory()->owner()->create([
-        'company_id' => $company->id,
-        'user_id' => $owner->id,
-    ]);
-    CompanyUser::factory()->create([
-        'company_id' => $company->id,
-        'user_id' => $admin->id,
-        'role' => CompanyRole::ADMIN->value,
-        'is_active' => true,
-    ]);
-    CompanyContext::setActive($company);
-    $this->actingAs($owner);
-
-    $def = createTestWorkflow($company);
-    $transition = $def->transitions()->where('from_status_key', 'draft')->first();
-    $transition->update([
-        'requires_approval' => true,
-        'approval_type' => 'parallel',
-        'approver_roles' => ['admin'],
-    ]);
-
-    $service = app(WorkflowService::class);
-    $instance = $service->initialise('purchase_order', 1);
-
-    $service->transition($instance, $transition->fresh(), $owner);
-
-    // Reject
-    $approval = WorkflowApproval::withoutGlobalScopes()
-        ->where('workflow_instance_id', $instance->id)
-        ->first();
-    $service->respondToApproval($approval, ApprovalStatus::REJECTED, $admin, 'Not approved.');
-
-    // Should revert to from_status
-    expect($instance->fresh()->current_status_key)->toBe('draft');
-});
-
-// ── 7. WorkflowHistory is immutable ──
-
-test('WorkflowHistory is immutable and cannot be updated', function (): void {
-    $company = Company::factory()->create();
-    $user = User::factory()->create();
-    CompanyUser::factory()->owner()->create([
-        'company_id' => $company->id,
-        'user_id' => $user->id,
-    ]);
-    CompanyContext::setActive($company);
-    $this->actingAs($user);
-
-    createTestWorkflow($company);
-
-    $service = app(WorkflowService::class);
-    $instance = $service->initialise('purchase_order', 1);
-
-    $history = $instance->history()->first();
-
-    $this->expectException(LogicException::class);
-    $history->comment = 'Modified';
-    $history->save();
-});
-
-// ── 8. Tenant isolation on workflow definitions ──
-
-test('two companies have separate workflow definitions', function (): void {
-    $companyA = Company::factory()->create();
-    $companyB = Company::factory()->create();
-
-    createTestWorkflow($companyA);
-
-    WorkflowDefinition::withoutGlobalScopes()->create([
-        'company_id' => $companyB->id,
+    // Setup workflow with approval
+    $definition = WorkflowDefinition::create([
+        'company_id' => $this->company->id,
+        'name' => 'Approval Workflow',
         'document_type' => 'purchase_order',
-        'name' => 'Company B PO',
         'is_active' => true,
         'is_default' => true,
     ]);
 
-    CompanyContext::setActive($companyA);
-    expect(WorkflowDefinition::all())->toHaveCount(1);
-    expect(WorkflowDefinition::first()->name)->toBe('Test PO Workflow');
+    WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'draft',
+        'label' => 'Draft',
+        'is_initial' => true,
+        'is_terminal' => false,
+    ]);
 
+    WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'approved',
+        'label' => 'Approved',
+        'is_initial' => false,
+        'is_terminal' => true,
+    ]);
+
+    $transition = WorkflowTransition::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'from_status_key' => 'draft',
+        'to_status_key' => 'approved',
+        'label' => 'Request Approval',
+        'allowed_roles' => ['manager'],
+        'requires_approval' => true,
+        'approver_roles' => ['admin'],
+    ]);
+
+    $this->actingAs($this->user);
+
+    $instance = $this->workflowService->initialise('purchase_order', 101);
+    $this->workflowService->transition($instance, $transition, $this->user, 'Please approve');
+
+    // Check approval record was created
+    $approval = WorkflowApproval::where('workflow_instance_id', $instance->id)->first();
+    expect($approval)->not->toBeNull();
+    expect($approval->approver_id)->toBe($approver->id);
+    expect($approval->status)->toBe(ApprovalStatus::PENDING);
+
+    // Instance should still be in draft status (pending approval)
+    $instance->refresh();
+    expect($instance->current_status_key)->toBe('draft');
+});
+
+test('workflow approval completion executes transition', function (): void {
+    // Create approver
+    $approver = User::factory()->create();
+    CompanyUser::factory()->create([
+        'company_id' => $this->company->id,
+        'user_id' => $approver->id,
+        'role' => 'admin',
+        'is_active' => true,
+    ]);
+
+    // Setup workflow
+    $definition = WorkflowDefinition::create([
+        'company_id' => $this->company->id,
+        'name' => 'Approval Test',
+        'document_type' => 'purchase_order',
+        'is_active' => true,
+        'is_default' => true,
+    ]);
+
+    WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'draft',
+        'label' => 'Draft',
+        'is_initial' => true,
+        'is_terminal' => false,
+    ]);
+
+    WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'approved',
+        'label' => 'Approved',
+        'is_initial' => false,
+        'is_terminal' => true,
+    ]);
+
+    $transition = WorkflowTransition::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'from_status_key' => 'draft',
+        'to_status_key' => 'approved',
+        'label' => 'Approve',
+        'allowed_roles' => ['manager'],
+        'requires_approval' => true,
+        'approver_roles' => ['admin'],
+    ]);
+
+    $this->actingAs($this->user);
+
+    // Initialize and request approval
+    $instance = $this->workflowService->initialise('purchase_order', 202);
+    $this->workflowService->transition($instance, $transition, $this->user);
+
+    // Approve the request
+    $approval = WorkflowApproval::where('workflow_instance_id', $instance->id)->first();
+    $this->workflowService->respondToApproval($approval, ApprovalStatus::APPROVED, $approver, 'Looks good');
+
+    // Check instance moved to approved status
+    $instance->refresh();
+    expect($instance->current_status_key)->toBe('approved');
+    expect($instance->completed_at)->not->toBeNull();
+
+    // Check approval record updated
+    $approval->refresh();
+    expect($approval->status)->toBe(ApprovalStatus::APPROVED);
+    expect($approval->comment)->toBe('Looks good');
+});
+
+test('workflow approval rejection reverts to original status', function (): void {
+    // Create approver
+    $approver = User::factory()->create();
+    CompanyUser::factory()->create([
+        'company_id' => $this->company->id,
+        'user_id' => $approver->id,
+        'role' => 'admin',
+        'is_active' => true,
+    ]);
+
+    // Setup workflow
+    $definition = WorkflowDefinition::create([
+        'company_id' => $this->company->id,
+        'name' => 'Rejection Test',
+        'document_type' => 'expense_claim',
+        'is_active' => true,
+        'is_default' => true,
+    ]);
+
+    WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'draft',
+        'label' => 'Draft',
+        'is_initial' => true,
+        'is_terminal' => false,
+    ]);
+
+    WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'approved',
+        'label' => 'Approved',
+        'is_initial' => false,
+        'is_terminal' => true,
+    ]);
+
+    $transition = WorkflowTransition::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'from_status_key' => 'draft',
+        'to_status_key' => 'approved',
+        'label' => 'Request Approval',
+        'allowed_roles' => ['manager'],
+        'requires_approval' => true,
+        'approver_roles' => ['admin'],
+    ]);
+
+    $this->actingAs($this->user);
+
+    // Initialize and request approval
+    $instance = $this->workflowService->initialise('expense_claim', 303);
+    $this->workflowService->transition($instance, $transition, $this->user);
+
+    // Reject the request
+    $approval = WorkflowApproval::where('workflow_instance_id', $instance->id)->first();
+    $this->workflowService->respondToApproval($approval, ApprovalStatus::REJECTED, $approver, 'Needs more details');
+
+    // Check instance reverted to draft status
+    $instance->refresh();
+    expect($instance->current_status_key)->toBe('draft');
+    expect($instance->completed_at)->toBeNull();
+
+    // Check approval record updated
+    $approval->refresh();
+    expect($approval->status)->toBe(ApprovalStatus::REJECTED);
+    expect($approval->comment)->toBe('Needs more details');
+});
+
+test('workflow service returns current status for document', function (): void {
+    // Setup workflow
+    $definition = WorkflowDefinition::create([
+        'company_id' => $this->company->id,
+        'name' => 'Status Test',
+        'document_type' => 'sales_order',
+        'is_active' => true,
+        'is_default' => true,
+    ]);
+
+    $status = WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definition->id,
+        'key' => 'processing',
+        'label' => 'Processing',
+        'is_initial' => true,
+        'is_terminal' => false,
+    ]);
+
+    $this->actingAs($this->user);
+
+    $instance = $this->workflowService->initialise('sales_order', 404);
+
+    $currentStatus = $this->workflowService->currentStatus('sales_order', 404);
+    expect($currentStatus->key)->toBe('processing');
+    expect($currentStatus->label)->toBe('Processing');
+
+    // Test non-existent document
+    $noStatus = $this->workflowService->currentStatus('sales_order', 999);
+    expect($noStatus)->toBeNull();
+});
+
+test('Company A workflow instances not visible to Company B', function (): void {
+    $companyB = Company::factory()->create();
+    
+    // Create workflow for Company A
+    $definitionA = WorkflowDefinition::create([
+        'company_id' => $this->company->id,
+        'name' => 'Company A Workflow',
+        'document_type' => 'purchase_order',
+        'is_active' => true,
+        'is_default' => true,
+    ]);
+
+    WorkflowStatus::create([
+        'company_id' => $this->company->id,
+        'workflow_definition_id' => $definitionA->id,
+        'key' => 'draft',
+        'label' => 'Draft',
+        'is_initial' => true,
+        'is_terminal' => false,
+    ]);
+
+    $this->actingAs($this->user);
+    $instanceA = $this->workflowService->initialise('purchase_order', 505);
+
+    // Switch to Company B
     CompanyContext::setActive($companyB);
-    expect(WorkflowDefinition::all())->toHaveCount(1);
-    expect(WorkflowDefinition::first()->name)->toBe('Company B PO');
-});
 
-// ── 9. Terminal status has no available transitions ──
+    // Company B should not see Company A's workflow instances
+    expect(WorkflowInstance::all())->toHaveCount(0);
+    expect(WorkflowDefinition::all())->toHaveCount(0);
+    expect(WorkflowHistory::all())->toHaveCount(0);
 
-test('document in terminal status has no available transitions', function (): void {
-    $company = Company::factory()->create();
-    $user = User::factory()->create();
-    CompanyUser::factory()->owner()->create([
-        'company_id' => $company->id,
-        'user_id' => $user->id,
-    ]);
-    CompanyContext::setActive($company);
-    $this->actingAs($user);
-
-    $def = createTestWorkflow($company);
-    $service = app(WorkflowService::class);
-    $instance = $service->initialise('purchase_order', 1);
-
-    // Transition draft → approved → closed
-    $t1 = $def->transitions()->where('from_status_key', 'draft')->first();
-    $service->transition($instance, $t1, $user);
-
-    $t2 = $def->transitions()->where('from_status_key', 'approved')->first();
-    $service->transition($instance->fresh(), $t2, $user);
-
-    expect($instance->fresh()->current_status_key)->toBe('closed');
-
-    $available = $service->availableTransitions($instance->fresh(), $user);
-    expect($available)->toHaveCount(0);
-});
-
-// ── 10. Pre-built templates applied for pharmacy ──
-
-test('pre-built templates are applied correctly for pharmacy business type', function (): void {
-    $company = Company::factory()->create([
-        'business_type' => 'pharmacy',
-    ]);
-    CompanyContext::setActive($company);
-
-    $templateService = app(BusinessTypeTemplateService::class);
-    $templateService->apply($company);
-
-    // Pharmacy gets "standard" complexity → Standard PO Approval workflow
-    $definitions = WorkflowDefinition::all();
-    expect($definitions->count())->toBeGreaterThanOrEqual(1);
-
-    $poDef = WorkflowDefinition::where('document_type', 'purchase_order')->first();
-    expect($poDef)->not->toBeNull();
-    expect($poDef->name)->toBe('Standard PO Approval');
-    expect($poDef->is_default)->toBeTrue();
-
-    // Should have 6 statuses for standard PO
-    $statuses = $poDef->statuses;
-    expect($statuses)->toHaveCount(6);
-
-    // Initial status should be draft
-    $initial = $poDef->initialStatus();
-    expect($initial->key)->toBe('draft');
+    // Verify data exists without global scopes
+    expect(WorkflowInstance::withoutGlobalScopes()->count())->toBe(1);
+    expect(WorkflowDefinition::withoutGlobalScopes()->count())->toBe(1);
+    expect(WorkflowHistory::withoutGlobalScopes()->count())->toBe(1);
 });

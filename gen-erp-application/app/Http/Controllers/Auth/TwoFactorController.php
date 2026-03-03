@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
-use App\Models\User;
+use App\Domain\Auth\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +29,7 @@ class TwoFactorController extends Controller
 
         $userId = session('two_factor_user_id');
 
-        if (!$userId) {
+        if (! $userId) {
             return response()->json([
                 'success' => false,
                 'message' => __('No pending 2FA challenge.'),
@@ -40,13 +40,13 @@ class TwoFactorController extends Controller
 
         // Try TOTP code first
         if ($request->filled('code')) {
-            $google2fa = new Google2FA();
+            $google2fa = new Google2FA;
             $valid = $google2fa->verifyKey(
                 decrypt($user->two_factor_secret),
                 $request->code
             );
 
-            if (!$valid) {
+            if (! $valid) {
                 return response()->json([
                     'success' => false,
                     'message' => __('Invalid authentication code.'),
@@ -56,8 +56,8 @@ class TwoFactorController extends Controller
         // Try recovery code
         elseif ($request->filled('recovery_code')) {
             $valid = $this->validateRecoveryCode($user, $request->recovery_code);
-            
-            if (!$valid) {
+
+            if (! $valid) {
                 return response()->json([
                     'success' => false,
                     'message' => __('Invalid recovery code.'),
@@ -98,7 +98,7 @@ class TwoFactorController extends Controller
     public function enable(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         if ($user->two_factor_confirmed_at) {
             return response()->json([
                 'success' => false,
@@ -106,7 +106,7 @@ class TwoFactorController extends Controller
             ], 400);
         }
 
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
         $secret = $google2fa->generateSecretKey();
 
         $user->update(['two_factor_secret' => encrypt($secret)]);
@@ -138,20 +138,20 @@ class TwoFactorController extends Controller
 
         $user = $request->user();
 
-        if (!$user->two_factor_secret) {
+        if (! $user->two_factor_secret) {
             return response()->json([
                 'success' => false,
                 'message' => __('Two-factor authentication has not been enabled yet.'),
             ], 400);
         }
 
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
         $valid = $google2fa->verifyKey(
             decrypt($user->two_factor_secret),
             $request->code
         );
 
-        if (!$valid) {
+        if (! $valid) {
             return response()->json([
                 'success' => false,
                 'message' => __('Invalid authentication code. Please try again.'),
@@ -160,13 +160,13 @@ class TwoFactorController extends Controller
 
         // Generate recovery codes — shown once, stored hashed
         $recoveryCodes = collect(range(1, 10))
-            ->map(fn() => strtoupper(Str::random(10)))
+            ->map(fn () => strtoupper(Str::random(10)))
             ->toArray();
 
         $user->update([
             'two_factor_confirmed_at' => now(),
             'two_factor_recovery_codes' => encrypt(json_encode(
-                array_map(fn($code) => Hash::make($code), $recoveryCodes)
+                array_map(fn ($code) => Hash::make($code), $recoveryCodes)
             )),
         ]);
 
@@ -191,7 +191,7 @@ class TwoFactorController extends Controller
         $user = $request->user();
 
         // Verify password before disabling 2FA
-        if (!Hash::check($request->password, $user->password)) {
+        if (! Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => __('Invalid password.'),
@@ -215,7 +215,7 @@ class TwoFactorController extends Controller
      */
     private function validateRecoveryCode(User $user, string $code): bool
     {
-        if (!$user->two_factor_recovery_codes) {
+        if (! $user->two_factor_recovery_codes) {
             return false;
         }
 
@@ -225,11 +225,11 @@ class TwoFactorController extends Controller
             if (Hash::check($code, $hashedCode)) {
                 // Invalidate used recovery code — each code is single-use
                 unset($codes[$index]);
-                
+
                 $user->update([
-                    'two_factor_recovery_codes' => encrypt(json_encode(array_values($codes)))
+                    'two_factor_recovery_codes' => encrypt(json_encode(array_values($codes))),
                 ]);
-                
+
                 return true;
             }
         }

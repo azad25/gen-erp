@@ -2,35 +2,35 @@
 
 namespace Database\Seeders\SampleData;
 
-use App\Enums\CompanyRole;
-use App\Enums\InvoiceStatus;
-use App\Enums\ProductType;
-use App\Enums\SalesOrderStatus;
-use App\Enums\PurchaseOrderStatus;
-use App\Enums\StockMovementType;
-use App\Models\Branch;
-use App\Models\Company;
-use App\Models\CompanyUser;
-use App\Models\Customer;
-use App\Models\Department;
-use App\Models\Designation;
-use App\Models\Document;
-use App\Models\DocumentFolder;
-use App\Models\Employee;
-use App\Models\Expense;
-use App\Models\Invoice;
-use App\Models\InvoiceItem;
-use App\Models\Product;
-use App\Models\ProductCategory;
-use App\Models\PurchaseOrder;
-use App\Models\PurchaseOrderItem;
-use App\Models\SalesOrder;
-use App\Models\SalesOrderItem;
-use App\Models\StockMovement;
-use App\Models\Supplier;
-use App\Models\TaxGroup;
-use App\Models\User;
-use App\Models\Warehouse;
+use App\Support\Enums\CompanyRole;
+use App\Support\Enums\InvoiceStatus;
+use App\Support\Enums\ProductType;
+use App\Support\Enums\PurchaseOrderStatus;
+use App\Support\Enums\SalesOrderStatus;
+use App\Support\Enums\StockMovementType;
+use App\Domain\Auth\Models\Branch;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Auth\Models\CompanyUser;
+use App\Domain\Customer\Models\Customer;
+use App\Domain\HR\Models\Department;
+use App\Domain\HR\Models\Designation;
+use App\Domain\Document\Models\Document;
+use App\Domain\Document\Models\DocumentFolder;
+use App\Domain\HR\Models\Employee;
+use App\Domain\Accounting\Models\Expense;
+use App\Domain\Invoice\Models\Invoice;
+use App\Domain\Invoice\Models\InvoiceItem;
+use App\Domain\Product\Models\Product;
+use App\Domain\Product\Models\ProductCategory;
+use App\Domain\Purchase\Models\PurchaseOrder;
+use App\Domain\Purchase\Models\PurchaseOrderItem;
+use App\Domain\SalesOrder\Models\SalesOrder;
+use App\Domain\SalesOrder\Models\SalesOrderItem;
+use App\Domain\Inventory\Models\StockMovement;
+use App\Domain\Purchase\Models\Supplier;
+use App\Domain\Product\Models\TaxGroup;
+use App\Domain\Auth\Models\User;
+use App\Domain\Inventory\Models\Warehouse;
 use App\Services\CompanyContext;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -114,6 +114,7 @@ class ApexGarmentsSeeder
             );
             $users[] = $user;
         }
+
         return $users;
     }
 
@@ -134,6 +135,7 @@ class ApexGarmentsSeeder
                 ],
             );
         }
+
         return $warehouses;
     }
 
@@ -148,6 +150,7 @@ class ApexGarmentsSeeder
                 ['company_id' => $company->id, 'name' => $name, 'slug' => Str::slug($name)],
             );
         }
+
         return $categories;
     }
 
@@ -164,11 +167,11 @@ class ApexGarmentsSeeder
             $isZeroRated = in_array($catName, ['Finished Garments', 'Raw Materials', 'Fabric']);
             $tax = $isZeroRated ? $zeroRated : $vatStd;
             $products[] = Product::firstOrCreate(
-                ['company_id' => $company->id, 'sku' => "APX-".str_pad($i, 5, '0', STR_PAD_LEFT)],
+                ['company_id' => $company->id, 'sku' => 'APX-'.str_pad($i, 5, '0', STR_PAD_LEFT)],
                 [
                     'company_id' => $company->id,
                     'name' => "Product {$i}",
-                    'sku' => "APX-".str_pad($i, 5, '0', STR_PAD_LEFT),
+                    'sku' => 'APX-'.str_pad($i, 5, '0', STR_PAD_LEFT),
                     'slug' => Str::slug("Product {$i}"),
                     'category_id' => $category->id,
                     'tax_group_id' => $tax?->id,
@@ -182,6 +185,7 @@ class ApexGarmentsSeeder
                 ],
             );
         }
+
         return $products;
     }
 
@@ -201,6 +205,7 @@ class ApexGarmentsSeeder
                 ],
             );
         }
+
         return $customers;
     }
 
@@ -220,6 +225,7 @@ class ApexGarmentsSeeder
                 ],
             );
         }
+
         return $suppliers;
     }
 
@@ -406,7 +412,7 @@ class ApexGarmentsSeeder
         }
     }
 
-    private function seedExpenses(Company $company, int $count = 15, int $userId): void
+    private function seedExpenses(Company $company, int $count, int $userId): void
     {
         $expenseTypes = ['Rent', 'Utilities', 'Salaries', 'Transport', 'Marketing', 'Supplies', 'Maintenance'];
         for ($i = 1; $i <= $count; $i++) {
@@ -428,7 +434,7 @@ class ApexGarmentsSeeder
         }
     }
 
-    private function seedDocuments(Company $company, int $count = 40, int $userId): void
+    private function seedDocuments(Company $company, int $count, int $userId): void
     {
         $folder = DocumentFolder::firstOrCreate(
             ['company_id' => $company->id, 'name' => 'General'],

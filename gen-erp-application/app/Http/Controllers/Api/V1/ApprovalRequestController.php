@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\ApprovalRequest;
-use App\Services\WorkflowService;
+use App\Domain\Workflow\Services\WorkflowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -22,18 +22,22 @@ class ApprovalRequestController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/approval-requests",
+     *     path="/api/v1/approval-requests",
      *     summary="List all approval requests",
      *     tags={"Approval Requests"},
+     *
      *     @OA\Parameter(name="status", in="query", description="Status", @OA\Schema(type="string")),
      *     @OA\Parameter(name="user_id", in="query", description="User ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/ApprovalRequest")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -54,16 +58,20 @@ class ApprovalRequestController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/approval-requests/{id}",
+     *     path="/api/v1/approval-requests/{id}",
      *     summary="Get a specific approval request",
      *     tags={"Approval Requests"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Approval Request ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/ApprovalRequest")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
@@ -77,20 +85,27 @@ class ApprovalRequestController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/approval-requests/{approvalRequest}/approve",
+     *     path="/api/v1/approval-requests/{approvalRequest}/approve",
      *     summary="Approve an approval request",
      *     tags={"Approval Requests"},
+     *
      *     @OA\Parameter(name="approvalRequest", in="path", required=true, description="Approval Request ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="notes", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Request approved",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
@@ -111,20 +126,27 @@ class ApprovalRequestController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/approval-requests/{approvalRequest}/reject",
+     *     path="/api/v1/approval-requests/{approvalRequest}/reject",
      *     summary="Reject an approval request",
      *     tags={"Approval Requests"},
+     *
      *     @OA\Parameter(name="approvalRequest", in="path", required=true, description="Approval Request ID", @OA\Schema(type="integer")),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="notes", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Request rejected",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")

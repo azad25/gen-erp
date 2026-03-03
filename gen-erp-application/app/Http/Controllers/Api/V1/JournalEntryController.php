@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\JournalEntry;
-use App\Services\AccountingService;
+use App\Domain\Accounting\Contracts\AccountingServiceInterface;
+use App\Domain\Accounting\Models\JournalEntry;
+use App\Http\Resources\JournalEntryResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,23 +18,27 @@ use Illuminate\Http\Request;
 class JournalEntryController extends BaseApiController
 {
     public function __construct(
-        private AccountingService $accountingService
+        private AccountingServiceInterface $accountingService
     ) {}
 
     /**
      * @OA\Get(
-     *     path="/journal-entries",
+     *     path="/api/v1/journal-entries",
      *     summary="List all journal entries",
      *     tags={"Journal Entries"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="entry_date", in="query", description="Entry date", @OA\Schema(type="string", format="date")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/JournalEntry")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -49,21 +54,25 @@ class JournalEntryController extends BaseApiController
             ->orderBy('entry_date', 'desc')
             ->paginate($request->integer('per_page', 15));
 
-        return $this->paginated($entries);
+        return $this->paginated(JournalEntryResource::collection($entries));
     }
 
     /**
      * @OA\Get(
-     *     path="/journal-entries/{id}",
+     *     path="/api/v1/journal-entries/{id}",
      *     summary="Get a specific journal entry",
      *     tags={"Journal Entries"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Journal Entry ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/JournalEntry")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
@@ -72,29 +81,35 @@ class JournalEntryController extends BaseApiController
     {
         $journalEntry->load(['lines.account']);
 
-        return $this->success($journalEntry);
+        return $this->success(new JournalEntryResource($journalEntry));
     }
 
     /**
      * @OA\Post(
-     *     path="/journal-entries",
+     *     path="/api/v1/journal-entries",
      *     summary="Create a new journal entry",
      *     tags={"Journal Entries"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="entry_date", type="string", format="date"),
      *             @OA\Property(property="reference", type="string"),
      *             @OA\Property(property="description", type="string"),
      *             @OA\Property(property="lines", type="array", @OA\Items(type="object"))
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Journal entry created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/JournalEntry"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -110,25 +125,34 @@ class JournalEntryController extends BaseApiController
             'lines.*.account_id' => ['required', 'exists:accounts,id'],
             'lines.*.debit' => ['required', 'integer', 'min:0'],
             'lines.*.credit' => ['required', 'integer', 'min:0'],
+            'lines.*.description' => ['nullable', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()->id;
+        $entryData = [
+            'entry_date' => $validated['entry_date'],
+            'reference' => $validated['reference'],
+            'description' => $validated['description'],
+        ];
 
-        $entry = $this->accountingService->createJournalEntry($validated);
+        $entry = $this->accountingService->createEntry(activeCompany(), $entryData, $validated['lines']);
 
-        return $this->success($entry->load(['lines.account']), 'Journal entry created', 201);
+        return $this->success(new JournalEntryResource($entry->load(['lines.account'])), 'Journal entry created', 201);
     }
 
     /**
      * @OA\Delete(
-     *     path="/journal-entries/{id}",
+     *     path="/api/v1/journal-entries/{id}",
      *     summary="Delete a journal entry",
      *     tags={"Journal Entries"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Journal Entry ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Journal entry deleted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="message", type="string")
      *         )

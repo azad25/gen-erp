@@ -173,7 +173,7 @@
                                 </div>
                                 <div class="grid grid-cols-3 gap-4 pb-4 border-b border-slate-200">
                                     <dt class="font-medium text-slate-500">{{ __('Business Type') }}</dt>
-                                    <dd class="col-span-2 text-slate-900">{{ \App\Enums\BusinessType::tryFrom($business_type)?->label() ?? '-' }}</dd>
+                                    <dd class="col-span-2 text-slate-900">{{ \App\Support\Enums\BusinessType::tryFrom($business_type)?->label() ?? '-' }}</dd>
                                 </div>
                                 <div class="grid grid-cols-3 gap-4 pb-4 border-b border-slate-200">
                                     <dt class="font-medium text-slate-500">{{ __('Contact') }}</dt>

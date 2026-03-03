@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\SubscriptionService;
+use App\Domain\Subscription\Services\SubscriptionService;
 use Illuminate\Console\Command;
 
 /**

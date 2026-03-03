@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Enums\BusinessType;
-use App\Enums\Plan;
-use App\Models\Company;
+use App\Support\Enums\BusinessType;
+use App\Support\Enums\Plan;
+use App\Domain\Auth\Models\Company;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 

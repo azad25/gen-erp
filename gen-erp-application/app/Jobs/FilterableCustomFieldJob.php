@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\CustomFieldDefinition;
+use App\Domain\Shared\Models\CustomFieldDefinition;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

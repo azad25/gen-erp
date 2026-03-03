@@ -2,8 +2,8 @@
 
 namespace App\Services\Integration;
 
-use App\Models\IntegrationHook;
 use App\Jobs\RunHookHandlerJob;
+use App\Models\IntegrationHook;
 use App\Services\CompanyContext;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;

@@ -1,21 +1,21 @@
 <?php
 
-use App\Enums\AdjustmentReason;
-use App\Enums\StockAdjustmentStatus;
-use App\Enums\StockMovementType;
-use App\Enums\StockTransferStatus;
+use App\Support\Enums\AdjustmentReason;
+use App\Support\Enums\StockAdjustmentStatus;
+use App\Support\Enums\StockMovementType;
+use App\Support\Enums\StockTransferStatus;
 use App\Exceptions\InsufficientStockException;
-use App\Models\Company;
-use App\Models\Product;
-use App\Models\StockAdjustment;
-use App\Models\StockAdjustmentItem;
-use App\Models\StockLevel;
-use App\Models\StockMovement;
-use App\Models\StockTransfer;
-use App\Models\StockTransferItem;
-use App\Models\Warehouse;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Product\Models\Product;
+use App\Domain\Inventory\Models\StockAdjustment;
+use App\Domain\Inventory\Models\StockAdjustmentItem;
+use App\Domain\Inventory\Models\StockLevel;
+use App\Domain\Inventory\Models\StockMovement;
+use App\Domain\Inventory\Models\StockTransfer;
+use App\Domain\Inventory\Models\StockTransferItem;
+use App\Domain\Inventory\Models\Warehouse;
 use App\Services\CompanyContext;
-use App\Services\InventoryService;
+use App\Domain\Inventory\Services\InventoryService;
 
 // ═══════════════════════════════════════════════════
 // InventoryTest — 12 tests

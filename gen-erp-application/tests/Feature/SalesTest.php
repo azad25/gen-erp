@@ -1,19 +1,19 @@
 <?php
 
-use App\Enums\InvoiceStatus;
-use App\Enums\SalesOrderStatus;
-use App\Enums\StockMovementType;
+use App\Support\Enums\InvoiceStatus;
+use App\Support\Enums\SalesOrderStatus;
+use App\Support\Enums\StockMovementType;
 use App\Exceptions\InsufficientStockException;
-use App\Models\Company;
-use App\Models\Customer;
-use App\Models\Invoice;
-use App\Models\Product;
-use App\Models\SalesOrder;
-use App\Models\StockLevel;
-use App\Models\Warehouse;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Customer\Models\Customer;
+use App\Domain\Invoice\Models\Invoice;
+use App\Domain\Product\Models\Product;
+use App\Domain\SalesOrder\Models\SalesOrder;
+use App\Domain\Inventory\Models\StockLevel;
+use App\Domain\Inventory\Models\Warehouse;
 use App\Services\CompanyContext;
-use App\Services\InventoryService;
-use App\Services\SalesService;
+use App\Domain\Inventory\Services\InventoryService;
+use App\Domain\Sales\Services\SalesService;
 
 // ═══════════════════════════════════════════════════
 // SalesTest — 13 tests

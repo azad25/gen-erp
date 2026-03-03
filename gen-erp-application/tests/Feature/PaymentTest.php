@@ -1,18 +1,18 @@
 <?php
 
-use App\Enums\CreditNoteStatus;
-use App\Enums\InvoiceStatus;
-use App\Models\Company;
-use App\Models\Customer;
-use App\Models\CustomerPayment;
-use App\Models\GoodsReceipt;
-use App\Models\Invoice;
-use App\Models\Product;
-use App\Models\Supplier;
-use App\Models\Warehouse;
+use App\Support\Enums\CreditNoteStatus;
+use App\Support\Enums\InvoiceStatus;
+use App\Domain\Auth\Models\Company;
+use App\Domain\Customer\Models\Customer;
+use App\Domain\Customer\Models\CustomerPayment;
+use App\Domain\Purchase\Models\GoodsReceipt;
+use App\Domain\Invoice\Models\Invoice;
+use App\Domain\Product\Models\Product;
+use App\Domain\Purchase\Models\Supplier;
+use App\Domain\Inventory\Models\Warehouse;
 use App\Services\CompanyContext;
-use App\Services\Mushak62ReportService;
-use App\Services\PaymentService;
+use App\Domain\Report\Services\Mushak62ReportService;
+use App\Domain\Payment\Services\PaymentService;
 
 // ═══════════════════════════════════════════════════
 // PaymentTest — 12 tests
@@ -166,9 +166,9 @@ test('approveSalesReturn restores stock via InventoryService', function (): void
     $product = Product::factory()->create(['company_id' => $company->id, 'track_inventory' => true]);
 
     // First add stock via InventoryService so we can deduct it
-    $inventoryService = app(\App\Services\InventoryService::class);
-    $inventoryService->stockIn($warehouse->id, $product->id, 100, \App\Enums\StockMovementType::PURCHASE_RECEIPT, null, 10000);
-    $inventoryService->stockOut($warehouse->id, $product->id, 30, \App\Enums\StockMovementType::SALE, null, 15000);
+    $inventoryService = app(\App\Domain\Inventory\Services\InventoryService::class);
+    $inventoryService->stockIn($warehouse->id, $product->id, 100, \App\Support\Enums\StockMovementType::PURCHASE_RECEIPT, null, 10000);
+    $inventoryService->stockOut($warehouse->id, $product->id, 30, \App\Support\Enums\StockMovementType::SALE, null, 15000);
 
     $invoice = Invoice::factory()->create([
         'company_id' => $company->id,
@@ -186,7 +186,7 @@ test('approveSalesReturn restores stock via InventoryService', function (): void
     $service->approveSalesReturn($return);
 
     // Stock was 70 (100 - 30), return restores 10 → 80
-    $level = \App\Models\StockLevel::where('product_id', $product->id)->where('warehouse_id', $warehouse->id)->first();
+    $level = \App\Domain\Inventory\Models\StockLevel::where('product_id', $product->id)->where('warehouse_id', $warehouse->id)->first();
     expect($level->quantity)->toBe(80.0);
     expect($return->fresh()->stock_restored)->toBeTrue();
 });
@@ -199,8 +199,8 @@ test('approvePurchaseReturn removes stock correctly', function (): void {
     $product = Product::factory()->create(['company_id' => $company->id, 'track_inventory' => true]);
 
     // Add stock first
-    $inventoryService = app(\App\Services\InventoryService::class);
-    $inventoryService->stockIn($warehouse->id, $product->id, 50, \App\Enums\StockMovementType::PURCHASE_RECEIPT, null, 20000);
+    $inventoryService = app(\App\Domain\Inventory\Services\InventoryService::class);
+    $inventoryService->stockIn($warehouse->id, $product->id, 50, \App\Support\Enums\StockMovementType::PURCHASE_RECEIPT, null, 20000);
 
     $receipt = GoodsReceipt::withoutGlobalScopes()->create([
         'company_id' => $company->id,
@@ -222,7 +222,7 @@ test('approvePurchaseReturn removes stock correctly', function (): void {
     $service->approvePurchaseReturn($return);
 
     // Stock was 50, return removes 15 → 35
-    $level = \App\Models\StockLevel::where('product_id', $product->id)->where('warehouse_id', $warehouse->id)->first();
+    $level = \App\Domain\Inventory\Models\StockLevel::where('product_id', $product->id)->where('warehouse_id', $warehouse->id)->first();
     expect($level->quantity)->toBe(35.0);
     expect($return->fresh()->stock_removed)->toBeTrue();
 });

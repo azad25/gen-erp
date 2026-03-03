@@ -20,8 +20,8 @@ class WhatsAppIntegration extends BaseNativeIntegration
 
     public function install(CompanyIntegration $ci): void
     {
-        $this->registerHook($ci, 'invoice.sent', self::class . '@onInvoiceSent');
-        $this->registerHook($ci, 'payment.reminder', self::class . '@onPaymentReminder');
+        $this->registerHook($ci, 'invoice.sent', self::class.'@onInvoiceSent');
+        $this->registerHook($ci, 'payment.reminder', self::class.'@onPaymentReminder');
     }
 
     public function uninstall(CompanyIntegration $ci): void
@@ -32,7 +32,7 @@ class WhatsAppIntegration extends BaseNativeIntegration
     /**
      * Send a WhatsApp template message.
      *
-     * @param array<string, string> $params Template parameters
+     * @param  array<string, string>  $params  Template parameters
      */
     public function sendTemplate(CompanyIntegration $ci, string $phoneNumber, string $template, array $params = []): bool
     {
@@ -42,6 +42,7 @@ class WhatsAppIntegration extends BaseNativeIntegration
 
         if (empty($apiKey)) {
             Log::warning('WhatsApp: No API key configured', ['company_id' => $ci->company_id]);
+
             return false;
         }
 
@@ -55,6 +56,7 @@ class WhatsAppIntegration extends BaseNativeIntegration
             return $endpoint;
         } catch (\Throwable $e) {
             Log::error('WhatsApp: Send failed', ['error' => $e->getMessage()]);
+
             return false;
         }
     }
@@ -62,7 +64,7 @@ class WhatsAppIntegration extends BaseNativeIntegration
     private function sendViaWati(array $config, string $phone, string $template, array $params): bool
     {
         $response = Http::withToken($config['api_key'])
-            ->post(($config['wati_url'] ?? 'https://live-server.wati.io') . '/api/v1/sendTemplateMessage', [
+            ->post(($config['wati_url'] ?? 'https://live-server.wati.io').'/api/v1/sendTemplateMessage', [
                 'whatsappNumber' => $phone,
                 'template_name' => $template,
                 'parameters' => array_map(fn ($k, $v) => ['name' => $k, 'value' => $v], array_keys($params), $params),

@@ -20,7 +20,7 @@ class DarazIntegration extends BaseNativeIntegration
 
     public function install(CompanyIntegration $ci): void
     {
-        $this->registerHook($ci, 'product.created', self::class . '@onProductCreated');
+        $this->registerHook($ci, 'product.created', self::class.'@onProductCreated');
         $this->createSyncSchedule($ci, 'orders', 'pull', 'every_15_minutes');
     }
 
@@ -52,6 +52,7 @@ class DarazIntegration extends BaseNativeIntegration
             return $response->successful() ? ($response->json('data.orders') ?? []) : [];
         } catch (\Throwable $e) {
             Log::error('Daraz: Pull orders failed', ['error' => $e->getMessage()]);
+
             return [];
         }
     }

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\Attendance;
-use App\Models\Employee;
-use App\Services\HRService;
+use App\Domain\HR\Contracts\HRServiceInterface;
+use App\Domain\HR\Models\Attendance;
+use App\Domain\HR\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,22 +20,26 @@ use Illuminate\Validation\Rule;
 class AttendanceController extends BaseApiController
 {
     public function __construct(
-        private readonly HRService $hrService
+        private readonly HRServiceInterface $hrService
     ) {}
 
     /**
      * @OA\Get(
-     *     path="/attendance",
+     *     path="/api/v1/attendance",
      *     summary="List attendance records",
      *     tags={"Attendance"},
+     *
      *     @OA\Parameter(name="employee_id", in="query", description="Employee ID", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="date", in="query", description="Date (Y-m-d)", @OA\Schema(type="string")),
      *     @OA\Parameter(name="status", in="query", description="Status", @OA\Schema(type="string")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
      *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
@@ -59,10 +63,12 @@ class AttendanceController extends BaseApiController
 
     /**
      * @OA\Get(
-     *     path="/attendance/{id}",
+     *     path="/api/v1/attendance/{id}",
      *     summary="Get a specific attendance record",
      *     tags={"Attendance"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Attendance ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(response=200, description="Successful response")
      * )
      */
@@ -75,12 +81,15 @@ class AttendanceController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/attendance",
+     *     path="/api/v1/attendance",
      *     summary="Mark attendance for an employee",
      *     tags={"Attendance"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="employee_id", type="integer"),
      *             @OA\Property(property="date", type="string", format="date"),
      *             @OA\Property(property="status", type="string"),
@@ -88,6 +97,7 @@ class AttendanceController extends BaseApiController
      *             @OA\Property(property="check_out", type="string")
      *         )
      *     ),
+     *
      *     @OA\Response(response=201, description="Attendance marked")
      * )
      */
@@ -143,16 +153,20 @@ class AttendanceController extends BaseApiController
 
     /**
      * @OA\Post(
-     *     path="/attendance/bulk",
+     *     path="/api/v1/attendance/bulk",
      *     summary="Bulk mark attendance",
      *     tags={"Attendance"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="date", type="string", format="date"),
      *             @OA\Property(property="records", type="array", @OA\Items(type="object"))
      *         )
      *     ),
+     *
      *     @OA\Response(response=201, description="Attendance marked")
      * )
      */

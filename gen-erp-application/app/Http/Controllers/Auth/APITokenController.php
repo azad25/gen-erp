@@ -57,7 +57,7 @@ class APITokenController extends Controller
         $user = $request->user();
         $companyId = session('active_company_id');
 
-        if (!$companyId) {
+        if (! $companyId) {
             return response()->json([
                 'success' => false,
                 'message' => __('No active company selected.'),
@@ -66,7 +66,7 @@ class APITokenController extends Controller
 
         $company = $user->companies()->find($companyId);
 
-        if (!$company) {
+        if (! $company) {
             return response()->json([
                 'success' => false,
                 'message' => __('You do not have access to this company.'),
@@ -121,7 +121,7 @@ class APITokenController extends Controller
             ->where('company_id', $companyId)
             ->first();
 
-        if (!$token) {
+        if (! $token) {
             return response()->json([
                 'success' => false,
                 'message' => __('Token not found.'),

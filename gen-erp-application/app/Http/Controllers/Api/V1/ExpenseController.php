@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\Expense;
-use App\Services\AccountingService;
+use App\Domain\Accounting\Contracts\AccountingServiceInterface;
+use App\Domain\Accounting\Models\Expense;
+use App\Http\Resources\ExpenseResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -18,24 +19,28 @@ use Illuminate\Validation\Rule;
 class ExpenseController extends BaseApiController
 {
     public function __construct(
-        private readonly AccountingService $accountingService
+        private readonly AccountingServiceInterface $accountingService
     ) {}
 
     /**
      * @OA\Get(
-     *     path="/expenses",
+     *     path="/api/v1/expenses",
      *     summary="List all expenses",
      *     tags={"Expenses"},
+     *
      *     @OA\Parameter(name="search", in="query", description="Search term", @OA\Schema(type="string")),
      *     @OA\Parameter(name="category", in="query", description="Category", @OA\Schema(type="string")),
      *     @OA\Parameter(name="status", in="query", description="Status", @OA\Schema(type="string")),
      *     @OA\Parameter(name="per_page", in="query", description="Items per page", @OA\Schema(type="integer", default=15)),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", type="array", @OA\Items(allOf={@OA\Schema(ref="#/components/schemas/Expense")})),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -52,21 +57,25 @@ class ExpenseController extends BaseApiController
             ->orderBy('expense_date', 'desc')
             ->paginate($request->integer('per_page', 15));
 
-        return $this->paginated($expenses);
+        return $this->paginated(ExpenseResource::collection($expenses));
     }
 
     /**
      * @OA\Get(
-     *     path="/expenses/{id}",
+     *     path="/api/v1/expenses/{id}",
      *     summary="Get a specific expense",
      *     tags={"Expenses"},
+     *
      *     @OA\Parameter(name="id", in="path", required=true, description="Expense ID", @OA\Schema(type="integer")),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful response",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Expense")
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
@@ -75,17 +84,20 @@ class ExpenseController extends BaseApiController
     {
         $expense->load(['creator', 'account', 'paymentAccount']);
 
-        return $this->success($expense);
+        return $this->success(new ExpenseResource($expense));
     }
 
     /**
      * @OA\Post(
-     *     path="/expenses",
+     *     path="/api/v1/expenses",
      *     summary="Create a new expense",
      *     tags={"Expenses"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="expense_date", type="string", format="date"),
      *             @OA\Property(property="category", type="string"),
      *             @OA\Property(property="description", type="string"),
@@ -96,12 +108,15 @@ class ExpenseController extends BaseApiController
      *             @OA\Property(property="payment_account_id", type="integer")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Expense created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Expense"),
+     *             @OA\Property(property="data", type="object"),
      *             @OA\Property(property="message", type="string")
      *         )
      *     )
@@ -134,7 +149,7 @@ class ExpenseController extends BaseApiController
         // Create the journal entry (DR: Expense Account, CR: Cash/Bank)
         $this->accountingService->journalForExpense($expense);
 
-        return $this->success($expense->load(['creator', 'account', 'paymentAccount']), __('Expense created'), 201);
+        return $this->success(new ExpenseResource($expense->load(['creator', 'account', 'paymentAccount'])), __('Expense created'), 201);
     }
 
     /**
@@ -155,7 +170,7 @@ class ExpenseController extends BaseApiController
 
         $expense->update($validated);
 
-        return $this->success($expense->fresh()->load(['creator', 'account', 'paymentAccount']), __('Expense updated'));
+        return $this->success(new ExpenseResource($expense->fresh()->load(['creator', 'account', 'paymentAccount'])), __('Expense updated'));
     }
 
     /**

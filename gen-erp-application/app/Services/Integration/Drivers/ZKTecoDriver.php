@@ -24,7 +24,7 @@ class ZKTecoDriver extends BaseNativeIntegration implements DeviceDriver
 
     public function install(CompanyIntegration $ci): void
     {
-        $this->registerHook($ci, 'attendance.synced', self::class . '@onAttendanceSynced');
+        $this->registerHook($ci, 'attendance.synced', self::class.'@onAttendanceSynced');
         $this->createSyncSchedule($ci, 'attendance', 'pull', 'every_15_minutes');
     }
 
@@ -43,11 +43,13 @@ class ZKTecoDriver extends BaseNativeIntegration implements DeviceDriver
 
         if (! $ip) {
             Log::warning('ZKTeco: No IP configured');
+
             return false;
         }
 
         try {
             $response = Http::timeout(5)->get("http://{$ip}:{$port}/iclock/getinfo");
+
             return $response->successful();
         } catch (\Throwable) {
             return false;
@@ -83,6 +85,7 @@ class ZKTecoDriver extends BaseNativeIntegration implements DeviceDriver
             return $this->parseAttendanceLog($response->body());
         } catch (\Throwable $e) {
             Log::error('ZKTeco pull failed', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -91,6 +94,7 @@ class ZKTecoDriver extends BaseNativeIntegration implements DeviceDriver
     public function push(array $data): bool
     {
         Log::info('ZKTeco push not implemented');
+
         return true;
     }
 
@@ -103,6 +107,7 @@ class ZKTecoDriver extends BaseNativeIntegration implements DeviceDriver
     public function getStatus(): array
     {
         $connected = ! empty($this->credentials['ip']);
+
         return [
             'status' => $connected ? 'connected' : 'disconnected',
             'message' => $connected ? 'Device ready' : 'No credentials set',

@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Enums\TaxType;
-use App\Models\TaxGroup;
+use App\Support\Enums\TaxType;
+use App\Domain\Product\Models\TaxGroup;
 
 /**
  * Calculates tax amounts for Bangladesh tax system: compound SD + VAT, simple VAT, AIT.
@@ -20,7 +20,6 @@ class TaxCalculationService
      *
      * @param  int  $amountPaise  Base amount in paise (smallest currency unit)
      * @param  TaxGroup  ...$groups  Tax groups to apply
-     * @return TaxResult
      */
     public function calculate(int $amountPaise, TaxGroup ...$groups): TaxResult
     {

@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Enums\AlertOperator;
-use App\Models\AlertLog;
-use App\Models\AlertRule;
+use App\Support\Enums\AlertOperator;
+use App\Domain\Shared\Models\AlertLog;
+use App\Domain\Shared\Models\AlertRule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
@@ -115,9 +115,9 @@ class AlertRulesService
         ]);
 
         // Dispatch notifications to configured channels
-        $event = \App\Enums\NotificationEvent::tryFrom('alert_triggered');
-        $company = \App\Models\Company::withoutGlobalScopes()->find($companyId);
-        
+        $event = \App\Support\Enums\NotificationEvent::tryFrom('alert_triggered');
+        $company = \App\Domain\Auth\Models\Company::withoutGlobalScopes()->find($companyId);
+
         if ($event && $company) {
             $variables = [
                 'rule_id' => $rule->id,
@@ -125,11 +125,11 @@ class AlertRulesService
                 'entity_id' => $entity->getKey(),
                 'trigger_value' => $triggerValue,
             ];
-            
+
             // Get users with the target roles
             $roles = $rule->target_roles ?? [];
             $targetUserIds = [];
-            if (!empty($roles)) {
+            if (! empty($roles)) {
                 $companyUsers = \App\Models\CompanyUser::withoutGlobalScopes()
                     ->where('company_id', $companyId)
                     ->whereIn('role', $roles)
@@ -137,8 +137,8 @@ class AlertRulesService
                     ->get();
                 $targetUserIds = $companyUsers->pluck('user_id')->toArray();
             }
-            
-            if (!empty($targetUserIds)) {
+
+            if (! empty($targetUserIds)) {
                 app(NotificationService::class)->send($event, $company, $variables, $targetUserIds);
             }
         }
