@@ -5,4 +5,6 @@ return [
     App\Providers\EventServiceProvider::class,
     App\Providers\AuthServiceProvider::class,
     App\Providers\CqrsServiceProvider::class,
+    App\Providers\CRMServiceProvider::class,
+    App\Domain\Logistics\Providers\LogisticsServiceProvider::class,
 ];

@@ -25,6 +25,19 @@
           </div>
         </div>
 
+        <!-- CRM -->
+        <div>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">CRM</p>
+          <div class="space-y-1">
+            <NavItem icon="📊" label="Dashboard" route="/crm/dashboard" :page-url="pageUrl" />
+            <NavItem icon="🎯" label="Leads" route="/crm/leads" :page-url="pageUrl" />
+            <NavItem icon="👥" label="Contacts" route="/crm/contacts" :page-url="pageUrl" />
+            <NavItem icon="💼" label="Opportunities" route="/crm/opportunities" :page-url="pageUrl" />
+            <NavItem icon="🔄" label="Pipeline" route="/crm/pipelines" :page-url="pageUrl" />
+            <NavItem icon="📋" label="Activities" route="/crm/activities" :page-url="pageUrl" />
+          </div>
+        </div>
+
         <!-- Sales -->
         <div>
           <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">Sales</p>
@@ -45,6 +58,18 @@
             <NavItem icon="📥" label="Receipts" route="/purchase/receipts" :page-url="pageUrl" />
             <NavItem icon="🏬" label="Suppliers" route="/purchase/suppliers" :page-url="pageUrl" />
             <NavItem icon="↩️" label="Returns" route="/purchase/returns" :page-url="pageUrl" />
+          </div>
+        </div>
+
+        <!-- Logistics -->
+        <div>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">Logistics</p>
+          <div class="space-y-1">
+            <NavItem icon="📦" label="Shipments" route="/logistics/shipments" :page-url="pageUrl" />
+            <NavItem icon="🚚" label="Carriers" route="/logistics/carriers" :page-url="pageUrl" />
+            <NavItem icon="📍" label="Tracking" route="/logistics/tracking" :page-url="pageUrl" />
+            <NavItem icon="↩️" label="Returns" route="/logistics/returns" :page-url="pageUrl" />
+            <NavItem icon="💰" label="COD Management" route="/logistics/cod" :page-url="pageUrl" />
           </div>
         </div>
 

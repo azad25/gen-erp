@@ -1,0 +1,70 @@
+<?php
+
+return [
+    'shipment' => [
+        'created' => 'Shipment created successfully',
+        'updated' => 'Shipment updated successfully',
+        'cancelled' => 'Shipment cancelled successfully',
+        'bulk_created' => 'Shipments created successfully',
+        'pickup_scheduled' => 'Pickup scheduled successfully',
+    ],
+    
+    'tracking' => [
+        'not_found' => 'Tracking information not found',
+        'status_updated' => 'Shipment status updated successfully',
+        'sync_success' => 'Tracking synced successfully with carrier',
+        'sync_failed' => 'Failed to sync tracking with carrier',
+        'bulk_sync_completed' => 'Bulk tracking sync completed',
+    ],
+    
+    'return' => [
+        'requested' => 'Return request submitted successfully',
+        'approved' => 'Return request approved successfully',
+        'rejected' => 'Return request rejected',
+        'received' => 'Return marked as received',
+        'refunded' => 'Refund processed successfully',
+        'images_uploaded' => 'Return images uploaded successfully',
+    ],
+    
+    'cod' => [
+        'marked_collected' => 'COD marked as collected successfully',
+    ],
+    
+    'validation' => [
+        'carrier_required' => 'Carrier is required',
+        'customer_required' => 'Customer is required',
+        'recipient_name_required' => 'Recipient name is required',
+        'recipient_phone_required' => 'Recipient phone is required',
+        'recipient_address_required' => 'Recipient address is required',
+        'recipient_city_required' => 'Recipient city is required',
+        'sender_name_required' => 'Sender name is required',
+        'sender_phone_required' => 'Sender phone is required',
+        'sender_address_required' => 'Sender address is required',
+        'sender_city_required' => 'Sender city is required',
+        'delivery_type_required' => 'Delivery type is required',
+        'payment_method_required' => 'Payment method is required',
+        'cod_amount_required' => 'COD amount is required for COD shipments',
+        'weight_required' => 'Weight is required',
+        'items_required' => 'At least one item is required',
+        'item_name_required' => 'Item name is required',
+        'item_quantity_required' => 'Item quantity is required',
+        'item_weight_required' => 'Item weight is required',
+        'recipient_name_string' => 'Recipient name must be a string',
+        'recipient_phone_string' => 'Recipient phone must be a string',
+        'recipient_email_format' => 'Recipient email must be a valid email address',
+        'recipient_address_string' => 'Recipient address must be a string',
+        'cod_amount_numeric' => 'COD amount must be a number',
+        'declared_value_numeric' => 'Declared value must be a number',
+        'expected_delivery_date_format' => 'Expected delivery date must be a valid date',
+        'expected_delivery_date_future' => 'Expected delivery date must be in the future',
+        'shipment_required' => 'Shipment is required',
+        'shipment_not_found' => 'Shipment not found',
+        'return_reason_required' => 'Return reason is required',
+        'return_reason_details_required' => 'Return reason details are required',
+        'return_reason_details_max' => 'Return reason details cannot exceed 1000 characters',
+        'return_images_max' => 'Maximum 5 images allowed',
+        'return_image_format' => 'File must be an image',
+        'return_image_types' => 'Only JPEG, PNG, and JPG images are allowed',
+        'return_image_size' => 'Image size cannot exceed 2MB',
+    ],
+];

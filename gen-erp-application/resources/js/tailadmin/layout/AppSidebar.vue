@@ -257,7 +257,6 @@ const menuGroups = [
         name: "User Profile",
         path: "/profile",
       },
-
       {
         name: "Forms",
         icon: ListIcon,
@@ -276,6 +275,25 @@ const menuGroups = [
         subItems: [
           { name: "Black Page", path: "/blank", pro: false },
           { name: "404 Page", path: "/error-404", pro: false },
+        ],
+      },
+    ],
+  },
+  {
+    title: "CMS",
+    items: [
+      {
+        icon: DocsIcon,
+        name: "CMS",
+        subItems: [
+          { name: "Sites", path: "/cms/sites", pro: false },
+          { name: "Pages", path: "/cms/pages", pro: false },
+          { name: "Menus", path: "/cms/menus", pro: false },
+          { name: "Blog Posts", path: "/cms/blog", pro: false },
+          { name: "Contact Forms", path: "/cms/contacts", pro: false },
+          { name: "Reviews", path: "/cms/reviews", pro: false },
+          { name: "Wishlist", path: "/cms/wishlist", pro: false },
+          { name: "SEO", path: "/cms/seo", pro: false },
         ],
       },
     ],

@@ -58,11 +58,11 @@ class DocumentService implements DocumentServiceInterface
     public function upload(
         UploadedFile $file,
         int $companyId,
-        int $uploadedBy,
-        ?int $folderId = null,
         ?string $entityType = null,
         ?int $entityId = null,
+        ?int $folderId = null,
         ?string $description = null,
+        ?int $uploadedBy = null
     ): Document {
         $this->validateFile($file);
         $this->enforceStorageQuota($companyId, $file->getSize());

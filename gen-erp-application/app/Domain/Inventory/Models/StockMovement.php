@@ -18,6 +18,7 @@ class StockMovement extends Model
 
     protected $fillable = [
         'company_id',
+        'idempotency_key',
         'warehouse_id',
         'product_id',
         'variant_id',
@@ -26,6 +27,7 @@ class StockMovement extends Model
         'quantity_before',
         'quantity_after',
         'unit_cost',
+        'total_cost',
         'reference_type',
         'reference_id',
         'notes',
@@ -38,6 +40,7 @@ class StockMovement extends Model
         'quantity_before' => 'float',
         'quantity_after' => 'float',
         'unit_cost' => 'integer',
+        'total_cost' => 'integer',
         'movement_date' => 'date',
     ];
 

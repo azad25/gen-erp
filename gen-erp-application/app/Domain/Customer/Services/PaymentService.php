@@ -5,20 +5,21 @@ namespace App\Domain\Customer\Services;
 use App\Domain\Customer\Contracts\PaymentServiceInterface;
 use App\Support\Enums\CreditNoteStatus;
 use App\Support\Enums\InvoiceStatus;
-use App\Models\CreditNote;
-use App\Models\CreditNoteItem;
+use App\Domain\Customer\Models\CreditNote;
+use App\Domain\Customer\Models\CreditNoteItem;
+use App\Events\CreditNoteApplied;
 use App\Domain\Customer\Models\Customer;
-use App\Models\CustomerPayment;
-use App\Models\CustomerPaymentAllocation;
-use App\Models\GoodsReceipt;
-use App\Models\Invoice;
-use App\Models\PurchaseReturn;
-use App\Models\PurchaseReturnItem;
-use App\Models\SalesReturn;
-use App\Models\SalesReturnItem;
-use App\Models\Supplier;
-use App\Models\SupplierPayment;
-use App\Models\SupplierPaymentAllocation;
+use App\Domain\Customer\Models\CustomerPayment;
+use App\Domain\Customer\Models\CustomerPaymentAllocation;
+use App\Domain\Purchase\Models\GoodsReceipt;
+use App\Domain\Invoice\Models\Invoice;
+use App\Domain\Purchase\Models\PurchaseReturn;
+use App\Domain\Purchase\Models\PurchaseReturnItem;
+use App\Domain\Customer\Models\SalesReturn;
+use App\Domain\Customer\Models\SalesReturnItem;
+use App\Domain\Purchase\Models\Supplier;
+use App\Domain\Purchase\Models\SupplierPayment;
+use App\Domain\Purchase\Models\SupplierPaymentAllocation;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -234,6 +235,9 @@ class PaymentService implements PaymentServiceInterface
                 "Credit Note {$creditNote->credit_note_number}",
                 $creditNote,
             );
+
+            // Fire event to trigger automatic journal reversal
+            event(new CreditNoteApplied($creditNote, $invoice));
         });
     }
 

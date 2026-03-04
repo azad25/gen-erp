@@ -1,0 +1,70 @@
+<?php
+
+return [
+    'shipment' => [
+        'created' => 'শিপমেন্ট সফলভাবে তৈরি হয়েছে',
+        'updated' => 'শিপমেন্ট সফলভাবে আপডেট হয়েছে',
+        'cancelled' => 'শিপমেন্ট সফলভাবে বাতিল হয়েছে',
+        'bulk_created' => 'শিপমেন্টগুলি সফলভাবে তৈরি হয়েছে',
+        'pickup_scheduled' => 'পিকআপ সফলভাবে নির্ধারিত হয়েছে',
+    ],
+    
+    'tracking' => [
+        'not_found' => 'ট্র্যাকিং তথ্য পাওয়া যায়নি',
+        'status_updated' => 'শিপমেন্ট স্ট্যাটাস সফলভাবে আপডেট হয়েছে',
+        'sync_success' => 'ক্যারিয়ারের সাথে ট্র্যাকিং সফলভাবে সিঙ্ক হয়েছে',
+        'sync_failed' => 'ক্যারিয়ারের সাথে ট্র্যাকিং সিঙ্ক করতে ব্যর্থ',
+        'bulk_sync_completed' => 'বাল্ক ট্র্যাকিং সিঙ্ক সম্পন্ন হয়েছে',
+    ],
+    
+    'return' => [
+        'requested' => 'রিটার্ন অনুরোধ সফলভাবে জমা দেওয়া হয়েছে',
+        'approved' => 'রিটার্ন অনুরোধ সফলভাবে অনুমোদিত হয়েছে',
+        'rejected' => 'রিটার্ন অনুরোধ প্রত্যাখ্যান করা হয়েছে',
+        'received' => 'রিটার্ন প্রাপ্ত হিসেবে চিহ্নিত',
+        'refunded' => 'রিফান্ড সফলভাবে প্রক্রিয়া করা হয়েছে',
+        'images_uploaded' => 'রিটার্ন ছবি সফলভাবে আপলোড হয়েছে',
+    ],
+    
+    'cod' => [
+        'marked_collected' => 'COD সফলভাবে সংগৃহীত হিসেবে চিহ্নিত',
+    ],
+    
+    'validation' => [
+        'carrier_required' => 'ক্যারিয়ার প্রয়োজন',
+        'customer_required' => 'গ্রাহক প্রয়োজন',
+        'recipient_name_required' => 'প্রাপকের নাম প্রয়োজন',
+        'recipient_phone_required' => 'প্রাপকের ফোন প্রয়োজন',
+        'recipient_address_required' => 'প্রাপকের ঠিকানা প্রয়োজন',
+        'recipient_city_required' => 'প্রাপকের শহর প্রয়োজন',
+        'sender_name_required' => 'প্রেরকের নাম প্রয়োজন',
+        'sender_phone_required' => 'প্রেরকের ফোন প্রয়োজন',
+        'sender_address_required' => 'প্রেরকের ঠিকানা প্রয়োজন',
+        'sender_city_required' => 'প্রেরকের শহর প্রয়োজন',
+        'delivery_type_required' => 'ডেলিভারি টাইপ প্রয়োজন',
+        'payment_method_required' => 'পেমেন্ট পদ্ধতি প্রয়োজন',
+        'cod_amount_required' => 'COD শিপমেন্টের জন্য COD পরিমাণ প্রয়োজন',
+        'weight_required' => 'ওজন প্রয়োজন',
+        'items_required' => 'কমপক্ষে একটি আইটেম প্রয়োজন',
+        'item_name_required' => 'আইটেমের নাম প্রয়োজন',
+        'item_quantity_required' => 'আইটেমের পরিমাণ প্রয়োজন',
+        'item_weight_required' => 'আইটেমের ওজন প্রয়োজন',
+        'recipient_name_string' => 'প্রাপকের নাম একটি স্ট্রিং হতে হবে',
+        'recipient_phone_string' => 'প্রাপকের ফোন একটি স্ট্রিং হতে হবে',
+        'recipient_email_format' => 'প্রাপকের ইমেইল একটি বৈধ ইমেইল ঠিকানা হতে হবে',
+        'recipient_address_string' => 'প্রাপকের ঠিকানা একটি স্ট্রিং হতে হবে',
+        'cod_amount_numeric' => 'COD পরিমাণ একটি সংখ্যা হতে হবে',
+        'declared_value_numeric' => 'ঘোষিত মূল্য একটি সংখ্যা হতে হবে',
+        'expected_delivery_date_format' => 'প্রত্যাশিত ডেলিভারি তারিখ একটি বৈধ তারিখ হতে হবে',
+        'expected_delivery_date_future' => 'প্রত্যাশিত ডেলিভারি তারিখ ভবিষ্যতে হতে হবে',
+        'shipment_required' => 'শিপমেন্ট প্রয়োজন',
+        'shipment_not_found' => 'শিপমেন্ট পাওয়া যায়নি',
+        'return_reason_required' => 'রিটার্নের কারণ প্রয়োজন',
+        'return_reason_details_required' => 'রিটার্নের কারণের বিস্তারিত প্রয়োজন',
+        'return_reason_details_max' => 'রিটার্নের কারণের বিস্তারিত ১০০০ অক্ষরের বেশি হতে পারে না',
+        'return_images_max' => 'সর্বোচ্চ ৫টি ছবি অনুমোদিত',
+        'return_image_format' => 'ফাইলটি একটি ছবি হতে হবে',
+        'return_image_types' => 'শুধুমাত্র JPEG, PNG, এবং JPG ছবি অনুমোদিত',
+        'return_image_size' => 'ছবির আকার ২MB এর বেশি হতে পারে না',
+    ],
+];

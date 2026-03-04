@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 use Laravel\Sanctum\Sanctum;
 
@@ -35,6 +36,7 @@ use App\Domain\Customer\Services\PaymentService;
 use App\Domain\Accounting\Services\AccountingService;
 use App\Domain\Accounting\Contracts\AccountingServiceInterface;
 use App\Domain\Auth\Services\AuthService;
+use App\Domain\Auth\Services\CompanyService as AuthCompanyService;
 use App\Domain\Report\Services\ReportBuilderService;
 use App\Domain\HR\Services\HRService;
 use App\Domain\HR\Services\PayrollService;
@@ -54,6 +56,10 @@ use App\Domain\System\Contracts\SystemServiceInterface;
 use App\Domain\Document\Contracts\DocumentServiceInterface;
 use App\Domain\Product\Contracts\ProductServiceInterface;
 use App\Domain\Auth\Contracts\CompanyServiceInterface;
+use App\Domain\CMS\Services\CMSService;
+use App\Domain\CMS\Contracts\CMSServiceInterface;
+use App\Domain\CMS\Services\CustomerService as CMSCustomerService;
+use App\Domain\CMS\Contracts\CustomerServiceInterface;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -92,13 +98,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PurchaseServiceInterface::class, PurchaseService::class);
         $this->app->singleton(InventoryService::class);
         $this->app->bind(InventoryServiceInterface::class, InventoryService::class);
+        $this->app->singleton(\App\Domain\Inventory\Services\InventoryValuationService::class);
         $this->app->singleton(PaymentService::class);
         $this->app->bind(\App\Domain\Customer\Contracts\PaymentServiceInterface::class, PaymentService::class);
         $this->app->singleton(AccountingService::class);
         $this->app->bind(AccountingServiceInterface::class, AccountingService::class);
+        $this->app->singleton(\App\Domain\Accounting\Services\PostingService::class);
         $this->app->singleton(AuthService::class);
-        $this->app->singleton(CompanyService::class);
-        $this->app->bind(CompanyServiceInterface::class, CompanyService::class);
+        $this->app->singleton(AuthCompanyService::class);
+        $this->app->bind(CompanyServiceInterface::class, AuthCompanyService::class);
         $this->app->singleton(ReportBuilderService::class);
         $this->app->singleton(HRService::class);
         $this->app->bind(HRServiceInterface::class, HRService::class);
@@ -113,6 +121,46 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PluginManager::class);
         $this->app->singleton(SystemService::class);
         $this->app->bind(SystemServiceInterface::class, SystemService::class);
+
+        // CMS Service
+        $this->app->singleton(CMSService::class);
+        $this->app->bind(CMSServiceInterface::class, CMSService::class);
+        
+        // CMS Cart Service
+        $this->app->singleton(\App\Domain\CMS\Services\CartService::class);
+        $this->app->bind(\App\Domain\CMS\Contracts\CartServiceInterface::class, \App\Domain\CMS\Services\CartService::class);
+        
+        // CMS Customer Service
+        $this->app->singleton(CMSCustomerService::class);
+        $this->app->bind(CustomerServiceInterface::class, CMSCustomerService::class);
+        
+        // CMS Review Service
+        $this->app->singleton(\App\Domain\CMS\Services\ReviewService::class);
+        $this->app->bind(\App\Domain\CMS\Contracts\ReviewServiceInterface::class, \App\Domain\CMS\Services\ReviewService::class);
+        
+        // CMS Wishlist Service
+        $this->app->singleton(\App\Domain\CMS\Services\WishlistService::class);
+        $this->app->bind(\App\Domain\CMS\Contracts\WishlistServiceInterface::class, \App\Domain\CMS\Services\WishlistService::class);
+        
+        // CMS Page Builder Service
+        $this->app->singleton(\App\Domain\CMS\Services\PageBuilderService::class);
+        $this->app->bind(\App\Domain\CMS\Contracts\PageBuilderServiceInterface::class, \App\Domain\CMS\Services\PageBuilderService::class);
+        
+        // CMS Public Site Service
+        $this->app->singleton(\App\Domain\CMS\Services\PublicSiteService::class);
+        $this->app->bind(\App\Domain\CMS\Contracts\PublicSiteServiceInterface::class, \App\Domain\CMS\Services\PublicSiteService::class);
+        
+        // CMS Contact Service
+        $this->app->singleton(\App\Domain\CMS\Services\ContactService::class);
+        $this->app->bind(\App\Domain\CMS\Contracts\ContactServiceInterface::class, \App\Domain\CMS\Services\ContactService::class);
+        
+        // CMS SEO Service
+        $this->app->singleton(\App\Domain\CMS\Services\SEOService::class);
+        $this->app->bind(\App\Domain\CMS\Contracts\SEOServiceInterface::class, \App\Domain\CMS\Services\SEOService::class);
+        
+        // CMS ERP Integration Service
+        $this->app->singleton(\App\Domain\CMS\Services\ERPIntegrationService::class);
+        $this->app->bind(\App\Domain\CMS\Contracts\ERPIntegrationServiceInterface::class, \App\Domain\CMS\Services\ERPIntegrationService::class);
 
         // Bind old service names to new domain services for backward compatibility
         $this->app->bind(\App\Services\HRService::class, HRService::class);
@@ -133,6 +181,15 @@ class AppServiceProvider extends ServiceProvider
 
         // Configure Sanctum to use our custom PersonalAccessToken model
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
+        // Configure morph map for polymorphic relationships
+        Relation::morphMap([
+            'customer' => \App\Domain\Customer\Models\Customer::class,
+            'lead' => \App\Domain\CRM\Models\Lead::class,
+            'opportunity' => \App\Domain\CRM\Models\Opportunity::class,
+            'user' => \App\Domain\Auth\Models\User::class,
+            'company' => \App\Domain\Auth\Models\Company::class,
+        ]);
 
         // Configure rate limiters
         $this->configureRateLimiting();

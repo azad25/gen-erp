@@ -3,6 +3,7 @@
 namespace App\Domain\Product\Models;
 
 use App\Support\Enums\ProductType;
+use App\Support\Enums\ValuationMethod;
 use App\Domain\Product\Models\ProductCategory;
 use App\Domain\Product\Models\TaxGroup;
 use App\Domain\Product\Models\ProductVariant;
@@ -53,6 +54,7 @@ class Product extends Model
         'min_selling_price',
         'tax_group_id',
         'track_inventory',
+        'valuation_method',
         'low_stock_threshold',
         'has_variants',
         'is_active',
@@ -72,6 +74,7 @@ class Product extends Model
             'min_selling_price' => 'integer',
             'low_stock_threshold' => 'integer',
             'track_inventory' => 'boolean',
+            'valuation_method' => ValuationMethod::class,
             'has_variants' => 'boolean',
             'is_active' => 'boolean',
             'custom_fields' => 'array',

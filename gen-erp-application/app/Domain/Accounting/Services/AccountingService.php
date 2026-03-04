@@ -4,12 +4,15 @@ namespace App\Domain\Accounting\Services;
 
 use App\Support\Enums\AccountSubType;
 use App\Support\Enums\AccountType;
+use App\Support\Enums\JournalCode;
 use App\Support\Enums\JournalEntryStatus;
 use App\Domain\Accounting\Actions\CreateAccountAction;
 use App\Domain\Accounting\Actions\DeleteAccountAction;
 use App\Domain\Accounting\Actions\UpdateAccountAction;
 use App\Domain\Accounting\Contracts\AccountingServiceInterface;
 use App\Domain\Accounting\DTOs\CreateAccountData;
+use App\Domain\Accounting\DTOs\ProposedJournalEntry;
+use App\Domain\Accounting\DTOs\ProposedJournalLine;
 use App\Domain\Accounting\DTOs\UpdateAccountData;
 use App\Domain\Accounting\Models\Account;
 use App\Domain\Accounting\Models\PaymentMethod;
@@ -39,6 +42,7 @@ class AccountingService implements AccountingServiceInterface
         private CreateAccountAction $createAccountAction,
         private UpdateAccountAction $updateAccountAction,
         private DeleteAccountAction $deleteAccountAction,
+        private PostingService $postingService,
     ) {}
 
     // ═══════════════════════════════════════════════
@@ -128,43 +132,68 @@ class AccountingService implements AccountingServiceInterface
             ->update([
                 'status' => JournalEntryStatus::POSTED,
                 'posted_by' => $user?->id,
+                'posted_at' => now(),
             ]);
     }
 
     // ═══════════════════════════════════════════════
-    // Auto-journal Creation
+    // Auto-journal Creation (via PostingService)
     // ═══════════════════════════════════════════════
 
     /**
-     * DR: Accounts Receivable, CR: Sales Revenue, CR: VAT Payable (if VAT).
+     * DR: Accounts Receivable, CR: Sales Revenue, CR: Output VAT Payable (if VAT).
+     * Uses PostingService for idempotent, atomic posting with tax tagging.
      */
     public function journalForInvoice(Invoice $invoice): JournalEntry
     {
-        $company = Company::withoutGlobalScopes()->find($invoice->company_id);
         $receivable = $this->findSystemAccount($invoice->company_id, AccountSubType::RECEIVABLE);
         $revenue = $this->findSystemAccount($invoice->company_id, AccountSubType::REVENUE);
 
         $lines = [
-            ['account_id' => $receivable->id, 'debit' => $invoice->total_amount, 'credit' => 0, 'description' => 'Accounts Receivable'],
-            ['account_id' => $revenue->id, 'debit' => 0, 'credit' => $invoice->subtotal, 'description' => 'Sales Revenue'],
+            new ProposedJournalLine(
+                accountId: $receivable->id,
+                debit: $invoice->total_amount,
+                credit: 0,
+                description: __('Accounts Receivable'),
+            ),
+            new ProposedJournalLine(
+                accountId: $revenue->id,
+                debit: 0,
+                credit: $invoice->subtotal,
+                description: __('Sales Revenue'),
+            ),
         ];
 
         if ($invoice->tax_amount > 0) {
             $vatPayable = $this->findSystemAccount($invoice->company_id, AccountSubType::CURRENT_LIABILITY, '2002');
-            $lines[] = ['account_id' => $vatPayable->id, 'debit' => 0, 'credit' => $invoice->tax_amount, 'description' => 'VAT Payable'];
+            $taxRate = $invoice->subtotal > 0
+                ? (int) round(($invoice->tax_amount / $invoice->subtotal) * 10000)
+                : 0;
+
+            $lines[] = new ProposedJournalLine(
+                accountId: $vatPayable->id,
+                debit: 0,
+                credit: $invoice->tax_amount,
+                description: __('Output VAT Payable'),
+                taxCode: 'OUTPUT_VAT',
+                taxRate: $taxRate,
+                taxBaseAmount: $invoice->subtotal,
+            );
         }
 
-        $entry = $this->createEntry($company, [
-            'entry_date' => $invoice->invoice_date ?? now(),
-            'reference_type' => 'invoice',
-            'reference_id' => $invoice->id,
-            'description' => 'Invoice '.$invoice->invoice_number,
-            'is_system' => true,
-        ], $lines);
+        $proposed = new ProposedJournalEntry(
+            companyId: $invoice->company_id,
+            idempotencyKey: "invoice_{$invoice->id}_journal",
+            journalCode: JournalCode::SALES,
+            entryDate: ($invoice->invoice_date ?? now())->toDateString(),
+            description: __('Invoice :number', ['number' => $invoice->invoice_number]),
+            referenceType: 'invoice',
+            referenceId: $invoice->id,
+            lines: $lines,
+            branchId: $invoice->branch_id ?? null,
+        );
 
-        $this->postEntry($entry);
-
-        return $entry;
+        return $this->postingService->post($proposed);
     }
 
     /**
@@ -172,83 +201,116 @@ class AccountingService implements AccountingServiceInterface
      */
     public function journalForPayment(CustomerPayment $payment): JournalEntry
     {
-        $company = Company::withoutGlobalScopes()->find($payment->company_id);
         $bank = $this->findSystemAccount($payment->company_id, AccountSubType::BANK);
         $receivable = $this->findSystemAccount($payment->company_id, AccountSubType::RECEIVABLE);
 
-        $entry = $this->createEntry($company, [
-            'entry_date' => $payment->payment_date ?? now(),
-            'reference_type' => 'customer_payment',
-            'reference_id' => $payment->id,
-            'description' => 'Payment received '.$payment->receipt_number,
-            'is_system' => true,
-        ], [
-            ['account_id' => $bank->id, 'debit' => $payment->amount, 'credit' => 0, 'description' => 'Bank'],
-            ['account_id' => $receivable->id, 'debit' => 0, 'credit' => $payment->amount, 'description' => 'Accounts Receivable'],
-        ]);
+        $proposed = new ProposedJournalEntry(
+            companyId: $payment->company_id,
+            idempotencyKey: "customer_payment_{$payment->id}_journal",
+            journalCode: JournalCode::BANK,
+            entryDate: ($payment->payment_date ?? now())->toDateString(),
+            description: __('Payment received :receipt', ['receipt' => $payment->receipt_number]),
+            referenceType: 'customer_payment',
+            referenceId: $payment->id,
+            lines: [
+                new ProposedJournalLine(accountId: $bank->id, debit: $payment->amount, credit: 0, description: __('Bank')),
+                new ProposedJournalLine(accountId: $receivable->id, debit: 0, credit: $payment->amount, description: __('Accounts Receivable')),
+            ],
+        );
 
-        $this->postEntry($entry);
-
-        return $entry;
+        return $this->postingService->post($proposed);
     }
 
     /**
-     * DR: Inventory/COGS, DR: VAT Receivable (if VAT), CR: Accounts Payable.
+     * DR: Inventory, DR: Input VAT Receivable (if VAT), CR: Accounts Payable.
+     * Tags INPUT_VAT on VAT lines for reporting.
      */
     public function journalForPurchase(GoodsReceipt $receipt): JournalEntry
     {
-        $company = Company::withoutGlobalScopes()->find($receipt->company_id);
         $inventory = $this->findSystemAccount($receipt->company_id, AccountSubType::INVENTORY);
         $payable = $this->findSystemAccount($receipt->company_id, AccountSubType::PAYABLE);
 
+        $receipt->loadMissing('items');
         $totalAmount = $receipt->items->sum(fn ($item) => $item->received_quantity * $item->unit_cost);
+        $taxAmount = $receipt->tax_amount ?? 0;
+        $netAmount = $totalAmount - $taxAmount;
 
-        $entry = $this->createEntry($company, [
-            'entry_date' => $receipt->received_date ?? now(),
-            'reference_type' => 'goods_receipt',
-            'reference_id' => $receipt->id,
-            'description' => 'GRN '.$receipt->grn_number,
-            'is_system' => true,
-        ], [
-            ['account_id' => $inventory->id, 'debit' => $totalAmount, 'credit' => 0, 'description' => 'Inventory'],
-            ['account_id' => $payable->id, 'debit' => 0, 'credit' => $totalAmount, 'description' => 'Accounts Payable'],
-        ]);
+        $lines = [
+            new ProposedJournalLine(
+                accountId: $inventory->id,
+                debit: $taxAmount > 0 ? $netAmount : $totalAmount,
+                credit: 0,
+                description: __('Inventory'),
+            ),
+        ];
 
-        $this->postEntry($entry);
+        // Tag INPUT_VAT for purchase-side VAT
+        if ($taxAmount > 0) {
+            $vatReceivable = $this->findSystemAccount($receipt->company_id, AccountSubType::CURRENT_LIABILITY, '2002');
+            $taxRate = $netAmount > 0 ? (int) round(($taxAmount / $netAmount) * 10000) : 0;
 
-        return $entry;
+            $lines[] = new ProposedJournalLine(
+                accountId: $vatReceivable->id,
+                debit: $taxAmount,
+                credit: 0,
+                description: __('Input VAT Receivable'),
+                taxCode: 'INPUT_VAT',
+                taxRate: $taxRate,
+                taxBaseAmount: $netAmount,
+            );
+        }
+
+        $lines[] = new ProposedJournalLine(
+            accountId: $payable->id,
+            debit: 0,
+            credit: $totalAmount,
+            description: __('Accounts Payable'),
+        );
+
+        $proposed = new ProposedJournalEntry(
+            companyId: $receipt->company_id,
+            idempotencyKey: "goods_receipt_{$receipt->id}_journal",
+            journalCode: JournalCode::PURCHASE,
+            entryDate: ($receipt->received_date ?? now())->toDateString(),
+            description: __('GRN :number', ['number' => $receipt->grn_number]),
+            referenceType: 'goods_receipt',
+            referenceId: $receipt->id,
+            lines: $lines,
+        );
+
+        return $this->postingService->post($proposed);
     }
 
     /**
-     * DR: Accounts Payable, CR: Bank/Cash, DR: TDS Payable (if TDS).
+     * DR: Accounts Payable, CR: Bank/Cash, CR: TDS Payable (if TDS).
      */
     public function journalForSupplierPayment(SupplierPayment $payment): JournalEntry
     {
-        $company = Company::withoutGlobalScopes()->find($payment->company_id);
         $payable = $this->findSystemAccount($payment->company_id, AccountSubType::PAYABLE);
         $bank = $this->findSystemAccount($payment->company_id, AccountSubType::BANK);
 
         $lines = [
-            ['account_id' => $payable->id, 'debit' => $payment->amount, 'credit' => 0, 'description' => 'Accounts Payable'],
-            ['account_id' => $bank->id, 'debit' => 0, 'credit' => $payment->amount - ($payment->tds_amount ?? 0), 'description' => 'Bank'],
+            new ProposedJournalLine(accountId: $payable->id, debit: $payment->amount, credit: 0, description: __('Accounts Payable')),
+            new ProposedJournalLine(accountId: $bank->id, debit: 0, credit: $payment->amount - ($payment->tds_amount ?? 0), description: __('Bank')),
         ];
 
         if (($payment->tds_amount ?? 0) > 0) {
             $tds = $this->findSystemAccount($payment->company_id, AccountSubType::CURRENT_LIABILITY, '2003');
-            $lines[] = ['account_id' => $tds->id, 'debit' => 0, 'credit' => $payment->tds_amount, 'description' => 'TDS Payable'];
+            $lines[] = new ProposedJournalLine(accountId: $tds->id, debit: 0, credit: $payment->tds_amount, description: __('TDS Payable'));
         }
 
-        $entry = $this->createEntry($company, [
-            'entry_date' => $payment->payment_date ?? now(),
-            'reference_type' => 'supplier_payment',
-            'reference_id' => $payment->id,
-            'description' => 'Supplier payment '.$payment->payment_number,
-            'is_system' => true,
-        ], $lines);
+        $proposed = new ProposedJournalEntry(
+            companyId: $payment->company_id,
+            idempotencyKey: "supplier_payment_{$payment->id}_journal",
+            journalCode: JournalCode::BANK,
+            entryDate: ($payment->payment_date ?? now())->toDateString(),
+            description: __('Supplier payment :number', ['number' => $payment->payment_number]),
+            referenceType: 'supplier_payment',
+            referenceId: $payment->id,
+            lines: $lines,
+        );
 
-        $this->postEntry($entry);
-
-        return $entry;
+        return $this->postingService->post($proposed);
     }
 
     /**
@@ -256,43 +318,39 @@ class AccountingService implements AccountingServiceInterface
      */
     public function journalForPayroll(PayrollRun $run): JournalEntry
     {
-        $company = Company::withoutGlobalScopes()->find($run->company_id);
         $salaryExpense = $this->findSystemAccount($run->company_id, AccountSubType::OPERATING_EXPENSE, '5002');
         $salaryPayable = $this->findSystemAccount($run->company_id, AccountSubType::CURRENT_LIABILITY, '2004');
 
-        // DR: total gross salary
         $lines = [
-            ['account_id' => $salaryExpense->id, 'debit' => $run->total_gross, 'credit' => 0, 'description' => 'Salary Expense'],
+            new ProposedJournalLine(accountId: $salaryExpense->id, debit: $run->total_gross, credit: 0, description: __('Salary Expense')),
+            new ProposedJournalLine(accountId: $salaryPayable->id, debit: 0, credit: $run->total_net, description: __('Salary Payable')),
         ];
 
-        // CR: net salary payable
         $creditTotal = $run->total_net;
-        $lines[] = ['account_id' => $salaryPayable->id, 'debit' => 0, 'credit' => $run->total_net, 'description' => 'Salary Payable'];
 
-        // CR: tax payable
         if ($run->total_tax > 0) {
             $taxPayable = $this->findSystemAccount($run->company_id, AccountSubType::CURRENT_LIABILITY, '2003');
-            $lines[] = ['account_id' => $taxPayable->id, 'debit' => 0, 'credit' => $run->total_tax, 'description' => 'Income Tax Payable'];
+            $lines[] = new ProposedJournalLine(accountId: $taxPayable->id, debit: 0, credit: $run->total_tax, description: __('Income Tax Payable'));
             $creditTotal += $run->total_tax;
         }
 
-        // CR: remaining deductions to salary payable to balance
         $remainingDeductions = $run->total_gross - $creditTotal;
         if ($remainingDeductions > 0) {
-            $lines[] = ['account_id' => $salaryPayable->id, 'debit' => 0, 'credit' => $remainingDeductions, 'description' => 'Other Deductions'];
+            $lines[] = new ProposedJournalLine(accountId: $salaryPayable->id, debit: 0, credit: $remainingDeductions, description: __('Other Deductions'));
         }
 
-        $entry = $this->createEntry($company, [
-            'entry_date' => $run->payment_date ?? now(),
-            'reference_type' => 'payroll_run',
-            'reference_id' => $run->id,
-            'description' => 'Payroll '.$run->run_number,
-            'is_system' => true,
-        ], $lines);
+        $proposed = new ProposedJournalEntry(
+            companyId: $run->company_id,
+            idempotencyKey: "payroll_run_{$run->id}_journal",
+            journalCode: JournalCode::PAYROLL,
+            entryDate: ($run->payment_date ?? now())->toDateString(),
+            description: __('Payroll :number', ['number' => $run->run_number]),
+            referenceType: 'payroll_run',
+            referenceId: $run->id,
+            lines: $lines,
+        );
 
-        $this->postEntry($entry);
-
-        return $entry;
+        return $this->postingService->post($proposed);
     }
 
     /**
@@ -300,8 +358,6 @@ class AccountingService implements AccountingServiceInterface
      */
     public function journalForExpense(Expense $expense): JournalEntry
     {
-        $company = Company::withoutGlobalScopes()->find($expense->company_id);
-
         $expenseAccount = $expense->account_id
             ? Account::withoutGlobalScopes()->find($expense->account_id)
             : $this->findSystemAccount($expense->company_id, AccountSubType::OPERATING_EXPENSE, '5005');
@@ -310,20 +366,21 @@ class AccountingService implements AccountingServiceInterface
             ? Account::withoutGlobalScopes()->find($expense->payment_account_id)
             : $this->findSystemAccount($expense->company_id, AccountSubType::CASH);
 
-        $entry = $this->createEntry($company, [
-            'entry_date' => $expense->expense_date ?? now(),
-            'reference_type' => 'expense',
-            'reference_id' => $expense->id,
-            'description' => 'Expense '.$expense->expense_number,
-            'is_system' => true,
-        ], [
-            ['account_id' => $expenseAccount->id, 'debit' => $expense->total_amount, 'credit' => 0, 'description' => $expense->description],
-            ['account_id' => $paymentAccount->id, 'debit' => 0, 'credit' => $expense->total_amount, 'description' => 'Payment'],
-        ]);
+        $proposed = new ProposedJournalEntry(
+            companyId: $expense->company_id,
+            idempotencyKey: "expense_{$expense->id}_journal",
+            journalCode: JournalCode::CASH,
+            entryDate: ($expense->expense_date ?? now())->toDateString(),
+            description: __('Expense :number', ['number' => $expense->expense_number]),
+            referenceType: 'expense',
+            referenceId: $expense->id,
+            lines: [
+                new ProposedJournalLine(accountId: $expenseAccount->id, debit: $expense->total_amount, credit: 0, description: $expense->description),
+                new ProposedJournalLine(accountId: $paymentAccount->id, debit: 0, credit: $expense->total_amount, description: __('Payment')),
+            ],
+        );
 
-        $this->postEntry($entry);
-
-        return $entry;
+        return $this->postingService->post($proposed);
     }
 
     // ═══════════════════════════════════════════════
@@ -624,5 +681,21 @@ class AccountingService implements AccountingServiceInterface
     public function deleteAccountGroup(AccountGroup $accountGroup): void
     {
         $accountGroup->delete();
+    }
+
+    /**
+     * Post a proposed journal entry using the PostingService.
+     */
+    public function postProposedEntry(ProposedJournalEntry $proposed, ?int $postedBy = null): JournalEntry
+    {
+        return $this->postingService->post($proposed, $postedBy);
+    }
+
+    /**
+     * Reverse a posted journal entry.
+     */
+    public function reverseEntry(JournalEntry $original, string $idempotencyKey, string $description, ?int $reversedBy = null): JournalEntry
+    {
+        return $this->postingService->reverse($original, $idempotencyKey, $description, $reversedBy);
     }
 }

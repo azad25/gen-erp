@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Variables for Dynamic Theming */
+:root {
+  --primary-color: #3b82f6;
+  --primary-dark: #1d4ed8;
+  --secondary-color: #64748b;
+  --accent-color: #f59e0b;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --background: #ffffff;
+  --background-secondary: #f9fafb;
+  --border-color: #e5e7eb;
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --background: #111827;
+    --background-secondary: #1f2937;
+    --border-color: #374151;
+  }
+}
+
+/* Dynamic theme classes */
+.theme-primary {
+  color: var(--primary-color);
+}
+
+.theme-bg-primary {
+  background-color: var(--primary-color);
+}
+
+.theme-border-primary {
+  border-color: var(--primary-color);
+}
+
+/* Utility classes */
+.container-custom {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.section-padding {
+  @apply py-12 lg:py-16;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Animation utilities */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading spinner */
+.spinner {
+  @apply inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin;
+}

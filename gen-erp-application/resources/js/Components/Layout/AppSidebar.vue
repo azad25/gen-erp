@@ -214,6 +214,9 @@ import {
   ListIcon,
   PlugInIcon,
   SettingsIcon,
+  TaskIcon,
+  FolderIcon,
+  BarChartIcon,
 } from "../../icons";
 import SidebarWidget from "./SidebarWidget.vue";
 import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
@@ -336,19 +339,48 @@ const menuGroups = [
         path: "/accounting/journal-entries",
       },
       {
-        icon: PieChartIcon,
-        name: "Trial Balance",
-        path: "/accounting/trial-balance",
+        icon: FolderIcon,
+        name: "Cost Centers",
+        path: "/accounting/cost-centers",
+      },
+      {
+        icon: SettingsIcon,
+        name: "Lock Date Management",
+        path: "/accounting/lock-date-management",
       },
       {
         icon: PieChartIcon,
-        name: "Profit & Loss",
-        path: "/accounting/profit-loss",
-      },
-      {
-        icon: PieChartIcon,
-        name: "Balance Sheet",
-        path: "/accounting/balance-sheet",
+        name: "Reports",
+        subItems: [
+          {
+            name: "Trial Balance",
+            path: "/accounting/reports/trial-balance",
+          },
+          {
+            name: "Profit & Loss",
+            path: "/accounting/reports/profit-loss",
+          },
+          {
+            name: "Balance Sheet",
+            path: "/accounting/reports/balance-sheet",
+          },
+          {
+            name: "VAT Reports",
+            path: "/accounting/reports/vat",
+          },
+          {
+            name: "Aging Reports",
+            path: "/accounting/reports/aging",
+          },
+          {
+            name: "Inventory Valuation",
+            path: "/accounting/reports/inventory-valuation",
+          },
+          {
+            name: "Comparative Reports",
+            path: "/accounting/reports/comparative",
+          },
+        ],
       },
     ],
   },
@@ -374,6 +406,116 @@ const menuGroups = [
         icon: DocsIcon,
         name: "Payroll",
         path: "/hr/payroll",
+      },
+      {
+        icon: TaskIcon,
+        name: "Task Dashboard",
+        path: "/hr/tasks/dashboard",
+      },
+      {
+        icon: CalenderIcon,
+        name: "Timesheet",
+        path: "/hr/timesheet",
+      },
+      {
+        icon: BarChartIcon,
+        name: "Capacity Planning",
+        path: "/hr/capacity",
+      },
+      {
+        icon: UserCircleIcon,
+        name: "Skills Management",
+        path: "/hr/skills",
+      },
+      {
+        icon: CalenderIcon,
+        name: "Availability",
+        path: "/hr/availability",
+      },
+      {
+        icon: DocsIcon,
+        name: "Performance Reviews",
+        path: "/hr/performance",
+      },
+    ],
+  },
+  {
+    title: "Project Management",
+    items: [
+      {
+        icon: GridIcon,
+        name: "Projects Dashboard",
+        path: "/projects/dashboard",
+      },
+      {
+        icon: FolderIcon,
+        name: "Projects",
+        path: "/projects",
+      },
+      {
+        icon: TaskIcon,
+        name: "Tasks",
+        path: "/tasks",
+      },
+      {
+        icon: BarChartIcon,
+        name: "Reports",
+        path: "/reports",
+      },
+    ],
+  },
+  {
+    title: "CRM",
+    items: [
+      {
+        icon: UserCircleIcon,
+        name: "Leads",
+        path: "/crm/leads",
+      },
+      {
+        icon: DocsIcon,
+        name: "Opportunities",
+        path: "/crm/opportunities",
+      },
+      {
+        icon: ListIcon,
+        name: "Pipelines",
+        path: "/crm/pipelines",
+      },
+      {
+        icon: BarChartIcon,
+        name: "Activities",
+        path: "/crm/activities",
+      },
+    ],
+  },
+  {
+    title: "CMS",
+    items: [
+      {
+        icon: PageIcon,
+        name: "Sites",
+        path: "/cms/sites",
+      },
+      {
+        icon: DocsIcon,
+        name: "Pages",
+        path: "/cms/pages",
+      },
+      {
+        icon: ChatIcon,
+        name: "Blog",
+        path: "/cms/blog",
+      },
+      {
+        icon: ListIcon,
+        name: "Menus",
+        path: "/cms/menus",
+      },
+      {
+        icon: SettingsIcon,
+        name: "SEO",
+        path: "/cms/seo",
       },
     ],
   },

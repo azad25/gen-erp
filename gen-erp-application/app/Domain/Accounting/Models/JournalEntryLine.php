@@ -17,16 +17,27 @@ class JournalEntryLine extends Model
         'company_id',
         'journal_entry_id',
         'account_id',
+        'line_no',
         'description',
         'debit',
         'credit',
+        'tax_code',
+        'tax_rate',
+        'tax_base_amount',
+        'branch_id',
+        'cost_center_id',
+        'dimensions',
     ];
 
     protected function casts(): array
     {
         return [
+            'line_no' => 'integer',
             'debit' => 'integer',
             'credit' => 'integer',
+            'tax_rate' => 'integer',
+            'tax_base_amount' => 'integer',
+            'dimensions' => 'array',
         ];
     }
 

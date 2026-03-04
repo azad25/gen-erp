@@ -12,6 +12,11 @@ class EventServiceProvider extends ServiceProvider
      * @var array<class-string, array<int, class-string>>
      */
     protected $listen = [
+        // ─── Notification Domain Events ──────────────────────────────────────────
+        \App\Domain\Notification\Events\SystemAlertFired::class => [
+            \App\Domain\Notification\Listeners\HandleNotifiableEvent::class,
+        ],
+
         // Invoice Domain Events
         \App\Domain\Invoice\Events\InvoiceSent::class => [
             \App\Domain\Invoice\Listeners\SendInvoiceNotification::class,
@@ -39,6 +44,11 @@ class EventServiceProvider extends ServiceProvider
             \App\Domain\Customer\Listeners\UpdateCustomerBalance::class,
         ],
 
+        // Credit Note Events
+        \App\Events\CreditNoteApplied::class => [
+            \App\Listeners\CreateCreditNoteReversal::class,
+        ],
+
         // Product Domain Events
         \App\Domain\Product\Events\ProductCreated::class => [
             // Add listeners for product creation
@@ -46,11 +56,24 @@ class EventServiceProvider extends ServiceProvider
     ];
 
     /**
+     * The event subscribers for the application.
+     *
+     * @var array<int, class-string>
+     */
+    protected $subscribe = [
+        \App\Domain\HR\Listeners\ProjectTaskEventListener::class,
+    ];
+
+    /**
      * Register any events for your application.
      */
     public function boot(): void
     {
-        //
+        // Register universal notification listener for all NotifiableEvent implementations
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Domain\Notification\Contracts\NotifiableEvent::class,
+            \App\Domain\Notification\Listeners\HandleNotifiableEvent::class
+        );
     }
 
     /**

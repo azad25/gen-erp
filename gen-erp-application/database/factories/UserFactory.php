@@ -35,6 +35,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password, // User model casts 'password' => 'hashed' — auto-hashes
             'remember_token' => Str::random(10),
+            'preferred_language' => fake()->optional(0.8)->randomElement(['bn', 'en']),
         ];
     }
 

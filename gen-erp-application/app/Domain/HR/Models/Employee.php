@@ -48,6 +48,11 @@ class Employee extends Model
         'status',
         'basic_salary',
         'gross_salary',
+        'hourly_rate',
+        'weekly_capacity_hours',
+        'is_available_for_projects',
+        'skills',
+        'certifications',
         'bank_name',
         'bank_account_number',
         'bank_routing_number',
@@ -56,6 +61,10 @@ class Employee extends Model
         'emergency_contact_name',
         'emergency_contact_phone',
         'photo_url',
+        'show_on_website',
+        'bio',
+        'position',
+        'social_links',
         'custom_fields',
     ];
 
@@ -69,12 +78,19 @@ class Employee extends Model
             'termination_date' => 'date',
             'basic_salary' => 'integer',
             'gross_salary' => 'integer',
+            'hourly_rate' => 'decimal:2',
+            'weekly_capacity_hours' => 'integer',
+            'is_available_for_projects' => 'boolean',
+            'skills' => 'array',
+            'certifications' => 'array',
             'status' => EmployeeStatus::class,
             'employment_type' => EmploymentType::class,
             'nid_number' => 'encrypted',
             'tin_number' => 'encrypted',
             'bank_account_number' => 'encrypted',
             'bkash_number' => 'encrypted',
+            'show_on_website' => 'boolean',
+            'social_links' => 'array',
             'custom_fields' => 'array',
         ];
     }
@@ -142,6 +158,48 @@ class Employee extends Model
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
+    }
+
+    /** @return HasMany<EmployeeTask, $this> */
+    public function employeeTasks(): HasMany
+    {
+        return $this->hasMany(EmployeeTask::class);
+    }
+
+    /** @return HasMany<EmployeeTimeEntry, $this> */
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(EmployeeTimeEntry::class);
+    }
+
+    /** @return HasMany<EmployeeWorklog, $this> */
+    public function worklogs(): HasMany
+    {
+        return $this->hasMany(EmployeeWorklog::class);
+    }
+
+    /** @return HasMany<EmployeeCapacity, $this> */
+    public function capacities(): HasMany
+    {
+        return $this->hasMany(EmployeeCapacity::class);
+    }
+
+    /** @return HasMany<EmployeeSkill, $this> */
+    public function employeeSkills(): HasMany
+    {
+        return $this->hasMany(EmployeeSkill::class);
+    }
+
+    /** @return HasMany<EmployeeAvailability, $this> */
+    public function availabilities(): HasMany
+    {
+        return $this->hasMany(EmployeeAvailability::class);
+    }
+
+    /** @return HasMany<PerformanceReview, $this> */
+    public function performanceReviews(): HasMany
+    {
+        return $this->hasMany(PerformanceReview::class);
     }
 
     // ─── Helpers ───

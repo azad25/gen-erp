@@ -87,6 +87,14 @@ class User extends Authenticatable
         return $this->belongsTo(Company::class, 'last_active_company_id');
     }
 
+    /**
+     * @return BelongsTo<Company, $this>
+     */
+    public function currentCompany(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'last_active_company_id');
+    }
+
     // ── Methods ──────────────────────────────────────────────
 
     /**

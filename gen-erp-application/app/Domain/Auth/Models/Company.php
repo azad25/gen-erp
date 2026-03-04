@@ -4,6 +4,7 @@ namespace App\Domain\Auth\Models;
 
 use App\Support\Enums\BusinessType;
 use App\Support\Enums\Plan;
+use App\Support\Enums\ValuationMethod;
 use App\Domain\Auth\Models\Concerns\Auditable;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Product\Models\Product;
@@ -49,6 +50,8 @@ class Company extends Model
         'timezone',
         'locale',
         'vat_registered',
+        'lock_date',
+        'valuation_method',
         'vat_bin',
         'address_line1',
         'address_line2',
@@ -75,6 +78,8 @@ class Company extends Model
             'plan' => Plan::class,
             'settings' => 'array',
             'vat_registered' => 'boolean',
+            'lock_date' => 'date',
+            'valuation_method' => ValuationMethod::class,
             'is_active' => 'boolean',
             'plan_expires_at' => 'datetime',
             'onboarding_completed_at' => 'datetime',

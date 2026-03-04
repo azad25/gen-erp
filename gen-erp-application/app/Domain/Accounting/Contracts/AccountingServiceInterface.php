@@ -3,6 +3,7 @@
 namespace App\Domain\Accounting\Contracts;
 
 use App\Domain\Accounting\DTOs\CreateAccountData;
+use App\Domain\Accounting\DTOs\ProposedJournalEntry;
 use App\Domain\Accounting\DTOs\UpdateAccountData;
 use App\Domain\Accounting\Models\Account;
 use App\Domain\Accounting\Models\PaymentMethod;
@@ -116,4 +117,14 @@ interface AccountingServiceInterface
      * Delete an account group.
      */
     public function deleteAccountGroup(AccountGroup $accountGroup): void;
+
+    /**
+     * Post a proposed journal entry using the PostingService.
+     */
+    public function postProposedEntry(ProposedJournalEntry $proposed, ?int $postedBy = null): JournalEntry;
+
+    /**
+     * Reverse a posted journal entry.
+     */
+    public function reverseEntry(JournalEntry $original, string $idempotencyKey, string $description, ?int $reversedBy = null): JournalEntry;
 }

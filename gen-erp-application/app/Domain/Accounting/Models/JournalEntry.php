@@ -2,6 +2,7 @@
 
 namespace App\Domain\Accounting\Models;
 
+use App\Support\Enums\JournalCode;
 use App\Support\Enums\JournalEntryStatus;
 use App\Domain\Auth\Models\Concerns\BelongsToCompany;
 use Illuminate\Database\Eloquent\Model;
@@ -20,23 +21,31 @@ class JournalEntry extends Model
     protected $fillable = [
         'company_id',
         'branch_id',
+        'idempotency_key',
         'entry_number',
+        'journal_code',
         'entry_date',
         'reference_type',
         'reference_id',
         'description',
         'status',
+        'posted_at',
+        'currency',
         'is_system',
         'created_by',
         'posted_by',
+        'reversed_by_id',
+        'reversal_of_id',
     ];
 
     protected function casts(): array
     {
         return [
             'entry_date' => 'date',
+            'posted_at' => 'datetime',
             'is_system' => 'boolean',
             'status' => JournalEntryStatus::class,
+            'journal_code' => JournalCode::class,
         ];
     }
 
@@ -84,6 +93,26 @@ class JournalEntry extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(JournalEntryLine::class);
+    }
+
+    /**
+     * The entry that reversed this one (if any).
+     *
+     * @return BelongsTo<JournalEntry, $this>
+     */
+    public function reversedBy(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'reversed_by_id');
+    }
+
+    /**
+     * The original entry this is a reversal of (if any).
+     *
+     * @return BelongsTo<JournalEntry, $this>
+     */
+    public function reversalOf(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'reversal_of_id');
     }
 
     public function totalDebits(): int

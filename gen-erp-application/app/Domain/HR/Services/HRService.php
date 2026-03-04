@@ -13,9 +13,19 @@ use App\Domain\HR\Models\Attendance;
 use App\Domain\HR\Models\Department;
 use App\Domain\HR\Models\Designation;
 use App\Domain\HR\Models\Employee;
+use App\Domain\HR\Models\EmployeeAvailability;
+use App\Domain\HR\Models\EmployeeCapacity;
+use App\Domain\HR\Models\EmployeeSkill;
+use App\Domain\HR\Models\EmployeeTask;
+use App\Domain\HR\Models\EmployeeTimeEntry;
+use App\Domain\HR\Models\EmployeeWorklog;
 use App\Domain\HR\Models\LeaveBalance;
 use App\Domain\HR\Models\LeaveRequest;
 use App\Domain\HR\Models\LeaveType;
+use App\Domain\HR\Models\PerformanceReview;
+use App\Domain\HR\Services\CapacityPlanningService;
+use App\Domain\HR\Services\TaskAssignmentService;
+use App\Domain\HR\Services\TimeTrackingService;
 use App\Domain\System\Services\SequenceService;
 use App\Support\Enums\AttendanceStatus;
 use App\Support\Enums\EmployeeStatus;
@@ -31,6 +41,9 @@ class HRService implements HRServiceInterface
         private CreateDepartmentAction $createDepartmentAction,
         private UpdateDepartmentAction $updateDepartmentAction,
         private DeleteDepartmentAction $deleteDepartmentAction,
+        private TaskAssignmentService $taskAssignmentService,
+        private TimeTrackingService $timeTrackingService,
+        private CapacityPlanningService $capacityPlanningService,
     ) {}
 
     /**
@@ -320,5 +333,201 @@ class HRService implements HRServiceInterface
     public function deleteDesignation(Designation $designation): void
     {
         $designation->delete();
+    }
+
+    // ═══════════════════════════════════════════════
+    // Task Management Integration
+    // ═══════════════════════════════════════════════
+
+    /**
+     * Get employee workload summary
+     */
+    public function getEmployeeWorkloadSummary(Employee $employee): array
+    {
+        $taskStats = $this->taskAssignmentService->getEmployeeTaskStatistics($employee);
+        $timeStats = $this->timeTrackingService->getEmployeeTimeStatistics($employee);
+        
+        return [
+            'employee_id' => $employee->id,
+            'employee_name' => $employee->fullName(),
+            'tasks' => $taskStats,
+            'time_tracking' => $timeStats,
+            'capacity' => $this->getEmployeeCurrentCapacity($employee),
+            'availability' => $this->getEmployeeAvailabilityStatus($employee),
+        ];
+    }
+
+    /**
+     * Get team workload overview
+     */
+    public function getTeamWorkloadOverview(Company $company): array
+    {
+        $employees = Employee::where('company_id', $company->id)
+            ->where('is_available_for_projects', true)
+            ->get();
+
+        $teamOverview = [
+            'total_employees' => $employees->count(),
+            'capacity_overview' => $this->capacityPlanningService->getTeamCapacityOverview($company),
+            'employees' => [],
+        ];
+
+        foreach ($employees as $employee) {
+            $teamOverview['employees'][] = $this->getEmployeeWorkloadSummary($employee);
+        }
+
+        return $teamOverview;
+    }
+
+    /**
+     * Get employee current capacity
+     */
+    public function getEmployeeCurrentCapacity(Employee $employee): array
+    {
+        $currentWeek = now()->startOfWeek();
+        $capacity = $this->capacityPlanningService->getOrCreateCapacity($employee, $currentWeek);
+
+        return [
+            'total_hours' => $capacity->total_capacity_hours,
+            'allocated_hours' => $capacity->allocated_hours,
+            'available_hours' => $capacity->available_hours,
+            'utilization_percentage' => $capacity->utilization_percentage,
+            'status' => $capacity->getUtilizationStatus(),
+        ];
+    }
+
+    /**
+     * Get employee availability status
+     */
+    public function getEmployeeAvailabilityStatus(Employee $employee): array
+    {
+        $today = now()->toDateString();
+        $availability = EmployeeAvailability::where('employee_id', $employee->id)
+            ->where('date', $today)
+            ->first();
+
+        if (!$availability) {
+            return [
+                'is_available' => true,
+                'availability_type' => 'full_day',
+                'reason' => null,
+            ];
+        }
+
+        return [
+            'is_available' => $availability->is_available,
+            'availability_type' => $availability->availability_type,
+            'reason' => $availability->reason,
+        ];
+    }
+
+    /**
+     * Update employee skills
+     */
+    public function updateEmployeeSkills(Employee $employee, array $skills): array
+    {
+        $updatedSkills = [];
+
+        foreach ($skills as $skillData) {
+            $skill = EmployeeSkill::updateOrCreate([
+                'employee_id' => $employee->id,
+                'skill_name' => $skillData['skill_name'],
+            ], [
+                'proficiency_level' => $skillData['proficiency_level'],
+                'years_of_experience' => $skillData['years_of_experience'] ?? 0,
+                'is_certified' => $skillData['is_certified'] ?? false,
+                'last_used_date' => $skillData['last_used_date'] ?? now(),
+            ]);
+
+            $updatedSkills[] = $skill;
+        }
+
+        return $updatedSkills;
+    }
+
+    /**
+     * Get employee performance summary
+     */
+    public function getEmployeePerformanceSummary(Employee $employee, ?int $year = null): array
+    {
+        $year = $year ?? now()->year;
+        
+        $reviews = PerformanceReview::where('employee_id', $employee->id)
+            ->whereYear('review_period_start', $year)
+            ->get();
+
+        if ($reviews->isEmpty()) {
+            return [
+                'employee_id' => $employee->id,
+                'year' => $year,
+                'reviews_count' => 0,
+                'average_rating' => null,
+                'latest_review' => null,
+            ];
+        }
+
+        $averageRating = $reviews->avg(function ($review) {
+            return $review->getAverageRating();
+        });
+
+        return [
+            'employee_id' => $employee->id,
+            'year' => $year,
+            'reviews_count' => $reviews->count(),
+            'average_rating' => round($averageRating, 2),
+            'latest_review' => $reviews->sortByDesc('created_at')->first(),
+            'performance_trend' => $this->calculatePerformanceTrend($reviews),
+        ];
+    }
+
+    /**
+     * Calculate performance trend
+     */
+    private function calculatePerformanceTrend($reviews): string
+    {
+        if ($reviews->count() < 2) {
+            return 'insufficient_data';
+        }
+
+        $sortedReviews = $reviews->sortBy('review_period_start');
+        $firstReview = $sortedReviews->first();
+        $lastReview = $sortedReviews->last();
+
+        $firstRating = $firstReview->getAverageRating();
+        $lastRating = $lastReview->getAverageRating();
+
+        $difference = $lastRating - $firstRating;
+
+        if ($difference > 0.5) {
+            return 'improving';
+        } elseif ($difference < -0.5) {
+            return 'declining';
+        } else {
+            return 'stable';
+        }
+    }
+
+    /**
+     * Get company HR analytics
+     */
+    public function getCompanyHRAnalytics(Company $company): array
+    {
+        $employees = Employee::where('company_id', $company->id)->get();
+        $activeEmployees = $employees->where('status', EmployeeStatus::ACTIVE);
+
+        return [
+            'total_employees' => $employees->count(),
+            'active_employees' => $activeEmployees->count(),
+            'project_available_employees' => $activeEmployees->where('is_available_for_projects', true)->count(),
+            'departments_count' => Department::where('company_id', $company->id)->count(),
+            'designations_count' => Designation::where('company_id', $company->id)->count(),
+            'pending_leave_requests' => LeaveRequest::whereHas('employee', fn($q) => $q->where('company_id', $company->id))
+                ->where('status', 'pending')->count(),
+            'active_tasks' => EmployeeTask::whereHas('employee', fn($q) => $q->where('company_id', $company->id))
+                ->whereIn('status', ['assigned', 'in_progress'])->count(),
+            'pending_time_approvals' => EmployeeTimeEntry::whereHas('employee', fn($q) => $q->where('company_id', $company->id))
+                ->where('is_approved', false)->count(),
+            'overallocated_employees' => $this->capacityPlanningService->getOverallocatedEmployees($company)->count(),
+        ];
     }
 }
