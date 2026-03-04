@@ -3,7 +3,7 @@
 namespace App\Domain\SalesOrder\Repositories\Eloquent;
 
 use App\Domain\SalesOrder\Models\SalesOrder;
-use App\Models\Company;
+use App\Domain\Auth\Models\Company;
 use App\Domain\SalesOrder\Repositories\Contracts\SalesOrderRepositoryInterface;
 use App\Support\Enums\SalesOrderStatus;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;

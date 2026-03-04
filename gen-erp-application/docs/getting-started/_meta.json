@@ -1,0 +1,5 @@
+{
+    "title": "Getting Started",
+    "order": ["index.md", "installation.md", "configuration.md", "first-company.md"]
+}
+

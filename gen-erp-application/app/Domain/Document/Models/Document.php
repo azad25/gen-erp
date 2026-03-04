@@ -36,6 +36,13 @@ class Document extends Model
         'uploaded_at' => 'datetime',
     ];
 
+    protected $appends = [
+        'human_size',
+        'is_image',
+        'is_pdf',
+        'is_previewable',
+    ];
+
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
@@ -91,5 +98,25 @@ class Document extends Model
         }
         
         return $bytes . ' B';
+    }
+
+    public function getHumanSizeAttribute(): string
+    {
+        return $this->humanSize();
+    }
+
+    public function getIsImageAttribute(): bool
+    {
+        return $this->isImage();
+    }
+
+    public function getIsPdfAttribute(): bool
+    {
+        return $this->isPdf();
+    }
+
+    public function getIsPreviewableAttribute(): bool
+    {
+        return $this->isPreviewable();
     }
 }

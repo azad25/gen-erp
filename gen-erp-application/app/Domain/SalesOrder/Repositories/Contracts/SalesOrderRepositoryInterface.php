@@ -3,7 +3,7 @@
 namespace App\Domain\SalesOrder\Repositories\Contracts;
 
 use App\Domain\SalesOrder\Models\SalesOrder;
-use App\Models\Company;
+use App\Domain\Auth\Models\Company;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 

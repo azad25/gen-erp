@@ -1,9 +1,10 @@
 <template>
-  <apexchart type="donut" :height="height" :options="opts" :series="series" />
+  <VueApexCharts type="donut" :height="height" :options="opts" :series="series" />
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import VueApexCharts from 'vue3-apexcharts'
 
 const p = defineProps({
   series: Array,

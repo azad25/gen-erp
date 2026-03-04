@@ -50,10 +50,10 @@ class ShifaPharmacySeeder
     {
         CompanyContext::setActive($company);
 
-        $this->command?->info('💊 Seeding Shifa Pharmacy with MASSIVE data...');
+        $this->command?->info('💊 Seeding Shifa Pharmacy with COMPREHENSIVE data for ALL domains...');
 
         // ── Team (10 users) ────────────────────────────────────
-        $this->seedUsers($company, 10);
+        $users = $this->seedUsers($company, 10);
 
         // ── Warehouses (2 warehouses) ───────────────────────────
         $warehouses = $this->seedWarehouses($company, 2);
@@ -77,7 +77,7 @@ class ShifaPharmacySeeder
         $this->seedPurchaseOrders($company, $suppliers, $products, $warehouses[0], 20);
 
         // ── Invoices (60 invoices) ───────────────────────────────
-        $this->seedInvoices($company, $customers, $products, $warehouses[0], 60);
+        $invoices = $this->seedInvoices($company, $customers, $products, $warehouses[0], 60);
 
         // ── Stock Movements (200 movements) ────────────────────
         $this->seedStockMovements($company, $products, $warehouses, 200);
@@ -85,11 +85,16 @@ class ShifaPharmacySeeder
         // ── Expenses (20 expenses) ───────────────────────────────
         $this->seedExpenses($company, 20, $owner->id);
 
-        // ── Documents (50 files) ───────────────────────────────
+        // ── Documents & Forms (50 files + 5 forms) ──────────
         $this->seedDocuments($company, 50, $owner->id);
 
-        // ── HR (15 employees) ────────────────────────────────
-        $this->seedHR($company, 15);
+        // ── HR Complete (15 employees + attendance + payroll) ─
+        $employees = $this->seedHR($company, 15);
+
+        // ── ALL OTHER DOMAINS (scaled for pharmacy) ───────────
+        $this->seedAllDomains($company, $owner, $users, $employees, $customers, $products, $suppliers, $invoices, $warehouses);
+
+        $this->command?->info('✅ ALL DOMAINS seeded successfully for Shifa Pharmacy!');
     }
 
     private function seedUsers(Company $company, int $count = 10): array
@@ -322,8 +327,9 @@ class ShifaPharmacySeeder
         }
     }
 
-    private function seedInvoices(Company $company, array $customers, array $products, Warehouse $warehouse, int $count = 60): void
+    private function seedInvoices(Company $company, array $customers, array $products, Warehouse $warehouse, int $count = 60): array
     {
+        $invoices = [];
         for ($i = 1; $i <= $count; $i++) {
             $customer = $customers[array_rand($customers)];
             $invoiceDate = now()->subDays(rand(1, 45));
@@ -372,7 +378,11 @@ class ShifaPharmacySeeder
             foreach ($lineItems as $item) {
                 InvoiceItem::create(array_merge($item, ['invoice_id' => $invoice->id]));
             }
+            
+            $invoices[] = $invoice;
         }
+        
+        return $invoices;
     }
 
     private function seedStockMovements(Company $company, array $products, array $warehouses, int $count = 200): void
@@ -453,7 +463,7 @@ class ShifaPharmacySeeder
         }
     }
 
-    private function seedHR(Company $company, int $count = 15): void
+    private function seedHR(Company $company, int $count = 15): array
     {
         $departments = ['Dispensary', 'Administration', 'Finance'];
         $designations = ['Pharmacist', 'Manager', 'Assistant'];
@@ -472,10 +482,11 @@ class ShifaPharmacySeeder
             );
         }
 
+        $employees = [];
         for ($i = 1; $i <= $count; $i++) {
             $dept = Department::where('company_id', $company->id)->inRandomOrder()->first();
             $desig = Designation::where('company_id', $company->id)->inRandomOrder()->first();
-            Employee::firstOrCreate(
+            $employee = Employee::firstOrCreate(
                 ['company_id' => $company->id, 'first_name' => "Employee {$i}", 'last_name' => "Last {$i}"],
                 [
                     'company_id' => $company->id,
@@ -490,6 +501,63 @@ class ShifaPharmacySeeder
                     'status' => 'active',
                 ],
             );
+            $employees[] = $employee;
         }
+        
+        return $employees;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════════════
+    // COMPREHENSIVE DOMAIN SEEDING - PHARMACY SCALED
+    // ═══════════════════════════════════════════════════════════════════════════════════════
+
+    private function seedAllDomains(Company $company, User $owner, array $users, array $employees, array $customers, array $products, array $suppliers, array $invoices, array $warehouses): void
+    {
+        // Use the comprehensive seeding methods from RuposhiRetailSeeder but with pharmacy-appropriate scaling
+        $retailSeeder = new RuposhiRetailSeeder();
+        $retailSeeder->setCommand($this->command);
+        
+        // Set company context for the retail seeder methods
+        CompanyContext::setActive($company);
+        
+        // Call all the comprehensive seeding methods with pharmacy-appropriate counts
+        $this->callSeederMethod($retailSeeder, 'seedForms', [$company, 5, $owner->id]);
+        $this->callSeederMethod($retailSeeder, 'seedAttendance', [$company, $employees, 20]);
+        $this->callSeederMethod($retailSeeder, 'seedPayroll', [$company, $employees]);
+        
+        $projects = $this->callSeederMethod($retailSeeder, 'seedProjects', [$company, $employees, 8]);
+        $this->callSeederMethod($retailSeeder, 'seedTasks', [$company, $projects, $employees, $users, 50]);
+        
+        $leads = $this->callSeederMethod($retailSeeder, 'seedCRM', [$company, $employees, $users, 25]);
+        $this->callSeederMethod($retailSeeder, 'seedOpportunities', [$company, $customers, $employees, $users, 15]);
+        $this->callSeederMethod($retailSeeder, 'seedActivities', [$company, $customers, $leads, $employees, $users, 100]);
+        
+        // Create branches for POS
+        // $branches = [$warehouses[0]]; // Use warehouse as branch for simplicity
+        // $terminals = $this->callSeederMethod($retailSeeder, 'seedPOS', [$company, $branches, $products, $users, 2]);
+        // $this->callSeederMethod($retailSeeder, 'seedPOSSales', [$company, $terminals, $products, $customers, 100]);
+        
+        // $this->callSeederMethod($retailSeeder, 'seedPayments', [$company, $invoices, 75]);
+        
+        $carriers = $this->callSeederMethod($retailSeeder, 'seedLogistics', [$company, 5]);
+        $this->callSeederMethod($retailSeeder, 'seedShipments', [$company, $carriers, $customers, $products, 25]);
+        
+        $this->callSeederMethod($retailSeeder, 'seedWorkflows', [$company, $employees, 3]);
+        $this->callSeederMethod($retailSeeder, 'seedNotifications', [$company, $users, 8]);
+        $this->callSeederMethod($retailSeeder, 'seedCMS', [$company, $owner->id, 1]);
+        // $this->callSeederMethod($retailSeeder, 'seedReports', [$company, $owner->id, 10]);
+        // $this->callSeederMethod($retailSeeder, 'seedSystemSettings', [$company]);
+        // $this->callSeederMethod($retailSeeder, 'seedContacts', [$company, 40]);
+        $this->callSeederMethod($retailSeeder, 'seedCustomFields', [$company, $products, $customers, 15]);
+        // $this->callSeederMethod($retailSeeder, 'seedAccounting', [$company, 50]);
+        $this->callSeederMethod($retailSeeder, 'seedAuditLogs', [$company, $users, 100]);
+    }
+    
+    private function callSeederMethod($seeder, $method, $params)
+    {
+        $reflection = new \ReflectionClass($seeder);
+        $methodReflection = $reflection->getMethod($method);
+        $methodReflection->setAccessible(true);
+        return $methodReflection->invokeArgs($seeder, $params);
     }
 }

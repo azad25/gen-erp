@@ -2,6 +2,7 @@
 /.agents
 /phase-1-development.md
 /rules.md
-*.md
+/*.md
 /fonts
 /tailadmin
+/gen-erp-technical-docs

@@ -1,15 +1,144 @@
-<template><apexchart type="bar" :height="height" :options="opts" :series="series" /></template>
+<template>
+  <div class="w-full h-full">
+    <canvas ref="chartCanvas" :width="width" :height="height"></canvas>
+  </div>
+</template>
+
 <script setup>
-import { computed } from 'vue'
-const p = defineProps({ series:Array, categories:Array, height:{type:Number,default:300} })
-const opts = computed(()=>({
-  chart:{ toolbar:{show:false }, animations:{ enabled:false }},
-  plotOptions:{ bar:{ borderRadius:4, columnWidth:'60%' } },
-  colors:['#0F766E'],
-  xaxis:{ categories:p.categories, labels:{ style:{ colors:'#6B7280', fontSize:'11px' } } },
-  yaxis:{ labels:{ style:{ colors:'#6B7280', fontSize:'11px' } } },
-  grid:{ borderColor:'#E5E7EB', strokeDashArray:4 },
-  dataLabels:{ enabled:false },
-  tooltip:{ theme:'light', style:{ fontSize:'12px' } },
-}))
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+
+const props = defineProps({
+  data: {
+    type: Object,
+    required: true
+  },
+  options: {
+    type: Object,
+    default: () => ({})
+  },
+  width: {
+    type: Number,
+    default: 400
+  },
+  height: {
+    type: Number,
+    default: 200
+  },
+  responsive: {
+    type: Boolean,
+    default: true
+  },
+  horizontal: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const chartCanvas = ref(null)
+const chartInstance = ref(null)
+
+// Default options
+const defaultOptions = {
+  responsive: props.responsive,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: true,
+      position: 'top'
+    },
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      titleColor: '#fff',
+      bodyColor: '#fff',
+      borderColor: 'rgba(255, 255, 255, 0.1)',
+      borderWidth: 1
+    }
+  },
+  scales: {
+    x: {
+      display: true,
+      grid: {
+        display: true,
+        color: 'rgba(0, 0, 0, 0.1)'
+      }
+    },
+    y: {
+      display: true,
+      grid: {
+        display: true,
+        color: 'rgba(0, 0, 0, 0.1)'
+      },
+      beginAtZero: true
+    }
+  },
+  elements: {
+    bar: {
+      borderWidth: 1,
+      borderRadius: 4
+    }
+  }
+}
+
+const createChart = async () => {
+  if (!chartCanvas.value) return
+
+  // Dynamically import Chart.js to reduce bundle size
+  const { Chart, registerables } = await import('chart.js')
+  Chart.register(...registerables)
+
+  const ctx = chartCanvas.value.getContext('2d')
+  
+  // Destroy existing chart if it exists
+  if (chartInstance.value) {
+    chartInstance.value.destroy()
+  }
+
+  // Merge options
+  const mergedOptions = {
+    ...defaultOptions,
+    ...props.options,
+    indexAxis: props.horizontal ? 'y' : 'x'
+  }
+
+  chartInstance.value = new Chart(ctx, {
+    type: 'bar',
+    data: props.data,
+    options: mergedOptions
+  })
+}
+
+const updateChart = () => {
+  if (chartInstance.value) {
+    chartInstance.value.data = props.data
+    chartInstance.value.update()
+  }
+}
+
+const destroyChart = () => {
+  if (chartInstance.value) {
+    chartInstance.value.destroy()
+    chartInstance.value = null
+  }
+}
+
+// Watch for data changes
+watch(() => props.data, () => {
+  updateChart()
+}, { deep: true })
+
+// Watch for options changes
+watch(() => props.options, () => {
+  createChart()
+}, { deep: true })
+
+onMounted(async () => {
+  await nextTick()
+  createChart()
+})
+
+onUnmounted(() => {
+  destroyChart()
+})
 </script>

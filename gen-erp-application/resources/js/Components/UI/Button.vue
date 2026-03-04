@@ -20,24 +20,31 @@
   </button>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 
-interface ButtonProps {
-  size?: 'sm' | 'md'
-  variant?: 'primary' | 'outline'
-  startIcon?: object
-  endIcon?: object
-  onClick?: () => void
-  className?: string
-  disabled?: boolean
-}
-
-const props = withDefaults(defineProps<ButtonProps>(), {
-  size: 'md',
-  variant: 'primary',
-  className: '',
-  disabled: false,
+const props = defineProps({
+  size: {
+    type: String,
+    default: 'md',
+    validator: (value) => ['sm', 'md'].includes(value)
+  },
+  variant: {
+    type: String,
+    default: 'primary',
+    validator: (value) => ['primary', 'outline'].includes(value)
+  },
+  startIcon: Object,
+  endIcon: Object,
+  onClick: Function,
+  className: {
+    type: String,
+    default: ''
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  }
 })
 
 const sizeClasses = {

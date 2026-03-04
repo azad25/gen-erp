@@ -290,24 +290,39 @@ class DocumentService implements DocumentServiceInterface
     }
 
     /**
-     * Get human-readable remaining storage.
+     * Get signed download URL for a document.
      */
-    public function storageRemaining(int $companyId): string
+    public function getDownloadUrl(Document $document): string
     {
-        $remaining = $this->getStorageQuota($companyId) - $this->companyStorageUsed($companyId);
+        return URL::temporarySignedRoute(
+            'documents.download',
+            now()->addHours(1),
+            ['document' => $document->id]
+        );
+    }
 
-        if ($remaining <= 0) {
-            return '0 B';
-        }
+    /**
+     * Get signed thumbnail URL for a document.
+     */
+    public function getThumbnailUrl(Document $document): string
+    {
+        return URL::temporarySignedRoute(
+            'documents.thumbnail',
+            now()->addHours(1),
+            ['document' => $document->id]
+        );
+    }
 
-        if ($remaining >= 1073741824) {
-            return round($remaining / 1073741824, 1).' GB';
-        }
-        if ($remaining >= 1048576) {
-            return round($remaining / 1048576, 1).' MB';
-        }
-
-        return round($remaining / 1024, 1).' KB';
+    /**
+     * Get signed preview URL for a document.
+     */
+    public function getPreviewUrl(Document $document): string
+    {
+        return URL::temporarySignedRoute(
+            'documents.preview',
+            now()->addHours(1),
+            ['document' => $document->id]
+        );
     }
 
     /**

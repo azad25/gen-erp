@@ -18,6 +18,13 @@ class AuthServiceProvider extends ServiceProvider
         \App\Domain\CMS\Models\Site::class => \App\Domain\CMS\Policies\SitePolicy::class,
         \App\Domain\CMS\Models\Page::class => \App\Domain\CMS\Policies\PagePolicy::class,
         \App\Domain\CMS\Models\Section::class => \App\Domain\CMS\Policies\SectionPolicy::class,
+        
+        // Major CRUD entities
+        \App\Domain\Customer\Models\Customer::class => \App\Policies\CustomerPolicy::class,
+        \App\Domain\Product\Models\Product::class => \App\Policies\ProductPolicy::class,
+        \App\Domain\Sales\Models\Invoice::class => \App\Policies\InvoicePolicy::class,
+        \App\Domain\HR\Models\Employee::class => \App\Policies\EmployeePolicy::class,
+        \App\Domain\Purchase\Models\PurchaseOrder::class => \App\Policies\PurchaseOrderPolicy::class,
     ];
 
     /**

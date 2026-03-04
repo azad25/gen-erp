@@ -386,6 +386,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { useToast } from '@/Composables/useToast'
 import { useCompany } from '@/Composables/useCompany'
+import { useApi } from '@/Composables/useApi'
 import CreateLeadModal from './CreateLeadModal.vue'
 import EditLeadModal from './EditLeadModal.vue'
 import ViewLeadModal from './ViewLeadModal.vue'
@@ -394,6 +395,7 @@ import BulkActionModal from './BulkActionModal.vue'
 
 const { showToast } = useToast()
 const { currentCompany } = useCompany()
+const { get, post, loading, error } = useApi()
 
 // Reactive data
 const leads = ref([])
@@ -429,64 +431,37 @@ const filters = reactive({
 // Methods
 const fetchLeads = async (page = 1) => {
   try {
-    const params = new URLSearchParams({
+    const params = {
       page,
       per_page: 15,
       search: searchQuery.value,
       ...filters
-    })
-    
-    const response = await fetch(`/api/v1/crm/leads?${params}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Accept': 'application/json',
-      }
-    })
-    
-    if (response.ok) {
-      const data = await response.json()
-      leads.value = data.data
-      pagination.value = data.meta
     }
-  } catch (error) {
-    console.error('Failed to fetch leads:', error)
+    
+    const data = await get('/api/v1/crm/leads', params)
+    leads.value = data.data
+    pagination.value = data.meta
+  } catch (err) {
+    console.error('Failed to fetch leads:', err)
     showToast('Failed to load leads', 'error')
   }
 }
 
 const fetchStats = async () => {
   try {
-    const response = await fetch('/api/v1/crm/leads/statistics', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Accept': 'application/json',
-      }
-    })
-    
-    if (response.ok) {
-      const data = await response.json()
-      stats.value = data.data
-    }
-  } catch (error) {
-    console.error('Failed to fetch stats:', error)
+    const data = await get('/api/v1/crm/leads/statistics')
+    stats.value = data.data
+  } catch (err) {
+    console.error('Failed to fetch stats:', err)
   }
 }
 
 const fetchUsers = async () => {
   try {
-    const response = await fetch('/api/v1/users', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Accept': 'application/json',
-      }
-    })
-    
-    if (response.ok) {
-      const data = await response.json()
-      users.value = data.data
-    }
-  } catch (error) {
-    console.error('Failed to fetch users:', error)
+    const data = await get('/api/v1/users')
+    users.value = data.data
+  } catch (err) {
+    console.error('Failed to fetch users:', err)
   }
 }
 
@@ -527,25 +502,13 @@ const convertLead = async (lead) => {
   if (!confirm('Are you sure you want to convert this lead to a customer?')) return
   
   try {
-    const response = await fetch(`/api/v1/crm/leads/${lead.uuid}/convert`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Accept': 'application/json',
-      }
-    })
-    
-    if (response.ok) {
-      showToast('Lead converted successfully', 'success')
-      fetchLeads()
-      fetchStats()
-    } else {
-      const error = await response.json()
-      showToast(error.message || 'Failed to convert lead', 'error')
-    }
-  } catch (error) {
-    console.error('Failed to convert lead:', error)
-    showToast('Failed to convert lead', 'error')
+    await post(`/api/v1/crm/leads/${lead.uuid}/convert`)
+    showToast('Lead converted successfully', 'success')
+    fetchLeads()
+    fetchStats()
+  } catch (err) {
+    console.error('Failed to convert lead:', err)
+    showToast(err.message || 'Failed to convert lead', 'error')
   }
 }
 

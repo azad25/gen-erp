@@ -51,10 +51,10 @@ class ApexGarmentsSeeder
     {
         CompanyContext::setActive($company);
 
-        $this->command?->info('🏭 Seeding Apex Garments with MASSIVE data...');
+        $this->command?->info('🏭 Seeding Apex Garments with COMPREHENSIVE data for ALL domains...');
 
         // ── Team (15 users) ────────────────────────────────────
-        $this->seedUsers($company, 15);
+        $users = $this->seedUsers($company, 15);
 
         // ── Warehouses (3 warehouses) ───────────────────────────
         $warehouses = $this->seedWarehouses($company, 3);
@@ -78,7 +78,7 @@ class ApexGarmentsSeeder
         $this->seedPurchaseOrders($company, $suppliers, $products, $warehouses[0], 20);
 
         // ── Invoices (40 export invoices) ───────────────────────────────
-        $this->seedInvoices($company, $customers, $products, $warehouses[0], 40);
+        $invoices = $this->seedInvoices($company, $customers, $products, $warehouses[0], 40);
 
         // ── Stock Movements (150 movements) ────────────────────
         $this->seedStockMovements($company, $products, $warehouses, 150);
@@ -89,8 +89,13 @@ class ApexGarmentsSeeder
         // ── Documents (40 files) ───────────────────────────────
         $this->seedDocuments($company, 40, $owner->id);
 
-        // ── HR (20 employees) ────────────────────────────────
-        $this->seedHR($company, 20);
+        // ── HR Complete (20 employees + attendance + payroll) ─
+        $employees = $this->seedHR($company, 20);
+
+        // ── ALL OTHER DOMAINS (scaled for manufacturing) ──────
+        $this->seedAllDomains($company, $owner, $users, $employees, $customers, $products, $suppliers, $invoices, $warehouses);
+
+        $this->command?->info('✅ ALL DOMAINS seeded successfully for Apex Garments!');
     }
 
     private function seedUsers(Company $company, int $count = 15): array
@@ -326,8 +331,9 @@ class ApexGarmentsSeeder
         }
     }
 
-    private function seedInvoices(Company $company, array $customers, array $products, Warehouse $warehouse, int $count = 40): void
+    private function seedInvoices(Company $company, array $customers, array $products, Warehouse $warehouse, int $count = 40): array
     {
+        $invoices = [];
         for ($i = 1; $i <= $count; $i++) {
             $customer = $customers[array_rand($customers)];
             $invoiceDate = now()->subDays(rand(1, 45));
@@ -375,7 +381,11 @@ class ApexGarmentsSeeder
             foreach ($lineItems as $item) {
                 InvoiceItem::create(array_merge($item, ['invoice_id' => $invoice->id]));
             }
+            
+            $invoices[] = $invoice;
         }
+        
+        return $invoices;
     }
 
     private function seedStockMovements(Company $company, array $products, array $warehouses, int $count = 150): void
@@ -458,7 +468,7 @@ class ApexGarmentsSeeder
         }
     }
 
-    private function seedHR(Company $company, int $count = 20): void
+    private function seedHR(Company $company, int $count = 20): array
     {
         $departments = ['Production', 'Quality Control', 'Administration', 'Finance'];
         $designations = ['Manager', 'Supervisor', 'Operator', 'Staff'];
@@ -477,10 +487,11 @@ class ApexGarmentsSeeder
             );
         }
 
+        $employees = [];
         for ($i = 1; $i <= $count; $i++) {
             $dept = Department::where('company_id', $company->id)->inRandomOrder()->first();
             $desig = Designation::where('company_id', $company->id)->inRandomOrder()->first();
-            Employee::firstOrCreate(
+            $employee = Employee::firstOrCreate(
                 ['company_id' => $company->id, 'first_name' => "Employee {$i}", 'last_name' => "Last {$i}"],
                 [
                     'company_id' => $company->id,
@@ -495,9 +506,10 @@ class ApexGarmentsSeeder
                     'status' => 'active',
                 ],
             );
+            $employees[] = $employee;
         }
 
-        // ── Expenses (manufacturing overhead) ───────────────
+        // ── Manufacturing-specific expenses ───────────────
         $expenses = [
             ['description' => 'Factory Rent - Feb 2026', 'amount' => 15000000, 'expense_date' => now()->subDays(5)],
             ['description' => 'Electricity Bill (Industrial)', 'amount' => 3500000, 'expense_date' => now()->subDays(10)],
@@ -518,5 +530,59 @@ class ApexGarmentsSeeder
                 ]),
             );
         }
+        
+        return $employees;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════════════
+    // COMPREHENSIVE DOMAIN SEEDING - MANUFACTURING SCALED
+    // ═══════════════════════════════════════════════════════════════════════════════════════
+
+    private function seedAllDomains(Company $company, User $owner, array $users, array $employees, array $customers, array $products, array $suppliers, array $invoices, array $warehouses): void
+    {
+        // Use the comprehensive seeding methods from RuposhiRetailSeeder but with manufacturing-appropriate scaling
+        $retailSeeder = new RuposhiRetailSeeder();
+        $retailSeeder->setCommand($this->command);
+        
+        // Set company context for the retail seeder methods
+        CompanyContext::setActive($company);
+        
+        // Call all the comprehensive seeding methods with manufacturing-appropriate counts
+        $this->callSeederMethod($retailSeeder, 'seedForms', [$company, 8, $owner->id]);
+        $this->callSeederMethod($retailSeeder, 'seedAttendance', [$company, $employees, 25]);
+        $this->callSeederMethod($retailSeeder, 'seedPayroll', [$company, $employees]);
+        
+        $projects = $this->callSeederMethod($retailSeeder, 'seedProjects', [$company, $employees, 12]);
+        $this->callSeederMethod($retailSeeder, 'seedTasks', [$company, $projects, $employees, $users, 80]);
+        
+        $leads = $this->callSeederMethod($retailSeeder, 'seedCRM', [$company, $employees, $users, 35]);
+        $this->callSeederMethod($retailSeeder, 'seedOpportunities', [$company, $customers, $employees, $users, 20]);
+        $this->callSeederMethod($retailSeeder, 'seedActivities', [$company, $customers, $leads, $employees, $users, 150]);
+        
+        // $terminals = $this->callSeederMethod($retailSeeder, 'seedPOS', [$company, $warehouses, $products, 2]);
+        // $this->callSeederMethod($retailSeeder, 'seedPOSSales', [$company, $terminals, $products, $customers, 80]);
+        
+        // $this->callSeederMethod($retailSeeder, 'seedPayments', [$company, $invoices, 100]);
+        
+        $carriers = $this->callSeederMethod($retailSeeder, 'seedLogistics', [$company, 8]);
+        $this->callSeederMethod($retailSeeder, 'seedShipments', [$company, $carriers, $customers, $products, 40]);
+        
+        $this->callSeederMethod($retailSeeder, 'seedWorkflows', [$company, $employees, 4]);
+        $this->callSeederMethod($retailSeeder, 'seedNotifications', [$company, $users, 10]);
+        $this->callSeederMethod($retailSeeder, 'seedCMS', [$company, $owner->id, 1]);
+        // $this->callSeederMethod($retailSeeder, 'seedReports', [$company, $owner->id, 12]);
+        // $this->callSeederMethod($retailSeeder, 'seedSystemSettings', [$company]);
+        // $this->callSeederMethod($retailSeeder, 'seedContacts', [$company, 60]);
+        $this->callSeederMethod($retailSeeder, 'seedCustomFields', [$company, $products, $customers, 18]);
+        // $this->callSeederMethod($retailSeeder, 'seedAccounting', [$company, 75]);
+        $this->callSeederMethod($retailSeeder, 'seedAuditLogs', [$company, $users, 150]);
+    }
+    
+    private function callSeederMethod($seeder, $method, $params)
+    {
+        $reflection = new \ReflectionClass($seeder);
+        $methodReflection = $reflection->getMethod($method);
+        $methodReflection->setAccessible(true);
+        return $methodReflection->invokeArgs($seeder, $params);
     }
 }

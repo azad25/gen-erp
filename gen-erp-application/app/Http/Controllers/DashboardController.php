@@ -50,7 +50,7 @@ class DashboardController extends Controller
     /**
      * Format audit log description for display.
      */
-    private function formatAuditDescription(\App\Models\AuditLog $log): string
+    private function formatAuditDescription(\App\Domain\Audit\Models\AuditLog $log): string
     {
         $userName = $log->user?->name ?? 'System';
         $action = match ($log->event) {

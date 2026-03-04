@@ -1,7 +1,7 @@
 <template>
   <aside
     :class="[
-      'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 dark:text-gray-100 h-screen transition-all duration-300 ease-in-out z-99999 border-r border-gray-200',
+      'fixed flex flex-col top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 dark:text-gray-100 h-screen transition-all duration-300 ease-in-out z-99999 border-r border-gray-200',
       {
         'lg:w-[290px]': isExpanded || isMobileOpen || isHovered,
         'lg:w-[90px]': !isExpanded && !isHovered,
@@ -20,7 +20,7 @@
       ]"
     >
       <Link href="/" class="flex items-center gap-3">
-        <HomeLogo class="w-10 h-10" />
+        <Logo class="w-10 h-10" />
         <span
           v-if="isExpanded || isHovered || isMobileOpen"
           class="text-xl font-extrabold text-black dark:text-white tracking-tight"
@@ -42,150 +42,146 @@
       class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar"
     >
       <nav class="mb-6">
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
           <div v-for="(menuGroup, groupIndex) in menuGroups" :key="groupIndex">
-            <h2
+            <!-- Collapsible Group Header -->
+            <div 
+              v-if="menuGroup.items.length > 1"
+              @click="toggleGroupCollapse(menuGroup.key)"
               :class="[
-                'text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3 px-4',
-                !isExpanded && !isHovered ? 'lg:hidden' : 'lg:block',
+                'menu-item group w-full cursor-pointer',
+                {
+                  'menu-item-active': !isGroupCollapsed(menuGroup.key) && isAnyRouteActive(menuGroup.items, menuGroup.key),
+                  'menu-item-inactive': isGroupCollapsed(menuGroup.key) || !isAnyRouteActive(menuGroup.items, menuGroup.key)
+                },
+                !isExpanded && !isHovered ? 'lg:justify-center' : 'lg:justify-start',
               ]"
             >
-              {{ menuGroup.title }}
-            </h2>
-            <ul class="flex flex-col gap-1">
-              <li v-for="(item, index) in menuGroup.items" :key="item.name">
-                <button
-                  v-if="item.subItems"
-                  @click="toggleSubmenu(groupIndex, index)"
+              <span
+                :class="[
+                  !isGroupCollapsed(menuGroup.key) && isAnyRouteActive(menuGroup.items, menuGroup.key)
+                    ? 'menu-item-icon-active'
+                    : 'menu-item-icon-inactive'
+                ]"
+              >
+                <component 
+                  :is="menuGroup.icon" 
+                  class="w-5 h-5 flex-shrink-0"
+                />
+              </span>
+              <span
+                v-if="isExpanded || isHovered || isMobileOpen"
+                class="menu-item-text"
+              >
+                {{ menuGroup.title }}
+              </span>
+              <ChevronDownIcon 
+                v-if="isExpanded || isHovered || isMobileOpen"
+                :class="[
+                  'ml-auto w-5 h-5 transition-transform duration-200',
+                  {
+                    'rotate-180': !isGroupCollapsed(menuGroup.key),
+                  },
+                ]"
+              />
+            </div>
+
+            <!-- Single Item Group (Dashboard) -->
+            <div v-else-if="menuGroup.items.length === 1">
+              <Link
+                :href="menuGroup.items[0].href"
+                :class="[
+                  'menu-item group w-full',
+                  {
+                    'menu-item-active': isCurrentRoute(menuGroup.items[0].routeName),
+                    'menu-item-inactive': !isCurrentRoute(menuGroup.items[0].routeName)
+                  },
+                  !isExpanded && !isHovered ? 'lg:justify-center' : 'lg:justify-start',
+                ]"
+              >
+                <span
                   :class="[
-                    'menu-item group w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200',
-                    isActive(item.path)
-                      ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-teal-400'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100',
-                    !isExpanded && !isHovered
-                      ? 'lg:justify-center lg:px-2'
-                      : 'lg:justify-start lg:px-4',
+                    isCurrentRoute(menuGroup.items[0].routeName) 
+                      ? 'menu-item-icon-active' 
+                      : 'menu-item-icon-inactive'
                   ]"
                 >
-                  <span
-                    :class="[
-                      'w-5 h-5 flex-shrink-0',
-                      isActive(item.path)
-                        ? 'text-primary dark:text-teal-400'
-                        : 'text-gray-500 dark:text-gray-400',
-                    ]"
-                  >
-                    <component :is="item.icon" />
-                  </span>
-                  <span
-                    v-if="isExpanded || isHovered || isMobileOpen"
-                    class="text-sm font-medium"
-                    >{{ item.name }}</span
-                  >
-                  <ChevronDownIcon
-                    v-if="isExpanded || isHovered || isMobileOpen"
-                    :class="[
-                      'ml-auto w-5 h-5 transition-transform duration-200 text-gray-400',
-                      {
-                        'rotate-180': isSubmenuOpen(groupIndex, index),
-                      },
-                    ]"
+                  <component 
+                    :is="menuGroup.items[0].icon" 
+                    class="w-5 h-5 flex-shrink-0"
                   />
-                </button>
-                <Link
-                  v-else-if="item.path"
-                  :href="item.path"
-                  :class="[
-                    'menu-item group flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200',
-                    isActive(item.path)
-                      ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-teal-400'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100',
-                    !isExpanded && !isHovered
-                      ? 'lg:justify-center lg:px-2'
-                      : 'lg:justify-start lg:px-4',
-                  ]"
+                </span>
+                <span
+                  v-if="isExpanded || isHovered || isMobileOpen"
+                  class="menu-item-text"
                 >
-                  <span
+                  {{ menuGroup.items[0].title }}
+                </span>
+              </Link>
+            </div>
+
+            <!-- Collapsible Group Items -->
+            <Transition
+              enter-active-class="transition-all duration-300 ease-out"
+              enter-from-class="opacity-0 max-h-0"
+              enter-to-class="opacity-100 max-h-96"
+              leave-active-class="transition-all duration-300 ease-in"
+              leave-from-class="opacity-100 max-h-96"
+              leave-to-class="opacity-0 max-h-0"
+            >
+              <div 
+                v-if="menuGroup.items.length > 1 && !isGroupCollapsed(menuGroup.key)"
+                class="overflow-hidden"
+              >
+                <div class="ml-4 border-l border-gray-200 dark:border-gray-700 pl-4 space-y-1">
+                  <!-- Category Dashboard Link (skip for settings) -->
+                  <Link
+                    v-if="menuGroup.key !== 'settings'"
+                    :href="`/${menuGroup.key}/dashboard`"
                     :class="[
-                      'w-5 h-5 flex-shrink-0',
-                      isActive(item.path)
-                        ? 'text-primary dark:text-teal-400'
-                        : 'text-gray-500 dark:text-gray-400',
+                      'menu-dropdown-item group text-sm w-full',
+                      {
+                        'menu-dropdown-item-active': isCurrentRoute(`${menuGroup.key}.dashboard`),
+                        'menu-dropdown-item-inactive': !isCurrentRoute(`${menuGroup.key}.dashboard`)
+                      }
                     ]"
                   >
-                    <component :is="item.icon" />
-                  </span>
-                  <span
-                    v-if="isExpanded || isHovered || isMobileOpen"
-                    class="text-sm font-medium"
-                    >{{ item.name }}</span
+                    <ChartBarIcon class="w-4 h-4 flex-shrink-0" />
+                    <span v-if="isExpanded || isHovered || isMobileOpen">
+                      {{ $t(`sidebar.${menuGroup.key}.dashboard`) }}
+                    </span>
+                  </Link>
+                  
+                  <!-- Regular Menu Items -->
+                  <Link
+                    v-for="(item, itemIndex) in menuGroup.items"
+                    :key="itemIndex"
+                    :href="item.href"
+                    :class="[
+                      'menu-dropdown-item group text-sm w-full',
+                      {
+                        'menu-dropdown-item-active': isCurrentRoute(item.routeName),
+                        'menu-dropdown-item-inactive': !isCurrentRoute(item.routeName)
+                      }
+                    ]"
                   >
-                </Link>
-                <transition
-                  @enter="startTransition"
-                  @after-enter="endTransition"
-                  @before-leave="startTransition"
-                  @after-leave="endTransition"
-                >
-                  <div
-                    v-show="
-                      isSubmenuOpen(groupIndex, index) &&
-                      (isExpanded || isHovered || isMobileOpen)
-                    "
-                  >
-                    <ul class="mt-2 space-y-1 ml-9">
-                      <li v-for="subItem in item.subItems" :key="subItem.name">
-                        <Link
-                          :href="subItem.path"
-                          :class="[
-                            'menu-dropdown-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200',
-                            isActive(subItem.path)
-                              ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-teal-400'
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100',
-                          ]"
-                        >
-                          {{ subItem.name }}
-                          <span class="flex items-center gap-1 ml-auto">
-                            <span
-                              v-if="subItem.new"
-                              :class="[
-                                'menu-dropdown-badge',
-                                {
-                                  'menu-dropdown-badge-active': isActive(
-                                    subItem.path
-                                  ),
-                                  'menu-dropdown-badge-inactive': !isActive(
-                                    subItem.path
-                                  ),
-                                },
-                              ]"
-                            >
-                              new
-                            </span>
-                            <span
-                              v-if="subItem.pro"
-                              :class="[
-                                'menu-dropdown-badge',
-                                {
-                                  'menu-dropdown-badge-active': isActive(
-                                    subItem.path
-                                  ),
-                                  'menu-dropdown-badge-inactive': !isActive(
-                                    subItem.path
-                                  ),
-                                },
-                              ]"
-                            >
-                              pro
-                            </span>
-                          </span>
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                </transition>
-              </li>
-            </ul>
+                    <component 
+                      :is="item.icon" 
+                      class="w-4 h-4 flex-shrink-0" 
+                    />
+                    <span v-if="isExpanded || isHovered || isMobileOpen">
+                      {{ item.title }}
+                    </span>
+                  </Link>
+                </div>
+              </div>
+            </Transition>
+
+            <!-- Separator -->
+            <div 
+              v-if="groupIndex < menuGroups.length - 1" 
+              class="h-px bg-gray-200 dark:bg-gray-700 mx-4 my-3"
+            ></div>
           </div>
         </div>
       </nav>
@@ -198,6 +194,7 @@
 import { ref, computed } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import { Link } from "@inertiajs/vue3";
+import { useTranslations } from "@/Composables/useTranslations";
 
 import {
   GridIcon,
@@ -217,394 +214,490 @@ import {
   TaskIcon,
   FolderIcon,
   BarChartIcon,
+  ChartBarIcon,
+  BoxIcon,
+  ArchiveIcon,
 } from "../../icons";
 import SidebarWidget from "./SidebarWidget.vue";
 import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
-import HomeLogo from "@/Components/Home/Logo.vue";
+import Logo from "@/Components/Home/Logo.vue";
 import CompanySwitcher from "./CompanySwitcher.vue";
 import { useSidebar } from "@/composables/useSidebar";
 
 const page = usePage();
-const route = computed(() => page.props.url || window.location.pathname);
+const { $t } = useTranslations();
 
-const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
+const { isExpanded, isMobileOpen, isHovered } = useSidebar();
 
-const menuGroups = [
+// Helper function to check current route
+const isCurrentRoute = (routeName) => {
+  const currentPath = page.url || window.location.pathname;
+  
+  // Handle main dashboard
+  if (routeName === 'dashboard') {
+    return currentPath === '/dashboard' || currentPath === '/';
+  }
+  
+  // Handle documents routes with exact matching
+  if (routeName.startsWith('documents.')) {
+    if (routeName === 'documents.dashboard') {
+      return currentPath === '/documents/dashboard';
+    }
+    if (routeName === 'documents.index') {
+      return currentPath === '/documents' || currentPath === '/documents/';
+    }
+    if (routeName === 'documents.folders') {
+      return currentPath === '/documents/folders';
+    }
+    if (routeName === 'documents.recent') {
+      return currentPath === '/documents/recent';
+    }
+  }
+  
+  // Handle other routes with exact matching
+  const expectedPath = '/' + routeName.replace('.', '/');
+  return currentPath === expectedPath || currentPath.startsWith(expectedPath + '/');
+};
+
+const isAnyRouteActive = (items, groupKey) => {
+  // Check if the dashboard route for this group is active
+  if (isCurrentRoute(`${groupKey}.dashboard`)) return true;
+  
+  // Check if any of the group items are active
+  if (!items) return false;
+  return items.some(item => isCurrentRoute(item.routeName));
+};
+
+// Collapsible groups state
+const collapsedGroups = ref(new Set());
+
+const menuGroups = computed(() => [
   {
-    title: "Main",
+    key: "main",
+    title: $t('sidebar.main.dashboard'),
+    icon: GridIcon,
     items: [
       {
         icon: GridIcon,
-        name: "Dashboard",
-        path: "/dashboard",
+        title: $t('sidebar.main.dashboard'),
+        href: "/dashboard",
+        routeName: "dashboard",
       },
     ],
   },
   {
-    title: "Sales",
+    key: "notifications",
+    title: $t('sidebar.notifications.title'),
+    icon: MailIcon,
     items: [
       {
-        icon: DocsIcon,
-        name: "Sales Orders",
-        path: "/sales/orders",
-      },
-      {
-        icon: DocsIcon,
-        name: "Invoices",
-        path: "/sales/invoices",
-      },
-      {
-        icon: UserCircleIcon,
-        name: "Customers",
-        path: "/sales/customers",
-      },
-      {
-        icon: DocsIcon,
-        name: "Credit Notes",
-        path: "/sales/credit-notes",
-      },
-      {
-        icon: DocsIcon,
-        name: "Returns",
-        path: "/sales/returns",
+        icon: MailIcon,
+        title: $t('sidebar.notifications.all'),
+        href: "/notifications",
+        routeName: "notifications.index",
       },
     ],
   },
   {
-    title: "Purchase",
+    key: "documents",
+    title: $t('sidebar.documents.title'),
+    icon: FolderIcon,
     items: [
       {
-        icon: DocsIcon,
-        name: "Purchase Orders",
-        path: "/purchase/orders",
-      },
-      {
-        icon: DocsIcon,
-        name: "Goods Receipts",
-        path: "/purchase/receipts",
-      },
-      {
-        icon: UserCircleIcon,
-        name: "Suppliers",
-        path: "/purchase/suppliers",
-      },
-      {
-        icon: DocsIcon,
-        name: "Returns",
-        path: "/purchase/returns",
-      },
-    ],
-  },
-  {
-    title: "Inventory",
-    items: [
-      {
-        icon: BoxCubeIcon,
-        name: "Products",
-        path: "/inventory/products",
-      },
-      {
-        icon: BoxCubeIcon,
-        name: "Stock",
-        path: "/inventory/stock",
-      },
-      {
-        icon: BoxCubeIcon,
-        name: "Warehouses",
-        path: "/inventory/warehouses",
-      },
-      {
-        icon: BoxCubeIcon,
-        name: "Transfers",
-        path: "/inventory/transfers",
-      },
-      {
-        icon: BoxCubeIcon,
-        name: "Adjustments",
-        path: "/inventory/adjustments",
-      },
-    ],
-  },
-  {
-    title: "Accounting",
-    items: [
-      {
-        icon: PieChartIcon,
-        name: "Chart of Accounts",
-        path: "/accounting/chart-of-accounts",
-      },
-      {
-        icon: DocsIcon,
-        name: "Journal Entries",
-        path: "/accounting/journal-entries",
+        icon: FolderIcon,
+        title: $t('sidebar.documents.all'),
+        href: "/documents",
+        routeName: "documents.index",
       },
       {
         icon: FolderIcon,
-        name: "Cost Centers",
-        path: "/accounting/cost-centers",
+        title: $t('sidebar.documents.folders'),
+        href: "/documents/folders",
+        routeName: "documents.folders",
+      },
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.documents.recent'),
+        href: "/documents/recent",
+        routeName: "documents.recent",
+      },
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.documents.forms'),
+        href: "/documents/forms",
+        routeName: "documents.forms.index",
       },
       {
         icon: SettingsIcon,
-        name: "Lock Date Management",
-        path: "/accounting/lock-date-management",
+        title: $t('sidebar.documents.custom_fields'),
+        href: "/documents/custom-fields",
+        routeName: "documents.custom-fields.index",
       },
+    ],
+  },
+  {
+    key: "sales",
+    title: $t('sidebar.sales.title'),
+    icon: DocsIcon,
+    items: [
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.sales.orders'),
+        href: "/sales/orders",
+        routeName: "sales.orders",
+      },
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.sales.invoices'),
+        href: "/sales/invoices",
+        routeName: "sales.invoices",
+      },
+      {
+        icon: UserCircleIcon,
+        title: $t('sidebar.sales.customers'),
+        href: "/sales/customers",
+        routeName: "sales.customers",
+      },
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.sales.credit_notes'),
+        href: "/sales/credit-notes",
+        routeName: "sales.credit-notes",
+      },
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.sales.returns'),
+        href: "/sales/returns",
+        routeName: "sales.returns",
+      },
+    ],
+  },
+  {
+    key: "purchase",
+    title: $t('sidebar.purchase.title'),
+    icon: DocsIcon,
+    items: [
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.purchase.orders'),
+        href: "/purchase/orders",
+        routeName: "purchase.orders",
+      },
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.purchase.receipts'),
+        href: "/purchase/receipts",
+        routeName: "purchase.receipts",
+      },
+      {
+        icon: UserCircleIcon,
+        title: $t('sidebar.purchase.suppliers'),
+        href: "/purchase/suppliers",
+        routeName: "purchase.suppliers",
+      },
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.purchase.returns'),
+        href: "/purchase/returns",
+        routeName: "purchase.returns",
+      },
+    ],
+  },
+  {
+    key: "inventory",
+    title: $t('sidebar.inventory.title'),
+    icon: BoxCubeIcon,
+    items: [
+      {
+        icon: BoxCubeIcon,
+        title: $t('sidebar.inventory.products'),
+        href: "/inventory/products",
+        routeName: "inventory.products",
+      },
+      {
+        icon: BoxCubeIcon,
+        title: $t('sidebar.inventory.stock'),
+        href: "/inventory/stock",
+        routeName: "inventory.stock",
+      },
+      {
+        icon: BoxCubeIcon,
+        title: $t('sidebar.inventory.warehouses'),
+        href: "/inventory/warehouses",
+        routeName: "inventory.warehouses",
+      },
+      {
+        icon: BoxCubeIcon,
+        title: $t('sidebar.inventory.transfers'),
+        href: "/inventory/transfers",
+        routeName: "inventory.transfers",
+      },
+      {
+        icon: BoxCubeIcon,
+        title: $t('sidebar.inventory.adjustments'),
+        href: "/inventory/adjustments",
+        routeName: "inventory.adjustments",
+      },
+    ],
+  },
+  {
+    key: "accounting",
+    title: $t('sidebar.accounting.title'),
+    icon: PieChartIcon,
+    items: [
       {
         icon: PieChartIcon,
-        name: "Reports",
-        subItems: [
-          {
-            name: "Trial Balance",
-            path: "/accounting/reports/trial-balance",
-          },
-          {
-            name: "Profit & Loss",
-            path: "/accounting/reports/profit-loss",
-          },
-          {
-            name: "Balance Sheet",
-            path: "/accounting/reports/balance-sheet",
-          },
-          {
-            name: "VAT Reports",
-            path: "/accounting/reports/vat",
-          },
-          {
-            name: "Aging Reports",
-            path: "/accounting/reports/aging",
-          },
-          {
-            name: "Inventory Valuation",
-            path: "/accounting/reports/inventory-valuation",
-          },
-          {
-            name: "Comparative Reports",
-            path: "/accounting/reports/comparative",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "HR & Payroll",
-    items: [
-      {
-        icon: UserCircleIcon,
-        name: "Employees",
-        path: "/hr/employees",
-      },
-      {
-        icon: CalenderIcon,
-        name: "Attendance",
-        path: "/hr/attendance",
-      },
-      {
-        icon: CalenderIcon,
-        name: "Leave",
-        path: "/hr/leave",
+        title: $t('sidebar.accounting.chart_of_accounts'),
+        href: "/accounting/chart-of-accounts",
+        routeName: "accounting.chart-of-accounts",
       },
       {
         icon: DocsIcon,
-        name: "Payroll",
-        path: "/hr/payroll",
-      },
-      {
-        icon: TaskIcon,
-        name: "Task Dashboard",
-        path: "/hr/tasks/dashboard",
-      },
-      {
-        icon: CalenderIcon,
-        name: "Timesheet",
-        path: "/hr/timesheet",
-      },
-      {
-        icon: BarChartIcon,
-        name: "Capacity Planning",
-        path: "/hr/capacity",
-      },
-      {
-        icon: UserCircleIcon,
-        name: "Skills Management",
-        path: "/hr/skills",
-      },
-      {
-        icon: CalenderIcon,
-        name: "Availability",
-        path: "/hr/availability",
-      },
-      {
-        icon: DocsIcon,
-        name: "Performance Reviews",
-        path: "/hr/performance",
-      },
-    ],
-  },
-  {
-    title: "Project Management",
-    items: [
-      {
-        icon: GridIcon,
-        name: "Projects Dashboard",
-        path: "/projects/dashboard",
+        title: $t('sidebar.accounting.journal_entries'),
+        href: "/accounting/journal-entries",
+        routeName: "accounting.journal-entries",
       },
       {
         icon: FolderIcon,
-        name: "Projects",
-        path: "/projects",
-      },
-      {
-        icon: TaskIcon,
-        name: "Tasks",
-        path: "/tasks",
+        title: $t('sidebar.accounting.cost_centers'),
+        href: "/accounting/cost-centers",
+        routeName: "accounting.cost-centers",
       },
       {
         icon: BarChartIcon,
-        name: "Reports",
-        path: "/reports",
+        title: $t('sidebar.accounting.trial_balance'),
+        href: "/accounting/trial-balance",
+        routeName: "accounting.trial-balance",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.accounting.profit_loss'),
+        href: "/accounting/profit-loss",
+        routeName: "accounting.profit-loss",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.accounting.balance_sheet'),
+        href: "/accounting/balance-sheet",
+        routeName: "accounting.balance-sheet",
       },
     ],
   },
   {
-    title: "CRM",
+    key: "hr",
+    title: $t('sidebar.hr.title'),
+    icon: UserCircleIcon,
     items: [
       {
         icon: UserCircleIcon,
-        name: "Leads",
-        path: "/crm/leads",
+        title: $t('sidebar.hr.employees'),
+        href: "/hr/employees",
+        routeName: "hr.employees",
+      },
+      {
+        icon: CalenderIcon,
+        title: $t('sidebar.hr.attendance'),
+        href: "/hr/attendance",
+        routeName: "hr.attendance",
+      },
+      {
+        icon: CalenderIcon,
+        title: $t('sidebar.hr.leave'),
+        href: "/hr/leave",
+        routeName: "hr.leave",
       },
       {
         icon: DocsIcon,
-        name: "Opportunities",
-        path: "/crm/opportunities",
+        title: $t('sidebar.hr.payroll'),
+        href: "/hr/payroll",
+        routeName: "hr.payroll",
       },
       {
-        icon: ListIcon,
-        name: "Pipelines",
-        path: "/crm/pipelines",
+        icon: TaskIcon,
+        title: $t('sidebar.hr.tasks'),
+        href: "/hr/tasks/dashboard",
+        routeName: "hr.tasks.dashboard",
       },
       {
-        icon: BarChartIcon,
-        name: "Activities",
-        path: "/crm/activities",
+        icon: CalenderIcon,
+        title: $t('sidebar.hr.timesheet'),
+        href: "/hr/timesheet",
+        routeName: "hr.timesheet",
       },
     ],
   },
   {
-    title: "CMS",
+    key: "projects",
+    title: $t('sidebar.projects.title'),
+    icon: FolderIcon,
+    items: [
+      {
+        icon: FolderIcon,
+        title: $t('sidebar.projects.projects'),
+        href: "/projects",
+        routeName: "projects.index",
+      },
+      {
+        icon: TaskIcon,
+        title: $t('sidebar.projects.tasks'),
+        href: "/tasks",
+        routeName: "tasks.index",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.projects.reports'),
+        href: "/projects/reports",
+        routeName: "projects.reports",
+      },
+    ],
+  },
+  {
+    key: "crm",
+    title: $t('sidebar.crm.title'),
+    icon: UserCircleIcon,
+    items: [
+      {
+        icon: UserCircleIcon,
+        title: $t('sidebar.crm.leads'),
+        href: "/crm/leads",
+        routeName: "crm.leads.index",
+      },
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.crm.opportunities'),
+        href: "/crm/opportunities",
+        routeName: "crm.opportunities.index",
+      },
+      {
+        icon: ListIcon,
+        title: $t('sidebar.crm.pipelines'),
+        href: "/crm/pipelines",
+        routeName: "crm.pipelines.index",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.crm.activities'),
+        href: "/crm/activities",
+        routeName: "crm.activities.index",
+      },
+    ],
+  },
+  {
+    key: "cms",
+    title: $t('sidebar.cms.title'),
+    icon: PageIcon,
     items: [
       {
         icon: PageIcon,
-        name: "Sites",
-        path: "/cms/sites",
+        title: $t('sidebar.cms.sites'),
+        href: "/cms/sites",
+        routeName: "cms.sites",
       },
       {
         icon: DocsIcon,
-        name: "Pages",
-        path: "/cms/pages",
+        title: $t('sidebar.cms.pages'),
+        href: "/cms/pages",
+        routeName: "cms.pages",
       },
       {
         icon: ChatIcon,
-        name: "Blog",
-        path: "/cms/blog",
+        title: $t('sidebar.cms.blog'),
+        href: "/cms/blog",
+        routeName: "cms.blog",
       },
       {
         icon: ListIcon,
-        name: "Menus",
-        path: "/cms/menus",
-      },
-      {
-        icon: SettingsIcon,
-        name: "SEO",
-        path: "/cms/seo",
+        title: $t('sidebar.cms.menus'),
+        href: "/cms/menus",
+        routeName: "cms.menus",
       },
     ],
   },
   {
-    title: "POS",
+    key: "logistics",
+    title: $t('sidebar.logistics.title'),
+    icon: BoxIcon,
     items: [
       {
-        icon: BoxCubeIcon,
-        name: "POS Session",
-        path: "/pos/session",
+        icon: GridIcon,
+        title: $t('sidebar.logistics.dashboard'),
+        href: "/logistics/dashboard",
+        routeName: "logistics.dashboard",
+      },
+      {
+        icon: BoxIcon,
+        title: $t('sidebar.logistics.shipments'),
+        href: "/logistics/shipments",
+        routeName: "logistics.shipments.index",
+      },
+      {
+        icon: ListIcon,
+        title: $t('sidebar.logistics.tracking'),
+        href: "/logistics/tracking",
+        routeName: "logistics.tracking.index",
+      },
+      {
+        icon: ArchiveIcon,
+        title: $t('sidebar.logistics.returns'),
+        href: "/logistics/returns",
+        routeName: "logistics.returns.index",
+      },
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.logistics.cod'),
+        href: "/logistics/cod",
+        routeName: "logistics.cod.index",
+      },
+      {
+        icon: SettingsIcon,
+        title: $t('sidebar.logistics.carriers'),
+        href: "/logistics/carriers",
+        routeName: "logistics.carriers.index",
       },
     ],
   },
   {
-    title: "Settings",
+    key: "settings",
+    title: $t('sidebar.settings.title'),
+    icon: SettingsIcon,
     items: [
       {
         icon: SettingsIcon,
-        name: "Company",
-        path: "/settings/company",
+        title: $t('sidebar.settings.company'),
+        href: "/settings/company",
+        routeName: "settings.company",
       },
       {
         icon: UserCircleIcon,
-        name: "Profile",
-        path: "/profile",
+        title: $t('sidebar.settings.users'),
+        href: "/settings/users",
+        routeName: "settings.users",
       },
       {
         icon: SettingsIcon,
-        name: "Users",
-        path: "/settings/users",
+        title: $t('sidebar.settings.roles'),
+        href: "/settings/roles",
+        routeName: "settings.roles",
       },
       {
-        icon: SettingsIcon,
-        name: "Roles & Permissions",
-        path: "/settings/roles",
-      },
-      {
-        icon: SettingsIcon,
-        name: "Workflows",
-        path: "/settings/workflows",
-      },
-      {
-        icon: SettingsIcon,
-        name: "Integrations",
-        path: "/settings/integrations",
+        icon: PlugInIcon,
+        title: $t('sidebar.settings.integrations'),
+        href: "/settings/integrations",
+        routeName: "settings.integrations",
       },
     ],
   },
-]
+]);
 
-const isActive = (path) => {
-  const currentPath = route.value
-  return currentPath === path
-}
+const toggleGroupCollapse = (groupKey) => {
+  if (collapsedGroups.value.has(groupKey)) {
+    collapsedGroups.value.delete(groupKey);
+  } else {
+    collapsedGroups.value.add(groupKey);
+  }
+};
 
-const toggleSubmenu = (groupIndex, itemIndex) => {
-  const key = `${groupIndex}-${itemIndex}`
-  openSubmenu.value = openSubmenu.value === key ? null : key
-}
-
-const isAnySubmenuRouteActive = computed(() => {
-  return menuGroups.some((group) =>
-    group.items.some(
-      (item) =>
-        item.subItems && item.subItems.some((subItem) => isActive(subItem.path))
-    )
-  )
-})
-
-const isSubmenuOpen = (groupIndex, itemIndex) => {
-  const key = `${groupIndex}-${itemIndex}`
-  return (
-    openSubmenu.value === key ||
-    (isAnySubmenuRouteActive.value &&
-      menuGroups[groupIndex].items[itemIndex].subItems?.some((subItem) =>
-        isActive(subItem.path)
-      ))
-  )
-}
-
-const startTransition = (el) => {
-  el.style.height = "auto"
-  const height = el.scrollHeight
-  el.style.height = "0px"
-  el.offsetHeight // force reflow
-  el.style.height = height + "px"
-}
-
-const endTransition = (el) => {
-  el.style.height = ""
-}
+const isGroupCollapsed = (groupKey) => {
+  return collapsedGroups.value.has(groupKey);
+};
 </script>

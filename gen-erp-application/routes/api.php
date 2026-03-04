@@ -130,9 +130,13 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
 
         // Documents
         Route::apiResource('documents', DocumentController::class);
+        Route::get('documents/storage-info', [DocumentController::class, 'storageInfo']);
         Route::get('documents/{document}/download', [DocumentController::class, 'download']);
         Route::get('documents/{document}/thumbnail', [DocumentController::class, 'thumbnail']);
         Route::get('documents/{document}/preview', [DocumentController::class, 'preview']);
+
+        // Document Folders
+        Route::apiResource('document-folders', DocumentFolderController::class);
 
         // Payments
         Route::apiResource('payments', PaymentController::class);
@@ -270,6 +274,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
 
         // CRM Domain
         Route::prefix('crm')->name('crm.')->group(function (): void {
+            // Dashboard
+            Route::get('dashboard/metrics', [\App\Http\Controllers\Api\V1\CRM\DashboardController::class, 'metrics'])->name('dashboard.metrics');
+            Route::get('dashboard/top-performers', [\App\Http\Controllers\Api\V1\CRM\DashboardController::class, 'topPerformers'])->name('dashboard.top-performers');
+
             // Lead Management
             Route::prefix('leads')->name('leads.')->group(function (): void {
                 Route::get('/', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'index'])->name('index');

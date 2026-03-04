@@ -22,6 +22,10 @@ export default {
         bangla:  ['"Noto Sans Bengali"', '"Plus Jakarta Sans"', 'sans-serif'],
         mono:    ['"JetBrains Mono"', ...defaultTheme.fontFamily.mono],
       },
+      zIndex: {
+        '99999': '99999',
+        '9999': '9999',
+      },
     },
   },
   plugins: [],

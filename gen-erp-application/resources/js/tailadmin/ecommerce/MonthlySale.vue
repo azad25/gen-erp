@@ -36,26 +36,41 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import DropdownMenu from '../common/DropdownMenu.vue'
+import VueApexCharts from 'vue3-apexcharts'
+
+const props = defineProps({
+  chartData: {
+    type: Array,
+    default: () => [],
+  },
+  chartLabels: {
+    type: Array,
+    default: () => [],
+  },
+})
+
 const menuItems = [
   { label: 'View More', onClick: () => console.log('View More clicked') },
   { label: 'Delete', onClick: () => console.log('Delete clicked') },
 ]
 
-import VueApexCharts from 'vue3-apexcharts'
+// Fallback dummy data
+const dummyData = [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112]
+const dummyLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-const series = ref([
+const series = computed(() => [
   {
     name: 'Sales',
-    data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
+    data: props.chartData && props.chartData.length > 0 ? props.chartData : dummyData,
   },
 ])
 
-const chartOptions = ref({
-  colors: ['#465fff'],
+const chartOptions = computed(() => ({
+  colors: ['#0F766E'], // Deep Teal
   chart: {
-    fontFamily: 'Outfit, sans-serif',
+    fontFamily: 'Inter, sans-serif',
     type: 'bar',
     toolbar: {
       show: false,
@@ -78,20 +93,7 @@ const chartOptions = ref({
     colors: ['transparent'],
   },
   xaxis: {
-    categories: [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ],
+    categories: props.chartLabels && props.chartLabels.length > 0 ? props.chartLabels : dummyLabels,
     axisBorder: {
       show: false,
     },
@@ -103,13 +105,15 @@ const chartOptions = ref({
     show: true,
     position: 'top',
     horizontalAlign: 'left',
-    fontFamily: 'Outfit',
+    fontFamily: 'Inter, sans-serif',
     markers: {
       radius: 99,
     },
   },
   yaxis: {
-    title: false,
+    title: {
+      text: ''
+    },
   },
   grid: {
     yaxis: {
@@ -122,16 +126,14 @@ const chartOptions = ref({
     opacity: 1,
   },
   tooltip: {
-    x: {
-      show: false,
-    },
+    theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
     y: {
       formatter: function (val) {
-        return val.toString()
+        return '৳' + (val / 100).toLocaleString()
       },
     },
   },
-})
+}))
 
 onMounted(() => {
   // Any additional setup can be done here if needed

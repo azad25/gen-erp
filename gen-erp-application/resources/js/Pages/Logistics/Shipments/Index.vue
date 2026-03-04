@@ -260,12 +260,14 @@ import {
 } from '@heroicons/vue/24/outline'
 import { useToast } from '@/Composables/useToast'
 import { useCompany } from '@/Composables/useCompany'
+import { useApi } from '@/Composables/useApi'
 import CreateShipmentModal from './CreateShipmentModal.vue'
 import ViewShipmentModal from './ViewShipmentModal.vue'
 import TrackShipmentModal from './TrackShipmentModal.vue'
 
 const { showToast } = useToast()
 const { currentCompany } = useCompany()
+const { get, post, loading, error } = useApi()
 
 // Reactive data
 const shipments = ref([])
@@ -292,63 +294,36 @@ const filters = reactive({
 // Methods
 const fetchShipments = async (page = 1) => {
   try {
-    const params = new URLSearchParams({
+    const params = {
       page,
       per_page: 15,
       ...filters
-    })
-    
-    const response = await fetch(`/api/v1/logistics/shipments?${params}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Accept': 'application/json',
-      }
-    })
-    
-    if (response.ok) {
-      const data = await response.json()
-      shipments.value = data.data
-      pagination.value = data.meta
     }
-  } catch (error) {
-    console.error('Failed to fetch shipments:', error)
+    
+    const data = await get('/api/v1/logistics/shipments', params)
+    shipments.value = data.data
+    pagination.value = data.meta
+  } catch (err) {
+    console.error('Failed to fetch shipments:', err)
     showToast('Failed to load shipments', 'error')
   }
 }
 
 const fetchStats = async () => {
   try {
-    const response = await fetch('/api/v1/logistics/shipments/statistics', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Accept': 'application/json',
-      }
-    })
-    
-    if (response.ok) {
-      const data = await response.json()
-      stats.value = data.data
-    }
-  } catch (error) {
-    console.error('Failed to fetch stats:', error)
+    const data = await get('/api/v1/logistics/shipments/statistics')
+    stats.value = data.data
+  } catch (err) {
+    console.error('Failed to fetch stats:', err)
   }
 }
 
 const fetchCarriers = async () => {
   try {
-    const response = await fetch('/api/v1/logistics/carriers', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Accept': 'application/json',
-      }
-    })
-    
-    if (response.ok) {
-      const data = await response.json()
-      carriers.value = data.data
-    }
-  } catch (error) {
-    console.error('Failed to fetch carriers:', error)
+    const data = await get('/api/v1/logistics/carriers')
+    carriers.value = data.data
+  } catch (err) {
+    console.error('Failed to fetch carriers:', err)
   }
 }
 
@@ -364,25 +339,13 @@ const cancelShipment = async (shipment) => {
   if (!confirm('Are you sure you want to cancel this shipment?')) return
   
   try {
-    const response = await fetch(`/api/v1/logistics/shipments/${shipment.uuid}/cancel`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Accept': 'application/json',
-      }
-    })
-    
-    if (response.ok) {
-      showToast('Shipment cancelled successfully', 'success')
-      fetchShipments()
-      fetchStats()
-    } else {
-      const error = await response.json()
-      showToast(error.message || 'Failed to cancel shipment', 'error')
-    }
-  } catch (error) {
-    console.error('Failed to cancel shipment:', error)
-    showToast('Failed to cancel shipment', 'error')
+    await post(`/api/v1/logistics/shipments/${shipment.uuid}/cancel`)
+    showToast('Shipment cancelled successfully', 'success')
+    fetchShipments()
+    fetchStats()
+  } catch (err) {
+    console.error('Failed to cancel shipment:', err)
+    showToast(err.message || 'Failed to cancel shipment', 'error')
   }
 }
 

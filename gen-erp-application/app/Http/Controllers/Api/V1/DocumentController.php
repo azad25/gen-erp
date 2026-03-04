@@ -51,7 +51,7 @@ class DocumentController extends BaseApiController
             ->when($request->get('search'), fn ($q, $s) => $q->where('name', 'LIKE', "%{$s}%"))
             ->when($request->get('mime_type'), fn ($q, $s) => $q->where('mime_type', $s))
             ->when($request->get('folder_id'), fn ($q, $id) => $q->where('folder_id', $id))
-            ->with(['folder', 'uploader'])
+            ->with(['folder', 'uploadedBy'])
             ->orderBy('created_at', 'desc')
             ->paginate($request->integer('per_page', 15));
 
@@ -80,7 +80,7 @@ class DocumentController extends BaseApiController
      */
     public function show(Document $document): JsonResponse
     {
-        $document->load(['folder', 'uploader']);
+        $document->load(['folder', 'uploadedBy']);
 
         return $this->success($document);
     }
@@ -116,15 +116,21 @@ class DocumentController extends BaseApiController
             'folder_id' => ['nullable', 'exists:document_folders,id'],
             'name' => ['required', 'string', 'max:255'],
             'file' => ['required', 'file', 'max:10240'], // 10MB max
+            'description' => ['nullable', 'string'],
         ]);
 
-        $validated['company_id'] = activeCompany()->id;
-        $validated['uploaded_by'] = auth()->id();
-
         $file = $request->file('file');
-        $document = $this->documentService->upload($file, $validated);
+        $document = $this->documentService->upload(
+            $file,
+            activeCompany()->id,
+            null, // entityType
+            null, // entityId
+            $validated['folder_id'] ?? null,
+            $validated['description'] ?? null,
+            auth()->id()
+        );
 
-        return $this->success($document->load(['folder', 'uploader']), 'Document uploaded', 201);
+        return $this->success($document->load(['folder', 'uploadedBy']), 'Document uploaded', 201);
     }
 
     public function update(Request $request, Document $document): JsonResponse
@@ -224,10 +230,59 @@ class DocumentController extends BaseApiController
      *     )
      * )
      */
-    public function preview(Document $document): JsonResponse
+    /**
+     * @OA\Get(
+     *     path="/api/v1/documents/storage-info",
+     *     summary="Get storage information",
+     *     tags={"Documents"},
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Storage information",
+     *
+     *         @OA\JsonContent(
+     *
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
+     */
+    public function storageInfo(): JsonResponse
     {
-        $url = $this->documentService->getPreviewUrl($document);
+        $companyId = activeCompany()->id;
+        
+        $used = $this->documentService->companyStorageUsed($companyId);
+        $quota = $this->documentService->getStorageQuota($companyId);
+        $usagePercent = $this->documentService->storageUsagePercent($companyId);
+        $remaining = $this->documentService->storageRemaining($companyId);
 
-        return $this->success(['preview_url' => $url]);
+        return $this->success([
+            'used_bytes' => $used,
+            'quota_bytes' => $quota,
+            'usage_percent' => $usagePercent,
+            'remaining' => $remaining,
+            'used_formatted' => $this->formatBytes($used),
+            'quota_formatted' => $this->formatBytes($quota),
+        ]);
+    }
+
+    /**
+     * Format bytes to human readable format.
+     */
+    private function formatBytes(int $bytes): string
+    {
+        if ($bytes >= 1073741824) {
+            return round($bytes / 1073741824, 1) . ' GB';
+        }
+        if ($bytes >= 1048576) {
+            return round($bytes / 1048576, 1) . ' MB';
+        }
+        if ($bytes >= 1024) {
+            return round($bytes / 1024, 1) . ' KB';
+        }
+        
+        return $bytes . ' B';
     }
 }

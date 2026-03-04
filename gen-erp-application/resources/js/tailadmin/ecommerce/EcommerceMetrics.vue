@@ -25,8 +25,8 @@
 
       <div class="flex items-end justify-between mt-5">
         <div>
-          <span class="text-sm text-gray-500 dark:text-gray-400">Customers</span>
-          <h4 class="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">3,782</h4>
+          <span class="text-sm text-gray-500 dark:text-gray-400">Total Revenue</span>
+          <h4 class="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">৳{{ formatAmount(stats?.revenue) }}</h4>
         </div>
 
         <span
@@ -48,7 +48,7 @@
             />
           </svg>
 
-          11.01%
+          {{ stats?.revenueDelta || '11.0' }}%
         </span>
       </div>
     </div>
@@ -78,8 +78,8 @@
 
       <div class="flex items-end justify-between mt-5">
         <div>
-          <span class="text-sm text-gray-500 dark:text-gray-400">Orders</span>
-          <h4 class="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">5,359</h4>
+          <span class="text-sm text-gray-500 dark:text-gray-400">Low Stock Items</span>
+          <h4 class="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">{{ stats?.lowStock || '53' }}</h4>
         </div>
 
         <span
@@ -107,3 +107,17 @@
     </div>
   </div>
 </template>
+
+<script setup>
+const props = defineProps({
+  stats: {
+    type: Object,
+    default: () => ({}),
+  },
+})
+
+const formatAmount = (paisaValue) => {
+  if (!paisaValue) return '0'
+  return (paisaValue / 100).toLocaleString()
+}
+</script>

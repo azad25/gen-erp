@@ -22,6 +22,11 @@ class DocumentFolder extends Model
         'created_by',
     ];
 
+    protected $appends = [
+        'documents_count',
+        'full_path',
+    ];
+
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
@@ -58,5 +63,15 @@ class DocumentFolder extends Model
         }
 
         return implode(' / ', $path);
+    }
+
+    public function getDocumentsCountAttribute(): int
+    {
+        return $this->documents()->count();
+    }
+
+    public function getFullPathAttribute(): string
+    {
+        return $this->getFullPath();
     }
 }

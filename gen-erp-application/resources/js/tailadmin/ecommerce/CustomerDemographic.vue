@@ -5,135 +5,126 @@
     <div class="flex justify-between">
       <div>
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Customers Demographic
+          Revenue by Type
         </h3>
         <p class="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-          Number of customer based on country
+          Current month breakdown
         </p>
       </div>
     </div>
-    <div
-      class="px-4 py-6 my-6 overflow-hidden border border-gary-200 rounded-2xl bg-gray-50 dark:border-gray-800 dark:bg-gray-900 sm:px-6"
-    >
-      <div
-        ref="mapOneRef"
-        id="mapOne"
-        class="mapOne map-btn -mx-4 -my-6 h-[212px] w-[252px] 2xsm:w-[307px] xsm:w-[358px] sm:-mx-6 md:w-[668px] lg:w-[634px] xl:w-[393px] 2xl:w-[554px]"
-      ></div>
+    
+    <div class="px-4 py-6 my-6 overflow-hidden flex justify-center items-center border border-gary-200 rounded-2xl bg-gray-50 dark:border-gray-800 dark:bg-gray-900 sm:px-6">
+      <VueApexCharts
+        type="donut"
+        width="380"
+        :options="chartOptions"
+        :series="chartSeries"
+      />
     </div>
+
     <div class="space-y-5">
-      <div class="flex items-center justify-between">
+      <div 
+        v-for="(label, index) in chartLabels" 
+        :key="index"
+        class="flex items-center justify-between"
+      >
         <div class="flex items-center gap-3">
-          <div class="items-center w-full rounded-full max-w-8">
-            <img src="/images/country/country-01.svg" alt="usa" />
-          </div>
+          <div 
+            class="w-3 h-3 rounded-full" 
+            :style="{ backgroundColor: getChartColor(index) }"
+          ></div>
           <div>
-            <p class="font-semibold text-gray-800 text-theme-sm dark:text-white/90">USA</p>
-            <span class="block text-gray-500 text-theme-xs dark:text-gray-400">
-              2,379 Customers
-            </span>
+            <p class="font-semibold text-gray-800 text-theme-sm dark:text-white/90">{{ label }}</p>
           </div>
         </div>
 
-        <div class="flex w-full max-w-[140px] items-center gap-3">
-          <div class="relative block h-2 w-full max-w-[100px] rounded-sm bg-gray-200 dark:bg-gray-800">
-            <div
-              class="absolute left-0 top-0 flex h-full w-[79%] items-center justify-center rounded-sm bg-brand-500 text-xs font-medium text-white"
-            ></div>
-          </div>
-          <p class="font-medium text-gray-800 text-theme-sm dark:text-white/90">79%</p>
+        <div class="flex items-center gap-3">
+          <p class="font-medium text-gray-800 text-theme-sm dark:text-white/90">
+            {{ calculatePercentage(chartSeries[index]) }}%
+          </p>
         </div>
       </div>
-
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="items-center w-full rounded-full max-w-8">
-            <img src="/images/country/country-02.svg" alt="france" />
-          </div>
-          <div>
-            <p class="font-semibold text-gray-800 text-theme-sm dark:text-white/90">France</p>
-            <span class="block text-gray-500 text-theme-xs dark:text-gray-400">
-              589 Customers
-            </span>
-          </div>
-        </div>
-
-        <div class="flex w-full max-w-[140px] items-center gap-3">
-          <div class="relative block h-2 w-full max-w-[100px] rounded-sm bg-gray-200 dark:bg-gray-800">
-            <div
-              class="absolute left-0 top-0 flex h-full w-[23%] items-center justify-center rounded-sm bg-brand-500 text-xs font-medium text-white"
-            ></div>
-          </div>
-          <p class="font-medium text-gray-800 text-theme-sm dark:text-white/90">23%</p>
-        </div>
+      
+      <div v-if="!chartSeries || chartSeries.length === 0" class="text-center text-gray-500 py-4">
+        No revenue data available
       </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import jsVectorMap from 'jsvectormap'
-import 'jsvectormap/dist/maps/world'
+<script setup>
+import { computed } from 'vue'
+import VueApexCharts from 'vue3-apexcharts'
 
-const mapOneRef = ref<HTMLElement | null>(null)
-const mapInstance = ref<any>(null)
-
-const initMap = () => {
-  if (mapOneRef.value) {
-    mapInstance.value = new jsVectorMap({
-      selector: mapOneRef.value,
-      map: 'world',
-      zoomButtons: false,
-      regionStyle: {
-        initial: {
-          fontFamily: 'Outfit',
-          fill: '#D9D9D9',
-        },
-        hover: {
-          fillOpacity: 1,
-          fill: '#465fff',
-        },
-      },
-      markers: [
-        {
-          name: 'Egypt',
-          coords: [26.8206, 30.8025],
-        },
-        {
-          name: 'United States',
-          coords: [55.3781, 3.436],
-        },
-        {
-          name: 'United States',
-          coords: [37.0902, -95.7129],
-        },
-      ],
-      markerStyle: {
-        initial: {
-          strokeWidth: 1,
-          fill: '#465fff',
-          fillOpacity: 1,
-          r: 4,
-        },
-        hover: {
-          fill: '#465fff',
-          fillOpacity: 1,
-        },
-        selected: {},
-        selectedHover: {},
-      },
-      onRegionTooltipShow: function (event: MouseEvent, tooltip: any) {
-        const code = (event.target as HTMLElement).getAttribute('data-code')
-        if (code === 'EG') {
-          tooltip.setContent(tooltip.text() + ' (Hello Egypt)')
-        }
-      },
-    })
+const props = defineProps({
+  revenueByType: {
+    type: Object,
+    default: () => ({ series: [], labels: [] })
   }
+})
+
+// Deep Teal branding palette
+const colors = ['#0F766E', '#14B8A6', '#5EEAD4', '#CCFBF1', '#042F2E', '#115E59']
+
+// Fallback to dummy data if props aren't populated yet
+const dummySeries = [44, 55, 13, 33]
+const dummyLabels = ['Product Sales', 'Services', 'Subscriptions', 'Other']
+
+const chartSeries = computed(() => {
+  return props.revenueByType?.series?.length > 0 
+    ? props.revenueByType.series 
+    : dummySeries
+})
+
+const chartLabels = computed(() => {
+  return props.revenueByType?.labels?.length > 0 
+    ? props.revenueByType.labels 
+    : dummyLabels
+})
+
+const getChartColor = (index) => {
+  return colors[index % colors.length]
 }
 
-onMounted(() => {
-  initMap()
+const totalSum = computed(() => {
+  return chartSeries.value.reduce((acc, curr) => acc + curr, 0) || 1
 })
+
+const calculatePercentage = (value) => {
+  if (!value) return 0
+  return Math.round((value / totalSum.value) * 100)
+}
+
+const chartOptions = computed(() => ({
+  chart: {
+    fontFamily: 'Inter, sans-serif',
+    type: 'donut',
+  },
+  colors: colors,
+  labels: chartLabels.value,
+  legend: {
+    show: false,
+  },
+  plotOptions: {
+    pie: {
+      donut: {
+        size: '65%',
+        background: 'transparent',
+      },
+    },
+  },
+  dataLabels: {
+    enabled: false,
+  },
+  stroke: {
+    show: true,
+    colors: ['transparent'],
+  },
+  theme: {
+    mode: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+  },
+  tooltip: {
+    theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+  }
+}))
 </script>

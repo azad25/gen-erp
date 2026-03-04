@@ -22,7 +22,16 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
+        "@fullcalendar/core": "^6.1.20",
+        "@fullcalendar/daygrid": "^6.1.20",
+        "@fullcalendar/interaction": "^6.1.20",
+        "@fullcalendar/list": "^6.1.20",
+        "@fullcalendar/timegrid": "^6.1.20",
+        "@fullcalendar/vue3": "^6.1.20",
+        "@heroicons/vue": "^2.2.0",
         "@inertiajs/vue3": "^2.3.17",
+        "@tailwindcss/forms": "^0.5.11",
+        "@tailwindcss/typography": "^0.5.19",
         "@tiptap/extension-image": "^2.1.13",
         "@tiptap/extension-link": "^2.1.13",
         "@tiptap/extension-text-align": "^2.1.13",
@@ -32,11 +41,19 @@
         "@vueuse/core": "^14.2.1",
         "apexcharts": "^5.7.0",
         "dayjs": "^1.11.19",
+        "dropzone": "^6.0.0-beta.2",
+        "flatpickr": "^4.6.13",
+        "jsvectormap": "^1.7.0",
         "lodash": "^4.17.21",
+        "lucide-vue-next": "^0.577.0",
         "pinia": "^3.0.4",
+        "swiper": "^12.1.2",
         "vue": "^3.5.29",
+        "vue-flatpickr-component": "^12.0.0",
+        "vue-kanban": "^1.8.0",
         "vue-router": "^5.0.3",
         "vue3-apexcharts": "^1.10.0",
-        "vuedraggable": "^4.1.0"
+        "vuedraggable": "^4.1.0",
+        "vuevectormap": "^2.1.1"
     }
 }

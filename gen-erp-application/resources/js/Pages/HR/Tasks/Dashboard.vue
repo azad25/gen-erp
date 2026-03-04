@@ -1,193 +1,218 @@
 <template>
-    <AppLayout title="Employee Task Dashboard">
-        <div class="py-6">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- Header -->
-                <div class="mb-6">
-                    <h1 class="text-2xl font-semibold text-gray-900">Task Dashboard</h1>
-                    <p class="text-gray-600">Manage your assigned tasks and track progress</p>
-                </div>
-
-                <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <div class="flex items-center">
-                            <div class="p-2 bg-blue-100 rounded-lg">
-                                <ClipboardDocumentListIcon class="h-6 w-6 text-blue-600" />
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Total Tasks</p>
-                                <p class="text-2xl font-semibold text-gray-900">{{ stats.total_tasks }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <div class="flex items-center">
-                            <div class="p-2 bg-yellow-100 rounded-lg">
-                                <ClockIcon class="h-6 w-6 text-yellow-600" />
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">In Progress</p>
-                                <p class="text-2xl font-semibold text-gray-900">{{ stats.in_progress_tasks }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <div class="flex items-center">
-                            <div class="p-2 bg-green-100 rounded-lg">
-                                <CheckCircleIcon class="h-6 w-6 text-green-600" />
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Completed</p>
-                                <p class="text-2xl font-semibold text-gray-900">{{ stats.completed_tasks }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <div class="flex items-center">
-                            <div class="p-2 bg-purple-100 rounded-lg">
-                                <ClockIcon class="h-6 w-6 text-purple-600" />
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Hours Logged</p>
-                                <p class="text-2xl font-semibold text-gray-900">{{ stats.total_hours }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Task List -->
-                <div class="bg-white rounded-lg shadow">
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-medium text-gray-900">My Tasks</h2>
-                            <div class="flex space-x-2">
-                                <select v-model="filters.status" class="rounded-md border-gray-300 text-sm">
-                                    <option value="">All Status</option>
-                                    <option value="assigned">Assigned</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="on_hold">On Hold</option>
-                                </select>
-                                <select v-model="filters.priority" class="rounded-md border-gray-300 text-sm">
-                                    <option value="">All Priority</option>
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="urgent">Urgent</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Task
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Project
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Priority
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Due Date
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Progress
-                                    </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="task in filteredTasks" :key="task.id">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div>
-                                            <div class="text-sm font-medium text-gray-900">{{ task.title }}</div>
-                                            <div class="text-sm text-gray-500">{{ task.description?.substring(0, 50) }}...</div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ task.project?.name }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span :class="getStatusClass(task.status)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
-                                            {{ task.status.replace('_', ' ').toUpperCase() }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span :class="getPriorityClass(task.priority)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
-                                            {{ task.priority?.toUpperCase() }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {{ task.due_date ? formatDate(task.due_date) : '-' }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                                                <div 
-                                                    class="bg-blue-600 h-2 rounded-full" 
-                                                    :style="{ width: task.progress + '%' }"
-                                                ></div>
-                                            </div>
-                                            <span class="text-sm text-gray-600">{{ task.progress }}%</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <button 
-                                            @click="startTask(task)"
-                                            v-if="task.status === 'assigned'"
-                                            class="text-blue-600 hover:text-blue-900 mr-3"
-                                        >
-                                            Start
-                                        </button>
-                                        <button 
-                                            @click="logTime(task)"
-                                            class="text-green-600 hover:text-green-900 mr-3"
-                                        >
-                                            Log Time
-                                        </button>
-                                        <button 
-                                            @click="viewTask(task)"
-                                            class="text-gray-600 hover:text-gray-900"
-                                        >
-                                            View
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+  <SidebarProvider>
+    <AppLayout>
+      <div class="space-y-6">
+        <!-- Page Header -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-black dark:text-white">
+              Task Dashboard
+            </h1>
+            <p class="text-sm text-gray-1 dark:text-gray-400">
+              Manage your assigned tasks and track progress
+            </p>
+          </div>
         </div>
 
-        <!-- Time Logging Modal -->
-        <TimeLogModal 
-            :show="showTimeModal"
-            :task="selectedTask"
-            @close="showTimeModal = false"
-            @saved="handleTimeLogged"
-        />
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            label="Total Tasks"
+            :value="stats.total_tasks"
+            subtitle="All assigned tasks"
+            color="teal"
+          >
+            <template #icon>
+              <ClipboardDocumentListIcon class="w-5 h-5" />
+            </template>
+          </StatCard>
+
+          <StatCard
+            label="In Progress"
+            :value="stats.in_progress_tasks"
+            subtitle="Currently being worked on"
+            color="amber"
+          >
+            <template #icon>
+              <ClockIcon class="w-5 h-5" />
+            </template>
+          </StatCard>
+
+          <StatCard
+            label="Completed"
+            :value="stats.completed_tasks"
+            subtitle="Finished tasks"
+            color="green"
+          >
+            <template #icon>
+              <CheckCircleIcon class="w-5 h-5" />
+            </template>
+          </StatCard>
+
+          <StatCard
+            label="Hours Logged"
+            :value="stats.total_hours"
+            subtitle="Total tracked time"
+            color="teal"
+          >
+            <template #icon>
+              <ClockIcon class="w-5 h-5" />
+            </template>
+          </StatCard>
+        </div>
+
+        <!-- Task List -->
+        <Card>
+          <template #header>
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-black dark:text-white">
+                My Tasks
+              </h2>
+              <div class="flex gap-2">
+                <select
+                  v-model="filters.status"
+                  class="rounded-md border border-stroke bg-transparent px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="">All Status</option>
+                  <option value="assigned">Assigned</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="on_hold">On Hold</option>
+                </select>
+                <select
+                  v-model="filters.priority"
+                  class="rounded-md border border-stroke bg-transparent px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="">All Priority</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+            </div>
+          </template>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-stroke text-sm">
+              <thead class="bg-gray-3/40 dark:bg-gray-900/40">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Task
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Project
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Status
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Priority
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Due Date
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Progress
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-stroke bg-white dark:bg-gray-900">
+                <tr v-for="task in filteredTasks" :key="task.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/60">
+                  <td class="px-6 py-4">
+                    <div>
+                      <div class="text-sm font-medium text-black dark:text-white">
+                        {{ task.title }}
+                      </div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ task.description?.substring(0, 80) }}<span v-if="task.description?.length > 80">...</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                    {{ task.project?.name }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span
+                      :class="getStatusClass(task.status)"
+                      class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                    >
+                      {{ task.status.replace('_', ' ').toUpperCase() }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span
+                      :class="getPriorityClass(task.priority)"
+                      class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                    >
+                      {{ task.priority?.toUpperCase() }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                    {{ task.due_date ? formatDate(task.due_date) : '-' }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <div class="w-20 bg-gray-200 dark:bg-gray-800 rounded-full h-2">
+                        <div
+                          class="h-2 rounded-full bg-primary"
+                          :style="{ width: `${task.progress}%` }"
+                        ></div>
+                      </div>
+                      <span class="text-xs text-gray-600 dark:text-gray-300">
+                        {{ task.progress }}%
+                      </span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-xs font-medium">
+                    <button
+                      v-if="task.status === 'assigned'"
+                      @click="startTask(task)"
+                      class="text-primary hover:text-primary-dark mr-3"
+                    >
+                      Start
+                    </button>
+                    <button
+                      @click="logTime(task)"
+                      class="text-success hover:text-success/80 mr-3"
+                    >
+                      Log Time
+                    </button>
+                    <button
+                      @click="viewTask(task)"
+                      class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+
+      <!-- Time Logging Modal -->
+      <TimeLogModal
+        :show="showTimeModal"
+        :task="selectedTask"
+        @close="showTimeModal = false"
+        @saved="handleTimeLogged"
+      />
     </AppLayout>
+  </SidebarProvider>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
+import StatCard from '@/Components/UI/StatCard.vue'
+import Card from '@/Components/UI/Card.vue'
 import TimeLogModal from '@/Components/HR/TimeLogModal.vue'
 import { 
     ClipboardDocumentListIcon, 

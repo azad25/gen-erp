@@ -100,80 +100,13 @@
         </div>
 
         <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div v-for="project in projects.data" :key="project.id" 
-               class="bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition-shadow">
-            <div class="p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center space-x-2">
-                  <div class="w-3 h-3 rounded-full" :class="getStatusColor(project.status)"></div>
-                  <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    {{ project.status.replace('_', ' ') }}
-                  </span>
-                </div>
-                <div class="flex items-center space-x-1">
-                  <div class="w-2 h-2 rounded-full" :class="getPriorityColor(project.priority)"></div>
-                  <span class="text-xs text-gray-500 capitalize">{{ project.priority }}</span>
-                </div>
-              </div>
-
-              <div class="mb-4">
-                <h3 class="text-lg font-medium text-gray-900 mb-1">
-                  <Link :href="route('projects.show', project.id)" 
-                        class="hover:text-blue-600">
-                    {{ project.name }}
-                  </Link>
-                </h3>
-                <p class="text-sm text-gray-600 line-clamp-2">{{ project.description }}</p>
-              </div>
-
-              <div class="mb-4">
-                <div class="flex items-center justify-between text-sm text-gray-500 mb-1">
-                  <span>Progress</span>
-                  <span>{{ project.progress_percentage }}%</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                  <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                       :style="`width: ${project.progress_percentage}%`"></div>
-                </div>
-              </div>
-
-              <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
-                <div v-if="project.client_name">
-                  <span class="font-medium">Client:</span> {{ project.client_name }}
-                </div>
-                <div v-else>
-                  <span class="text-gray-400">Internal Project</span>
-                </div>
-                <div v-if="project.end_date">
-                  <span class="font-medium">Due:</span> 
-                  <span :class="{ 'text-red-600': isOverdue(project) }">
-                    {{ formatDate(project.end_date) }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                  <div v-if="project.project_manager" class="flex items-center text-sm text-gray-500">
-                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                    </svg>
-                    {{ project.project_manager.first_name }} {{ project.project_manager.last_name }}
-                  </div>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <Link :href="route('projects.show', project.id)" 
-                        class="text-blue-600 hover:text-blue-500 text-sm font-medium">
-                    View
-                  </Link>
-                  <Link :href="route('projects.edit', project.id)" 
-                        class="text-gray-600 hover:text-gray-500 text-sm font-medium">
-                    Edit
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ProjectCard
+            v-for="project in projects.data"
+            :key="project.id"
+            :project="project"
+            @updated="loadProjects"
+            @deleted="handleProjectDeleted"
+          />
         </div>
 
         <!-- Pagination -->
@@ -223,7 +156,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import ProjectCard from '@/Components/Projects/ProjectCard.vue'
+import { useApi } from '@/Composables/useApi'
+import { useToast } from '@/Composables/useToast'
 import { debounce } from 'lodash'
+
+const { get, loading, error } = useApi()
+const { showToast } = useToast()
 
 const projects = ref({
   data: [],
@@ -236,8 +175,6 @@ const projects = ref({
   prev_page_url: null,
   next_page_url: null
 })
-
-const loading = ref(true)
 
 const filters = ref({
   search: '',
@@ -255,26 +192,18 @@ onMounted(() => {
 const loadProjects = async (page = 1) => {
   loading.value = true
   try {
-    const params = new URLSearchParams({
+    const params = {
       page: page.toString(),
       ...Object.fromEntries(
         Object.entries(filters.value).filter(([_, value]) => value !== '' && value !== false)
       )
-    })
-
-    const response = await fetch(`/api/v1/projects?${params}`, {
-      headers: {
-        'Authorization': `Bearer ${document.querySelector('meta[name="api-token"]')?.content}`,
-        'Accept': 'application/json',
-      }
-    })
-    
-    if (response.ok) {
-      const data = await response.json()
-      projects.value = data.data
     }
-  } catch (error) {
-    console.error('Failed to load projects:', error)
+
+    const data = await get('/api/v1/projects', params)
+    projects.value = data.data
+  } catch (err) {
+    console.error('Failed to load projects:', err)
+    showToast('Failed to load projects', 'error')
   } finally {
     loading.value = false
   }
@@ -304,6 +233,11 @@ const clearFilters = () => {
   applyFilters()
 }
 
+const handleProjectDeleted = (projectId) => {
+  projects.value.data = projects.value.data.filter(p => p.id !== projectId)
+  projects.value.total -= 1
+}
+
 const visiblePages = computed(() => {
   const current = projects.value.current_page
   const last = projects.value.last_page
@@ -315,37 +249,6 @@ const visiblePages = computed(() => {
   
   return pages
 })
-
-const getStatusColor = (status) => {
-  const colors = {
-    planning: 'bg-gray-400',
-    active: 'bg-green-400',
-    on_hold: 'bg-yellow-400',
-    completed: 'bg-blue-400',
-    cancelled: 'bg-red-400'
-  }
-  return colors[status] || 'bg-gray-400'
-}
-
-const getPriorityColor = (priority) => {
-  const colors = {
-    low: 'bg-green-400',
-    medium: 'bg-yellow-400',
-    high: 'bg-orange-400',
-    urgent: 'bg-red-400'
-  }
-  return colors[priority] || 'bg-gray-400'
-}
-
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString()
-}
-
-const isOverdue = (project) => {
-  if (!project.end_date) return false
-  return new Date(project.end_date) < new Date() && 
-         !['completed', 'cancelled'].includes(project.status)
-}
 </script>
 
 <style scoped>

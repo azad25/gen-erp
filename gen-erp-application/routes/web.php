@@ -6,11 +6,14 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\CompanySwitchController;
+use App\Http\Controllers\DocsController;
 use App\Http\Controllers\DashboardController;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LanguageController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 // ── Emergency Company Fix Route (bypasses middleware) ──────
 Route::get('/emergency-company-fix', function () {
@@ -44,10 +47,18 @@ Route::get('/emergency-company-fix', function () {
 Route::inertia('/', 'Home')->name('home');
 Route::get('/locale/{locale}', [HomeController::class, 'setLocale'])->name('locale.set');
 
+// ── Language Switching ────────────────────────────────────
+Route::post('/language/switch', [LanguageController::class, 'switch'])->name('language.switch');
+
 // ── Public Tracking Page ────────────────────────────────────
 Route::get('/track', function () {
     return view('public.tracking');
 })->name('public.tracking');
+
+// ── Public Form Routes ────────────────────────────────────
+Route::get('/forms/{slug}', [\App\Http\Controllers\Document\FormController::class, 'publicForm'])->name('public.forms.show');
+Route::get('/public/forms/{slug}', [\App\Http\Controllers\Document\FormController::class, 'publicForm'])->name('documents.forms.public');
+Route::post('/forms/{slug}/submit', [\App\Http\Controllers\Document\FormController::class, 'submitPublicForm'])->name('public.forms.submit');
 
 // ── Guest Auth Routes (Vue) ────────────────────────────────────
 Route::middleware('guest')->group(function (): void {
@@ -88,6 +99,9 @@ Route::prefix('auth')->group(function (): void {
 // ── Web Auth Routes (for traditional web views) ─────────────
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+    
+    // Language switching
+    Route::post('/language/switch', [LanguageController::class, 'switch'])->name('language.switch');
 
     // Company access management
     Route::get('/fix-company-access', [\App\Http\Controllers\CompanyAccessController::class, 'fixAccess'])->name('company.fix-access');
@@ -124,6 +138,7 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Sales Routes
+    Route::get('/sales/dashboard', [\App\Http\Controllers\Sales\SalesDashboardController::class, 'index'])->name('sales.dashboard');
     Route::get('/sales/orders', [\App\Http\Controllers\Sales\SalesOrderController::class, 'index'])->name('sales.orders');
     Route::get('/sales/invoices', [\App\Http\Controllers\Sales\InvoiceController::class, 'index'])->name('sales.invoices');
     Route::get('/sales/customers', fn () => Inertia::render('Sales/Customers'))->name('sales.customers');
@@ -131,12 +146,14 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
     Route::get('/sales/returns', fn () => Inertia::render('Sales/Returns'))->name('sales.returns');
 
     // Purchase Routes
+    Route::get('/purchase/dashboard', [\App\Http\Controllers\Purchase\PurchaseDashboardController::class, 'index'])->name('purchase.dashboard');
     Route::get('/purchase/orders', fn () => Inertia::render('Purchase/Orders'))->name('purchase.orders');
     Route::get('/purchase/receipts', fn () => Inertia::render('Purchase/Receipts'))->name('purchase.receipts');
     Route::get('/purchase/suppliers', fn () => Inertia::render('Purchase/Suppliers'))->name('purchase.suppliers');
     Route::get('/purchase/returns', fn () => Inertia::render('Purchase/Returns'))->name('purchase.returns');
 
     // Inventory Routes
+    Route::get('/inventory/dashboard', [\App\Http\Controllers\Inventory\InventoryDashboardController::class, 'index'])->name('inventory.dashboard');
     Route::get('/inventory/products', fn () => Inertia::render('Inventory/Products'))->name('inventory.products');
     Route::get('/inventory/stock', fn () => Inertia::render('Inventory/Stock'))->name('inventory.stock');
     Route::get('/inventory/warehouses', fn () => Inertia::render('Inventory/Warehouses'))->name('inventory.warehouses');
@@ -144,6 +161,7 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
     Route::get('/inventory/adjustments', fn () => Inertia::render('Inventory/Adjustments'))->name('inventory.adjustments');
 
     // Accounting Routes
+    Route::get('/accounting/dashboard', [\App\Http\Controllers\Accounting\AccountingDashboardController::class, 'index'])->name('accounting.dashboard');
     Route::get('/accounting/chart-of-accounts', fn () => Inertia::render('Accounting/ChartOfAccounts'))->name('accounting.chart-of-accounts');
     Route::get('/accounting/journal-entries', fn () => Inertia::render('Accounting/JournalEntries'))->name('accounting.journal-entries');
     Route::get('/accounting/trial-balance', fn () => Inertia::render('Accounting/TrialBalance'))->name('accounting.trial-balance');
@@ -151,6 +169,7 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
     Route::get('/accounting/balance-sheet', fn () => Inertia::render('Accounting/BalanceSheet'))->name('accounting.balance-sheet');
 
     // HR & Payroll Routes
+    Route::get('/hr/dashboard', [\App\Http\Controllers\HR\HRDashboardController::class, 'index'])->name('hr.dashboard');
     Route::get('/hr/employees', fn () => Inertia::render('HR/Employees'))->name('hr.employees');
     Route::get('/hr/attendance', fn () => Inertia::render('HR/Attendance'))->name('hr.attendance');
     Route::get('/hr/leave', fn () => Inertia::render('HR/Leave'))->name('hr.leave');
@@ -158,9 +177,36 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
 
     // HR Enhancement Routes
     Route::prefix('hr')->name('hr.')->group(function () {
-        Route::get('/tasks/dashboard', fn () => Inertia::render('HR/Tasks/Dashboard'))->name('tasks.dashboard');
-        Route::get('/timesheet', fn () => Inertia::render('HR/Timesheet/Index'))->name('timesheet.index');
-        Route::get('/capacity', fn () => Inertia::render('HR/Capacity/Index'))->name('capacity.index');
+        Route::get('/tasks/dashboard', function (Request $request) {
+            $apiController = app(\App\Http\Controllers\Api\V1\HR\EmployeeTaskController::class);
+            $response = $apiController->dashboard($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('HR/Tasks/Dashboard', [
+                'taskData' => $data['data']
+            ]);
+        })->name('tasks.dashboard');
+        
+        Route::get('/timesheet', function (Request $request) {
+            $apiController = app(\App\Http\Controllers\Api\V1\HR\EmployeeTimeEntryController::class);
+            $response = $apiController->index($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('HR/Timesheet/Index', [
+                'timeEntries' => $data['data']
+            ]);
+        })->name('timesheet.index');
+        
+        Route::get('/capacity', function (Request $request) {
+            $apiController = app(\App\Http\Controllers\Api\V1\HR\EmployeeCapacityController::class);
+            $response = $apiController->index($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('HR/Capacity/Index', [
+                'capacityData' => $data['data']
+            ]);
+        })->name('capacity.index');
+        
         Route::get('/skills', fn () => Inertia::render('HR/Skills/Index'))->name('skills.index');
         Route::get('/availability', fn () => Inertia::render('HR/Availability/Calendar'))->name('availability.calendar');
         Route::get('/performance', fn () => Inertia::render('HR/Performance/Index'))->name('performance.index');
@@ -183,10 +229,62 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
     // Profile Route
     Route::get('/profile', fn () => Inertia::render('Profile/Index'))->name('profile');
 
+    // Notifications Route
+    Route::get('/notifications', fn () => Inertia::render('Notifications/Index'))->name('notifications.index');
+
+    // Document Management Routes
+    Route::prefix('documents')->name('documents.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Documents\DocumentController::class, 'dashboard'])->name('dashboard');
+        Route::get('/', [\App\Http\Controllers\Documents\DocumentController::class, 'index'])->name('index');
+        Route::get('/folders', [\App\Http\Controllers\Documents\DocumentController::class, 'folders'])->name('folders');
+        Route::get('/recent', [\App\Http\Controllers\Documents\DocumentController::class, 'recent'])->name('recent');
+        
+        // Forms Management Routes
+        Route::prefix('forms')->name('forms.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Document\FormController::class, 'index'])->name('index');
+            Route::get('/builder', [\App\Http\Controllers\Document\FormController::class, 'builder'])->name('builder');
+            Route::get('/create', [\App\Http\Controllers\Document\FormController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Document\FormController::class, 'store'])->name('store');
+            Route::get('/{form}', [\App\Http\Controllers\Document\FormController::class, 'show'])->name('show');
+            Route::get('/{form}/edit', [\App\Http\Controllers\Document\FormController::class, 'edit'])->name('edit');
+            Route::put('/{form}', [\App\Http\Controllers\Document\FormController::class, 'update'])->name('update');
+            Route::delete('/{form}', [\App\Http\Controllers\Document\FormController::class, 'destroy'])->name('destroy');
+            Route::post('/{form}/submit', [\App\Http\Controllers\Document\FormController::class, 'submit'])->name('submit');
+            Route::get('/{form}/submissions', [\App\Http\Controllers\Document\FormController::class, 'submissions'])->name('submissions');
+            Route::get('/{form}/export', [\App\Http\Controllers\Document\FormController::class, 'exportSubmissions'])->name('export');
+            Route::post('/{form}/duplicate', [\App\Http\Controllers\Document\FormController::class, 'duplicate'])->name('duplicate');
+        });
+        
+        // Custom Fields Management Routes
+        Route::prefix('custom-fields')->name('custom-fields.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Document\CustomFieldController::class, 'index'])->name('index');
+            Route::get('/overview', [\App\Http\Controllers\Document\CustomFieldController::class, 'overview'])->name('overview');
+            Route::get('/create', [\App\Http\Controllers\Document\CustomFieldController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Document\CustomFieldController::class, 'store'])->name('store');
+            Route::get('/{customField}', [\App\Http\Controllers\Document\CustomFieldController::class, 'show'])->name('show');
+            Route::get('/{customField}/edit', [\App\Http\Controllers\Document\CustomFieldController::class, 'edit'])->name('edit');
+            Route::put('/{customField}', [\App\Http\Controllers\Document\CustomFieldController::class, 'update'])->name('update');
+            Route::delete('/{customField}', [\App\Http\Controllers\Document\CustomFieldController::class, 'destroy'])->name('destroy');
+            Route::get('/api/entity-types', [\App\Http\Controllers\Document\CustomFieldController::class, 'getEntityTypes'])->name('entity-types');
+            Route::post('/bulk-action', [\App\Http\Controllers\Document\CustomFieldController::class, 'bulkAction'])->name('bulk-action');
+            Route::post('/update-order', [\App\Http\Controllers\Document\CustomFieldController::class, 'updateOrder'])->name('update-order');
+            Route::get('/export', [\App\Http\Controllers\Document\CustomFieldController::class, 'export'])->name('export');
+        });
+    });
+
     // Project Management Routes
     Route::prefix('projects')->name('projects.')->group(function () {
-        Route::get('/', fn () => Inertia::render('Projects/Index'))->name('index');
-        Route::get('/dashboard', fn () => Inertia::render('Projects/Dashboard'))->name('dashboard');
+        Route::get('/', function (Request $request) {
+            $apiController = app(\App\Http\Controllers\Api\V1\ProjectController::class);
+            $response = $apiController->index($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('Projects/Index', [
+                'projects' => $data['data']
+            ]);
+        })->name('index');
+        
+        Route::get('/dashboard', [\App\Http\Controllers\Projects\ProjectsDashboardController::class, 'index'])->name('dashboard');
         Route::get('/create', fn () => Inertia::render('Projects/Create'))->name('create');
         Route::get('/{project}', fn ($project) => Inertia::render('Projects/Show', ['projectId' => $project]))->name('show');
         Route::get('/{project}/edit', fn ($project) => Inertia::render('Projects/Edit', ['projectId' => $project]))->name('edit');
@@ -204,22 +302,76 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
 
     // CRM Routes
     Route::prefix('crm')->name('crm.')->group(function () {
-        Route::get('/dashboard', fn () => Inertia::render('CRM/Dashboard/Index'))->name('dashboard');
-        Route::get('/leads', fn () => Inertia::render('CRM/Leads/Index'))->name('leads.index');
+        Route::get('/dashboard', [\App\Http\Controllers\CRM\CRMDashboardController::class, 'index'])->name('dashboard');
+        
+        Route::get('/leads', function (Request $request) {
+            $apiController = app(\App\Http\Controllers\Api\V1\CRM\LeadController::class);
+            $response = $apiController->index($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('CRM/Leads/Index', [
+                'leads' => $data['data']
+            ]);
+        })->name('leads.index');
+        
         Route::get('/leads/create', fn () => Inertia::render('CRM/Leads/Create'))->name('leads.create');
         Route::get('/leads/{lead}/edit', fn ($lead) => Inertia::render('CRM/Leads/Edit', ['leadId' => $lead]))->name('leads.edit');
         Route::get('/leads/scoring', fn () => Inertia::render('CRM/Leads/Scoring'))->name('leads.scoring');
-        Route::get('/opportunities', fn () => Inertia::render('CRM/Opportunities/Index'))->name('opportunities.index');
-        Route::get('/pipelines', fn () => Inertia::render('CRM/Pipelines/Index'))->name('pipelines.index');
-        Route::get('/activities', fn () => Inertia::render('CRM/Activities/Index'))->name('activities.index');
+        
+        Route::get('/opportunities', function (Request $request) {
+            $apiController = app(\App\Http\Controllers\Api\V1\CRM\OpportunityController::class);
+            $response = $apiController->index($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('CRM/Opportunities/Index', [
+                'opportunities' => $data['data']
+            ]);
+        })->name('opportunities.index');
+        
+        Route::get('/pipelines', function (Request $request) {
+            $apiController = app(\App\Http\Controllers\Api\V1\CRM\PipelineController::class);
+            $response = $apiController->index($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('CRM/Pipelines/Index', [
+                'pipelines' => $data['data']
+            ]);
+        })->name('pipelines.index');
+        
+        Route::get('/activities', function (Request $request) {
+            $apiController = app(\App\Http\Controllers\Api\V1\CRM\ActivityController::class);
+            $response = $apiController->index($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('CRM/Activities/Index', [
+                'activities' => $data['data']
+            ]);
+        })->name('activities.index');
+        
         Route::get('/contacts', fn () => Inertia::render('CRM/Contacts/Index'))->name('contacts.index');
     });
 
     // CMS Routes
     Route::prefix('cms')->name('cms.')->group(function () {
-        Route::get('/sites', fn () => Inertia::render('CMS/Sites/Index'))->name('sites.index');
+        Route::get('/dashboard', [\App\Http\Controllers\CMS\CMSDashboardController::class, 'index'])->name('dashboard');
+        
+        // Sites - using existing API controller with Inertia wrapper
+        Route::get('/sites', function (Request $request) {
+            $apiController = app(\App\Http\Controllers\Api\V1\SiteController::class);
+            $response = $apiController->index($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('CMS/Sites/Index', [
+                'sites' => $data['data']
+            ]);
+        })->name('sites.index');
+        
         Route::get('/sites/create', fn () => Inertia::render('CMS/Sites/Create'))->name('sites.create');
-        Route::get('/sites/{site}/edit', fn () => Inertia::render('CMS/Sites/Edit'))->name('sites.edit');
+        Route::get('/sites/{site}/edit', function ($site) {
+            return Inertia::render('CMS/Sites/Edit', ['siteId' => $site]);
+        })->name('sites.edit');
+        
+        // Pages
         Route::get('/sites/{site}/pages', fn () => Inertia::render('CMS/Pages/Index'))->name('sites.pages.index');
         Route::get('/sites/{site}/pages/create', fn () => Inertia::render('CMS/Pages/Create'))->name('sites.pages.create');
         Route::get('/sites/{site}/pages/{page}/edit', fn () => Inertia::render('CMS/Pages/Edit'))->name('sites.pages.edit');
@@ -234,6 +386,75 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
         Route::get('/reviews', fn () => Inertia::render('CMS/Reviews/Index'))->name('reviews.index');
         Route::get('/wishlist', fn () => Inertia::render('CMS/Wishlist/Index'))->name('wishlist.index');
         Route::get('/seo', fn () => Inertia::render('CMS/SEO/Index'))->name('seo.index');
+    });
+
+    // Logistics Routes
+    Route::prefix('logistics')->name('logistics.')->group(function () {
+        Route::get('/dashboard', fn () => Inertia::render('Logistics/Dashboard/Index'))->name('dashboard');
+        
+        Route::get('/shipments', function (Request $request) {
+            $apiController = app(\App\Domain\Logistics\Http\Controllers\ShipmentController::class);
+            $response = $apiController->index($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('Logistics/Shipments/Index', [
+                'shipments' => $data['data']
+            ]);
+        })->name('shipments.index');
+        
+        Route::get('/shipments/create', fn () => Inertia::render('Logistics/Shipments/Create'))->name('shipments.create');
+        Route::get('/shipments/{shipment}', fn ($shipment) => Inertia::render('Logistics/Shipments/Show', ['shipmentId' => $shipment]))->name('shipments.show');
+        Route::get('/shipments/{shipment}/edit', fn ($shipment) => Inertia::render('Logistics/Shipments/Edit', ['shipmentId' => $shipment]))->name('shipments.edit');
+        
+        Route::get('/tracking', function (Request $request) {
+            $apiController = app(\App\Domain\Logistics\Http\Controllers\TrackingController::class);
+            $response = $apiController->statistics($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('Logistics/Tracking/Index', [
+                'trackingData' => $data['data']
+            ]);
+        })->name('tracking.index');
+        
+        Route::get('/tracking/{trackingNumber}', function ($trackingNumber, Request $request) {
+            $apiController = app(\App\Domain\Logistics\Http\Controllers\TrackingController::class);
+            $response = $apiController->track($request, $trackingNumber);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('Logistics/Tracking/Show', [
+                'trackingNumber' => $trackingNumber,
+                'trackingInfo' => $data['data']
+            ]);
+        })->name('tracking.show');
+        
+        Route::get('/returns', function (Request $request) {
+            $apiController = app(\App\Domain\Logistics\Http\Controllers\ReturnController::class);
+            $response = $apiController->index($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('Logistics/Returns/Index', [
+                'returns' => $data['data']
+            ]);
+        })->name('returns.index');
+        
+        Route::get('/returns/create', fn () => Inertia::render('Logistics/Returns/Create'))->name('returns.create');
+        Route::get('/returns/{return}', fn ($return) => Inertia::render('Logistics/Returns/Show', ['returnId' => $return]))->name('returns.show');
+        
+        Route::get('/cod', function (Request $request) {
+            $apiController = app(\App\Domain\Logistics\Http\Controllers\CODController::class);
+            $response = $apiController->summary($request);
+            $data = json_decode($response->getContent(), true);
+            
+            return Inertia::render('Logistics/COD/Index', [
+                'codData' => $data['data']
+            ]);
+        })->name('cod.index');
+        
+        Route::get('/cod/settlements', fn () => Inertia::render('Logistics/COD/Settlements'))->name('cod.settlements');
+        
+        Route::get('/carriers', fn () => Inertia::render('Logistics/Carriers/Index'))->name('carriers.index');
+        Route::get('/carriers/create', fn () => Inertia::render('Logistics/Carriers/Create'))->name('carriers.create');
+        Route::get('/carriers/{carrier}/edit', fn ($carrier) => Inertia::render('Logistics/Carriers/Edit', ['carrierId' => $carrier]))->name('carriers.edit');
     });
 
     // Removed redirect from / to /dashboard - home page should be public
@@ -325,3 +546,16 @@ Route::get('/debug-session', function () {
         ],
     ]);
 })->middleware('auth');
+
+// ── Internal Documentation (Public / Optional Auth) ─────────────────────
+Route::prefix('docs')->name('docs.')->group(function () {
+    Route::get('/{any?}', [DocsController::class, 'index'])
+        ->where('any', '.*')
+        ->name('index');
+});
+
+Route::prefix('docs-api')->name('docs.api.')->group(function () {
+    Route::get('/navigation', [DocsController::class, 'navigation'])->name('navigation');
+    Route::get('/page', [DocsController::class, 'page'])->name('page');
+    Route::get('/search', [DocsController::class, 'search'])->name('search');
+});

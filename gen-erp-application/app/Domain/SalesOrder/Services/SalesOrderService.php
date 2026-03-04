@@ -3,7 +3,7 @@
 namespace App\Domain\SalesOrder\Services;
 
 use App\Support\Enums\SalesOrderStatus;
-use App\Models\Company;
+use App\Domain\Auth\Models\Company;
 use App\Domain\Product\Models\Product;
 use App\Domain\SalesOrder\Models\SalesOrder;
 use App\Domain\SalesOrder\Models\SalesOrderItem;

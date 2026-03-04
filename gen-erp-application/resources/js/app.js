@@ -6,6 +6,11 @@ import { createPinia } from 'pinia'
 import VueApexCharts from 'vue3-apexcharts'
 import ThemeProvider from './Components/Layout/ThemeProvider.vue'
 import '../css/app.css'
+import 'swiper/css'
+import 'swiper/css/navigation'
+import 'swiper/css/pagination'
+import 'jsvectormap/dist/jsvectormap.css'
+import 'flatpickr/dist/flatpickr.css'
 
 createInertiaApp({
   title: title => `${title} — GenERP BD`,
@@ -25,7 +30,7 @@ createInertiaApp({
     console.log('[Inertia] Setup called, current page:', props.initialPage.component)
     console.log('[Inertia] Page URL:', props.initialPage.url)
     console.log('[Inertia] Page props:', props.initialPage.props)
-    
+
     // Sync company ID from server to sessionStorage for API calls
     const companyId = props.initialPage.props.auth?.company?.id
     if (companyId) {
@@ -34,20 +39,20 @@ createInertiaApp({
     } else {
       console.warn('[Company Sync] No company ID found in props')
     }
-    
+
     const app = createApp({
       render: () => {
         return h(ThemeProvider, {}, () => h(App, props))
       }
     })
-    
+
     // Add global error handler
     app.config.errorHandler = (err, instance, info) => {
       console.error('Vue error:', err)
       console.error('Component:', instance)
       console.error('Info:', info)
     }
-    
+
     app.use(plugin).use(createPinia()).use(VueApexCharts).mount(el)
   },
   progress: { color: '#14B8A6', showSpinner: false },

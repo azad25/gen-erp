@@ -69,8 +69,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import flatPickr from 'vue-flatpickr-component'
+import VueApexCharts from 'vue3-apexcharts'
+
+const props = defineProps({
+  chartData: {
+    type: Array,
+    default: () => [],
+  },
+  chartLabels: {
+    type: Array,
+    default: () => [],
+  },
+})
 
 const options = [
   { value: 'optionOne', label: 'Monthly' },
@@ -86,104 +98,89 @@ const flatpickrConfig = {
   dateFormat: 'M j',
   defaultDate: [new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), new Date()],
 }
-import VueApexCharts from 'vue3-apexcharts'
 
-const series = ref([
-  {
-    name: 'Sales',
-    data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
-  },
-  {
-    name: 'Revenue',
-    data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
-  },
-])
+// Ensure default data exists if props are empty
+const dummyData = [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235]
+const dummyLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-const chartOptions = ref({
-  legend: {
-    show: false,
-    position: 'top',
-    horizontalAlign: 'left',
-  },
-  colors: ['#465FFF', '#9CB9FF'],
-  chart: {
-    fontFamily: 'Outfit, sans-serif',
-    type: 'area',
-    toolbar: {
+const series = computed(() => {
+  return [
+    {
+      name: 'Revenue',
+      data: props.chartData && props.chartData.length > 0 ? props.chartData : dummyData,
+    }
+  ]
+})
+
+const chartOptions = computed(() => {
+  return {
+    legend: {
       show: false,
+      position: 'top',
+      horizontalAlign: 'left',
     },
-  },
-  fill: {
-    gradient: {
-      enabled: true,
-      opacityFrom: 0.55,
-      opacityTo: 0,
+    colors: ['#0F766E'], // Updated to use Deep Teal GenERP Brand Color
+    chart: {
+      fontFamily: 'Inter, sans-serif', // Updated to project font
+      type: 'area',
+      toolbar: {
+        show: false,
+      },
     },
-  },
-  stroke: {
-    curve: 'straight',
-    width: [2, 2],
-  },
-  markers: {
-    size: 0,
-  },
-  labels: {
-    show: false,
-    position: 'top',
-  },
-  grid: {
+    fill: {
+      gradient: {
+        enabled: true,
+        opacityFrom: 0.55,
+        opacityTo: 0,
+      },
+    },
+    stroke: {
+      curve: 'straight',
+      width: [2],
+    },
+    markers: {
+      size: 0,
+    },
+    labels: {
+      show: false,
+      position: 'top',
+    },
+    grid: {
+      xaxis: {
+        lines: {
+          show: false,
+        },
+      },
+      yaxis: {
+        lines: {
+          show: true,
+        },
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    tooltip: {
+      theme: 'light'
+    },
     xaxis: {
-      lines: {
+      type: 'category',
+      categories: props.chartLabels && props.chartLabels.length > 0 ? props.chartLabels : dummyLabels,
+      axisBorder: {
+        show: false,
+      },
+      axisTicks: {
         show: false,
       },
     },
     yaxis: {
-      lines: {
-        show: true,
+      title: {
+        style: {
+          fontSize: '0px',
+        },
       },
     },
-  },
-  dataLabels: {
-    enabled: false,
-  },
-  tooltip: {
-    x: {
-      format: 'dd MMM yyyy',
-    },
-  },
-  xaxis: {
-    type: 'category',
-    categories: [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ],
-    axisBorder: {
-      show: false,
-    },
-    axisTicks: {
-      show: false,
-    },
-    tooltip: {
-      enabled: false,
-    },
-  },
-  yaxis: {
-    title: {
-      style: {
-        fontSize: '0px',
-      },
-    },
-  },
+  }
 })
 </script>
 

@@ -30,12 +30,14 @@
       
       <a
         :href="content.button_link || '#'"
-        :class="{
-          'bg-blue-600 hover:bg-blue-700 text-white': content.background === 'light',
-          'bg-white hover:bg-gray-100 text-gray-900': content.background === 'dark' || content.background === 'brand'
-        }"
-        class="inline-block font-semibold py-3 px-8 rounded-lg transition-colors duration-200"
-        :class="{ 'pointer-events-none': isEditing }"
+        :class="[
+          'inline-block font-semibold py-3 px-8 rounded-lg transition-colors duration-200',
+          {
+            'bg-blue-600 hover:bg-blue-700 text-white': content.background === 'light',
+            'bg-white hover:bg-gray-100 text-gray-900': content.background === 'dark' || content.background === 'brand',
+            'pointer-events-none': isEditing
+          }
+        ]"
       >
         {{ content.button_text || 'Contact Us' }}
       </a>

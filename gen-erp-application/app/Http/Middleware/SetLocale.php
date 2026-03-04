@@ -4,16 +4,33 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Session;
 use Symfony\Component\HttpFoundation\Response;
 
 class SetLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = session('locale', config('app.locale', 'bn'));
-
+        // Priority order: User preference > Session > Default (Bengali)
+        $locale = 'bn'; // Default to Bengali
+        
+        // Check user preference if authenticated
+        if (auth()->check() && auth()->user()->locale) {
+            $locale = auth()->user()->locale;
+        } 
+        // Check session
+        elseif (Session::has('locale')) {
+            $locale = Session::get('locale');
+        }
+        
+        // Ensure locale is supported
         if (in_array($locale, ['en', 'bn'])) {
-            app()->setLocale($locale);
+            App::setLocale($locale);
+            Session::put('locale', $locale);
+        } else {
+            App::setLocale('bn');
+            Session::put('locale', 'bn');
         }
 
         return $next($request);

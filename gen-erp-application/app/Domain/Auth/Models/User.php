@@ -32,6 +32,7 @@ class User extends Authenticatable
         'phone',
         'avatar_url',
         'preferred_locale',
+        'locale',
         'last_active_company_id',
         'is_superadmin',
         'two_factor_secret',
