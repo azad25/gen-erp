@@ -295,6 +295,73 @@ class LeadController extends Controller
         ]);
     }
 
+    public function scoringStatistics(Request $request): JsonResponse
+    {
+        $companyId = $request->user()->currentCompany->id;
+        $statistics = $this->leadService->getScoringStatistics($companyId);
+        
+        return response()->json([
+            'data' => $statistics
+        ]);
+    }
+
+    public function bulkScore(Request $request): JsonResponse
+    {
+        $request->validate([
+            'lead_ids' => 'required|array',
+            'lead_ids.*' => 'integer|exists:leads,id'
+        ]);
+        
+        $companyId = $request->user()->currentCompany->id;
+        
+        $updated = $this->leadService->bulkScore(
+            $request->lead_ids,
+            $companyId
+        );
+        
+        return response()->json([
+            'message' => __('crm.leads_scored_successfully', ['count' => $updated])
+        ]);
+    }
+
+    public function bulkQualify(Request $request): JsonResponse
+    {
+        $request->validate([
+            'lead_ids' => 'required|array',
+            'lead_ids.*' => 'integer|exists:leads,id'
+        ]);
+        
+        $companyId = $request->user()->currentCompany->id;
+        
+        $updated = $this->leadService->bulkQualify(
+            $request->lead_ids,
+            $companyId
+        );
+        
+        return response()->json([
+            'message' => __('crm.leads_qualified_successfully', ['count' => $updated])
+        ]);
+    }
+
+    public function score(Request $request, string $uuid): JsonResponse
+    {
+        $companyId = $request->user()->currentCompany->id;
+        $lead = $this->leadService->findByUuid($uuid, $companyId);
+        
+        if (!$lead) {
+            return response()->json([
+                'message' => __('crm.lead_not_found')
+            ], 404);
+        }
+        
+        $lead = $this->leadService->scoreLead($lead);
+        
+        return response()->json([
+            'message' => __('crm.lead_scored_successfully'),
+            'data' => new LeadResource($lead)
+        ]);
+    }
+
     public function myLeads(Request $request): AnonymousResourceCollection
     {
         $companyId = $request->user()->currentCompany->id;

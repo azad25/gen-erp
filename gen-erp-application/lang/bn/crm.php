@@ -9,8 +9,11 @@ return [
     'lead_assigned_successfully' => 'লিড সফলভাবে বরাদ্দ করা হয়েছে',
     'lead_score_updated_successfully' => 'লিড স্কোর সফলভাবে আপডেট হয়েছে',
     'lead_qualified_successfully' => 'লিড সফলভাবে যোগ্য হিসেবে চিহ্নিত হয়েছে',
+    'lead_scored_successfully' => 'লিড সফলভাবে স্কোর করা হয়েছে',
     'leads_assigned_successfully' => ':count টি লিড সফলভাবে বরাদ্দ করা হয়েছে',
     'leads_status_updated_successfully' => ':count টি লিডের স্ট্যাটাস সফলভাবে আপডেট হয়েছে',
+    'leads_scored_successfully' => ':count টি লিড সফলভাবে স্কোর করা হয়েছে',
+    'leads_qualified_successfully' => ':count টি লিড সফলভাবে যোগ্য হিসেবে চিহ্নিত হয়েছে',
 
     // Opportunity Management
     'opportunity_created_successfully' => 'সুযোগ সফলভাবে তৈরি হয়েছে',

@@ -276,13 +276,17 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
                 Route::post('/', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'store'])->name('store');
                 Route::get('/my-leads', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'myLeads'])->name('my-leads');
                 Route::get('/statistics', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'statistics'])->name('statistics');
+                Route::get('/scoring-statistics', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'scoringStatistics'])->name('scoring-statistics');
                 Route::post('/bulk-assign', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'bulkAssign'])->name('bulk-assign');
                 Route::post('/bulk-update-status', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'bulkUpdateStatus'])->name('bulk-update-status');
+                Route::post('/bulk-score', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'bulkScore'])->name('bulk-score');
+                Route::post('/bulk-qualify', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'bulkQualify'])->name('bulk-qualify');
                 Route::get('/{uuid}', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'show'])->name('show');
                 Route::put('/{uuid}', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'update'])->name('update');
                 Route::delete('/{uuid}', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'destroy'])->name('destroy');
                 Route::post('/{uuid}/assign', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'assign'])->name('assign');
                 Route::post('/{uuid}/update-score', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'updateScore'])->name('update-score');
+                Route::post('/{uuid}/score', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'score'])->name('score');
                 Route::post('/{uuid}/qualify', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'qualify'])->name('qualify');
                 Route::post('/{uuid}/notes', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'addNote'])->name('add-note');
                 Route::post('/{uuid}/tags', [\App\Http\Controllers\Api\V1\CRM\LeadController::class, 'addTag'])->name('add-tag');

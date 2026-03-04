@@ -9,8 +9,11 @@ return [
     'lead_assigned_successfully' => 'Lead assigned successfully',
     'lead_score_updated_successfully' => 'Lead score updated successfully',
     'lead_qualified_successfully' => 'Lead qualified successfully',
+    'lead_scored_successfully' => 'Lead scored successfully',
     'leads_assigned_successfully' => ':count leads assigned successfully',
     'leads_status_updated_successfully' => ':count leads status updated successfully',
+    'leads_scored_successfully' => ':count leads scored successfully',
+    'leads_qualified_successfully' => ':count leads qualified successfully',
 
     // Opportunity Management
     'opportunity_created_successfully' => 'Opportunity created successfully',
