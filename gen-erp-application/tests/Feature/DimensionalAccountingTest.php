@@ -14,18 +14,20 @@ uses(RefreshDatabase::class);
 test('journal entry lines can store custom dimensions', function (): void {
     // Arrange
     $company = Company::factory()->create();
-    $this->actingAs($company->users()->first());
+    $user = \App\Domain\Auth\Models\User::factory()->create();
+    $company->users()->attach($user, ['role' => 'owner']);
+    $this->actingAs($user);
 
     $receivableAccount = Account::factory()->create([
         'company_id' => $company->id,
-        'account_code' => '1200',
-        'account_name' => 'Accounts Receivable',
+        'code' => '1200',
+        'name' => 'Accounts Receivable',
     ]);
 
     $revenueAccount = Account::factory()->create([
         'company_id' => $company->id,
-        'account_code' => '4000',
-        'account_name' => 'Sales Revenue',
+        'code' => '4000',
+        'name' => 'Sales Revenue',
     ]);
 
     $costCenter = CostCenter::factory()->create([
@@ -85,8 +87,8 @@ test('journal entry lines can store custom dimensions', function (): void {
     $revenueLine = $journalEntry->lines->where('account_id', $revenueAccount->id)->first();
 
     // Check that dimensions are stored correctly
-    expect($receivableLine->dimensions)->toBe($customDimensions);
-    expect($revenueLine->dimensions)->toBe($customDimensions);
+    expect($receivableLine->dimensions)->toEqual($customDimensions);
+    expect($revenueLine->dimensions)->toEqual($customDimensions);
 
     // Check that cost center is also stored
     expect($receivableLine->cost_center_id)->toBe($costCenter->id);
@@ -109,7 +111,9 @@ test('journal entry lines can store custom dimensions', function (): void {
 test('dimensions are preserved in journal entry reversals', function (): void {
     // Arrange
     $company = Company::factory()->create();
-    $this->actingAs($company->users()->first());
+    $user = \App\Domain\Auth\Models\User::factory()->create();
+    $company->users()->attach($user, ['role' => 'owner']);
+    $this->actingAs($user);
 
     $account1 = Account::factory()->create(['company_id' => $company->id]);
     $account2 = Account::factory()->create(['company_id' => $company->id]);
@@ -161,7 +165,7 @@ test('dimensions are preserved in journal entry reversals', function (): void {
     expect($reversal->lines)->toHaveCount(2);
 
     foreach ($reversal->lines as $line) {
-        expect($line->dimensions)->toBe($originalDimensions);
+        expect($line->dimensions)->toEqual($originalDimensions);
     }
 
     // Verify the reversal swapped debits and credits but kept dimensions
@@ -170,14 +174,16 @@ test('dimensions are preserved in journal entry reversals', function (): void {
 
     expect($reversalDebitLine->account_id)->toBe($account2->id); // Originally credit account
     expect($reversalCreditLine->account_id)->toBe($account1->id); // Originally debit account
-    expect($reversalDebitLine->dimensions)->toBe($originalDimensions);
-    expect($reversalCreditLine->dimensions)->toBe($originalDimensions);
+    expect($reversalDebitLine->dimensions)->toEqual($originalDimensions);
+    expect($reversalCreditLine->dimensions)->toEqual($originalDimensions);
 });
 
 test('can query journal lines by multiple dimension criteria', function (): void {
     // Arrange
     $company = Company::factory()->create();
-    $this->actingAs($company->users()->first());
+    $user = \App\Domain\Auth\Models\User::factory()->create();
+    $company->users()->attach($user, ['role' => 'owner']);
+    $this->actingAs($user);
 
     $account = Account::factory()->create(['company_id' => $company->id]);
     $postingService = app(PostingService::class);
@@ -248,7 +254,7 @@ test('can query journal lines by multiple dimension criteria', function (): void
     expect($salesLines)->toHaveCount(4); // 2 entries × 2 lines each
 
     // Verify amounts can be summed by dimension
-    $project001Total = \App\Domain\Accounting\Models\JournalEntryLine::where('company_id', $company->id)
+    $project001Total = (int) \App\Domain\Accounting\Models\JournalEntryLine::where('company_id', $company->id)
         ->whereJsonContains('dimensions->project_id', 'PRJ-001')
         ->where('debit', '>', 0)
         ->sum('debit');

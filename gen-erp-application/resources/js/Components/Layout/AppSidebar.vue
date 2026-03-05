@@ -195,6 +195,11 @@ import { ref, computed } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import { Link } from "@inertiajs/vue3";
 import { useTranslations } from "@/Composables/useTranslations";
+import { 
+  CreditCardIcon, 
+  UsersIcon, 
+  DocumentTextIcon as FileTextIcon 
+} from "@heroicons/vue/24/outline";
 
 import {
   GridIcon,
@@ -341,6 +346,12 @@ const menuGroups = computed(() => [
     icon: DocsIcon,
     items: [
       {
+        icon: BarChartIcon,
+        title: $t('sidebar.sales.invoice_dashboard'),
+        href: "/sales/invoice-dashboard",
+        routeName: "sales.invoice-dashboard",
+      },
+      {
         icon: DocsIcon,
         title: $t('sidebar.sales.orders'),
         href: "/sales/orders",
@@ -369,6 +380,31 @@ const menuGroups = computed(() => [
         title: $t('sidebar.sales.returns'),
         href: "/sales/returns",
         routeName: "sales.returns",
+      },
+    ],
+  },
+  {
+    key: "pos",
+    title: $t('sidebar.pos.title'),
+    icon: BoxCubeIcon,
+    items: [
+      {
+        icon: GridIcon,
+        title: $t('sidebar.pos.terminal'),
+        href: "/pos/terminal",
+        routeName: "pos.terminal",
+      },
+      {
+        icon: CalenderIcon,
+        title: $t('sidebar.pos.sessions'),
+        href: "/pos/sessions",
+        routeName: "pos.sessions.index",
+      },
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.pos.sales'),
+        href: "/pos/sales",
+        routeName: "pos.sales.index",
       },
     ],
   },
@@ -481,6 +517,25 @@ const menuGroups = computed(() => [
         href: "/accounting/balance-sheet",
         routeName: "accounting.balance-sheet",
       },
+      {
+        icon: SettingsIcon,
+        title: $t('sidebar.accounting.lock_date'),
+        href: "/accounting/lock-date",
+        routeName: "accounting.lock-date",
+      },
+    ],
+  },
+  {
+    key: "payments",
+    title: $t('sidebar.payments.title'),
+    icon: DocsIcon,
+    items: [
+      {
+        icon: DocsIcon,
+        title: $t('sidebar.payments.customer_payments'),
+        href: "/payments",
+        routeName: "payments.index",
+      },
     ],
   },
   {
@@ -524,6 +579,30 @@ const menuGroups = computed(() => [
         href: "/hr/timesheet",
         routeName: "hr.timesheet",
       },
+      {
+        icon: ChartBarIcon,
+        title: $t('sidebar.hr.capacity'),
+        href: "/hr/capacity",
+        routeName: "hr.capacity.index",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.hr.skills'),
+        href: "/hr/skills",
+        routeName: "hr.skills.index",
+      },
+      {
+        icon: CalenderIcon,
+        title: $t('sidebar.hr.availability'),
+        href: "/hr/availability",
+        routeName: "hr.availability.calendar",
+      },
+      {
+        icon: ChartBarIcon,
+        title: $t('sidebar.hr.performance'),
+        href: "/hr/performance",
+        routeName: "hr.performance.index",
+      },
     ],
   },
   {
@@ -558,6 +637,12 @@ const menuGroups = computed(() => [
     items: [
       {
         icon: UserCircleIcon,
+        title: $t('sidebar.crm.contacts'),
+        href: "/contacts",
+        routeName: "contacts.index",
+      },
+      {
+        icon: UserCircleIcon,
         title: $t('sidebar.crm.leads'),
         href: "/crm/leads",
         routeName: "crm.leads.index",
@@ -579,6 +664,25 @@ const menuGroups = computed(() => [
         title: $t('sidebar.crm.activities'),
         href: "/crm/activities",
         routeName: "crm.activities.index",
+      },
+      {
+        icon: UserCircleIcon,
+        title: $t('sidebar.crm.crm_contacts'),
+        href: "/crm/contacts",
+        routeName: "crm.contacts.index",
+      },
+    ],
+  },
+  {
+    key: "calendar",
+    title: $t('sidebar.calendar.title'),
+    icon: CalenderIcon,
+    items: [
+      {
+        icon: CalenderIcon,
+        title: $t('sidebar.calendar.view'),
+        href: "/calendar",
+        routeName: "calendar",
       },
     ],
   },
@@ -610,6 +714,109 @@ const menuGroups = computed(() => [
         title: $t('sidebar.cms.menus'),
         href: "/cms/menus",
         routeName: "cms.menus",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.cms.reviews'),
+        href: "/cms/reviews",
+        routeName: "cms.reviews.index",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.cms.wishlist'),
+        href: "/cms/wishlist",
+        routeName: "cms.wishlist.index",
+      },
+      {
+        icon: SettingsIcon,
+        title: $t('sidebar.cms.seo'),
+        href: "/cms/seo",
+        routeName: "cms.seo.index",
+      },
+      {
+        icon: MailIcon,
+        title: $t('sidebar.cms.contacts'),
+        href: "/cms/contacts",
+        routeName: "cms.contacts.index",
+      },
+    ],
+  },
+  {
+    key: "reports",
+    title: $t('sidebar.reports.title'),
+    icon: BarChartIcon,
+    items: [
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.reports.dashboard'),
+        href: "/reports/dashboard",
+        routeName: "reports.dashboard",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.reports.trial_balance'),
+        href: "/reports/financial/trial-balance",
+        routeName: "reports.financial.trial-balance",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.reports.profit_loss'),
+        href: "/reports/financial/profit-loss",
+        routeName: "reports.financial.profit-loss",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.reports.balance_sheet'),
+        href: "/reports/financial/balance-sheet",
+        routeName: "reports.financial.balance-sheet",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.reports.cash_flow'),
+        href: "/reports/financial/cash-flow",
+        routeName: "reports.financial.cash-flow",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.reports.aging_ar'),
+        href: "/reports/aging/accounts-receivable",
+        routeName: "reports.aging.ar",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.reports.aging_ap'),
+        href: "/reports/aging/accounts-payable",
+        routeName: "reports.aging.ap",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.reports.inventory_valuation'),
+        href: "/reports/inventory/valuation",
+        routeName: "reports.inventory.valuation",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.reports.vat_liability'),
+        href: "/reports/vat/liability",
+        routeName: "reports.vat.liability",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.reports.mushak63'),
+        href: "/reports/vat/mushak63",
+        routeName: "reports.vat.mushak63",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.reports.yoy_profit_loss'),
+        href: "/reports/comparative/yoy-profit-loss",
+        routeName: "reports.comparative.yoy-profit-loss",
+      },
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.reports.builder'),
+        href: "/reports/builder",
+        routeName: "reports.builder.index",
       },
     ],
   },
@@ -657,6 +864,70 @@ const menuGroups = computed(() => [
     ],
   },
   {
+    key: "integrations",
+    title: $t('sidebar.integrations.title'),
+    icon: PlugInIcon,
+    items: [
+      {
+        icon: PlugInIcon,
+        title: $t('sidebar.integrations.dashboard'),
+        href: "/integrations",
+        routeName: "integrations.index",
+      },
+    ],
+  },
+  {
+    key: "subscription",
+    title: $t('sidebar.subscription.title'),
+    icon: CreditCardIcon,
+    items: [
+      {
+        icon: CreditCardIcon,
+        title: $t('sidebar.subscription.plans'),
+        href: "/subscription/plans",
+        routeName: "subscription.plans",
+      },
+      {
+        icon: CreditCardIcon,
+        title: $t('sidebar.subscription.manage'),
+        href: "/subscription",
+        routeName: "subscription.index",
+      },
+    ],
+  },
+  {
+    key: "admin_subscription",
+    title: $t('sidebar.admin_subscription.title'),
+    icon: CreditCardIcon,
+    items: [
+      {
+        icon: BarChartIcon,
+        title: $t('sidebar.admin_subscription.dashboard'),
+        href: "/admin/subscription/dashboard",
+        routeName: "admin.subscription.dashboard",
+      },
+      {
+        icon: UsersIcon,
+        title: $t('sidebar.admin_subscription.subscriptions'),
+        href: "/admin/subscription/subscriptions",
+        routeName: "admin.subscription.subscriptions",
+      },
+      {
+        icon: CreditCardIcon,
+        title: $t('sidebar.admin_subscription.payment_requests'),
+        href: "/admin/subscription/payment-requests",
+        routeName: "admin.subscription.payment-requests",
+      },
+      {
+        icon: FileTextIcon,
+        title: $t('sidebar.admin_subscription.invoices'),
+        href: "/admin/subscription/invoices",
+        routeName: "admin.subscription.invoices",
+      },
+    ],
+    show: computed(() => page.props.auth?.user?.is_superadmin),
+  },
+  {
     key: "settings",
     title: $t('sidebar.settings.title'),
     icon: SettingsIcon,
@@ -684,6 +955,12 @@ const menuGroups = computed(() => [
         title: $t('sidebar.settings.integrations'),
         href: "/settings/integrations",
         routeName: "settings.integrations",
+      },
+      {
+        icon: SettingsIcon,
+        title: $t('sidebar.settings.workflows'),
+        href: "/settings/workflows",
+        routeName: "settings.workflows",
       },
     ],
   },

@@ -417,4 +417,58 @@ class TimeTrackingService
         
         return (int) round(($billableHours / $totalHours) * 100);
     }
+
+    /**
+     * Get employee capacity information
+     */
+    public function getEmployeeCapacity(Employee $employee): array
+    {
+        // Default to 40 hours per week
+        $availableHours = 40;
+        
+        // Get allocated hours from employee tasks
+        $allocatedHours = $employee->employeeTasks()
+            ->whereIn('status', ['assigned', 'in_progress'])
+            ->sum('estimated_hours') ?? 0;
+
+        $remainingHours = max(0, $availableHours - $allocatedHours);
+        $utilizationPercentage = $availableHours > 0 
+            ? round(($allocatedHours / $availableHours) * 100, 2) 
+            : 0;
+
+        return [
+            'employee_id' => $employee->id,
+            'available_hours' => $availableHours,
+            'allocated_hours' => $allocatedHours,
+            'remaining_hours' => $remainingHours,
+            'utilization_percentage' => $utilizationPercentage,
+            'is_over_capacity' => $allocatedHours > $availableHours,
+        ];
+    }
+
+    /**
+     * Get time tracking summary for an employee
+     */
+    public function getTimeTrackingSummary(Employee $employee, Carbon $startDate, Carbon $endDate): array
+    {
+        $timeEntries = EmployeeTimeEntry::where('employee_id', $employee->id)
+            ->whereBetween('entry_date', [$startDate, $endDate])
+            ->get();
+
+        $totalHours = $timeEntries->sum('hours');
+        $billableHours = $timeEntries->where('is_billable', true)->sum('hours');
+        $nonBillableHours = $timeEntries->where('is_billable', false)->sum('hours');
+        $entriesCount = $timeEntries->count();
+
+        $daysDiff = $startDate->diffInDays($endDate) + 1;
+        $averageHoursPerDay = $daysDiff > 0 ? round($totalHours / $daysDiff, 2) : 0;
+
+        return [
+            'total_hours' => $totalHours,
+            'billable_hours' => $billableHours,
+            'non_billable_hours' => $nonBillableHours,
+            'entries_count' => $entriesCount,
+            'average_hours_per_day' => $averageHoursPerDay,
+        ];
+    }
 }

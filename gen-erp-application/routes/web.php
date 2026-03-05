@@ -45,7 +45,7 @@ Route::get('/emergency-company-fix', function () {
 
 // ── Home Page (Vue) ────────────────────────────────────────
 Route::inertia('/', 'Home')->name('home');
-Route::get('/locale/{locale}', [HomeController::class, 'setLocale'])->name('locale.set');
+// Removed duplicate locale route - use POST /language/switch instead
 
 // ── Language Switching ────────────────────────────────────
 Route::post('/language/switch', [LanguageController::class, 'switch'])->name('language.switch');
@@ -139,11 +139,15 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
 
     // Sales Routes
     Route::get('/sales/dashboard', [\App\Http\Controllers\Sales\SalesDashboardController::class, 'index'])->name('sales.dashboard');
+    Route::get('/sales/invoice-dashboard', fn () => Inertia::render('Sales/InvoiceDashboard'))->name('sales.invoice-dashboard');
     Route::get('/sales/orders', [\App\Http\Controllers\Sales\SalesOrderController::class, 'index'])->name('sales.orders');
     Route::get('/sales/invoices', [\App\Http\Controllers\Sales\InvoiceController::class, 'index'])->name('sales.invoices');
     Route::get('/sales/customers', fn () => Inertia::render('Sales/Customers'))->name('sales.customers');
     Route::get('/sales/credit-notes', fn () => Inertia::render('Sales/CreditNotes'))->name('sales.credit-notes');
     Route::get('/sales/returns', fn () => Inertia::render('Sales/Returns'))->name('sales.returns');
+
+    // Inbox / Messaging
+    Route::get('/inbox', fn () => Inertia::render('Inbox/Index'))->name('inbox');
 
     // Purchase Routes
     Route::get('/purchase/dashboard', [\App\Http\Controllers\Purchase\PurchaseDashboardController::class, 'index'])->name('purchase.dashboard');
@@ -214,10 +218,81 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
     });
 
     // POS Routes
-    Route::get('/pos/session', fn () => Inertia::render('POS/Session'))->name('pos.session');
+    Route::prefix('pos')->name('pos.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\POS\POSDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/terminal', fn () => Inertia::render('POS/Terminal'))->name('terminal');
+        Route::get('/sessions', fn () => Inertia::render('POS/Sessions'))->name('sessions.index');
+        Route::get('/sales', fn () => Inertia::render('POS/Sales'))->name('sales.index');
+    });
+
+    // Payment Routes
+    Route::prefix('payments')->name('payments.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Payment\PaymentController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Payment\PaymentController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Payment\PaymentController::class, 'store'])->name('store');
+        Route::get('/{id}', [\App\Http\Controllers\Payment\PaymentController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [\App\Http\Controllers\Payment\PaymentController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [\App\Http\Controllers\Payment\PaymentController::class, 'update'])->name('update');
+        Route::get('/{id}/allocate', [\App\Http\Controllers\Payment\PaymentController::class, 'allocate'])->name('allocate');
+        Route::post('/{id}/allocate', [\App\Http\Controllers\Payment\PaymentController::class, 'storeAllocation'])->name('allocate.store');
+    });
+
+    // Custom Fields Routes (Documents)
+    Route::prefix('documents/custom-fields')->name('documents.custom-fields.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Document\CustomFieldController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Document\CustomFieldController::class, 'store'])->name('store');
+        
+        // Specific routes must come before parameter routes
+        Route::get('/grouped/by-entity', [\App\Http\Controllers\Document\CustomFieldController::class, 'grouped'])->name('grouped');
+        Route::get('/stats/overview', [\App\Http\Controllers\Document\CustomFieldController::class, 'stats'])->name('stats');
+        Route::get('/domains/list', [\App\Http\Controllers\Document\CustomFieldController::class, 'domains'])->name('domains');
+        Route::get('/entity-types/list', [\App\Http\Controllers\Document\CustomFieldController::class, 'entityTypes'])->name('entity-types');
+        Route::post('/reorder', [\App\Http\Controllers\Document\CustomFieldController::class, 'updateOrder'])->name('update-order');
+        
+        // Parameter routes come last
+        Route::get('/{id}', [\App\Http\Controllers\Document\CustomFieldController::class, 'show'])->name('show');
+        Route::put('/{id}', [\App\Http\Controllers\Document\CustomFieldController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\Document\CustomFieldController::class, 'destroy'])->name('destroy');
+    });
 
     // Reports Routes
-    Route::get('/reports', fn () => Inertia::render('Reports/Index'))->name('reports');
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/dashboard', fn () => Inertia::render('Reports/Dashboard/Index'))->name('dashboard');
+        
+        // Financial Reports
+        Route::prefix('financial')->name('financial.')->group(function () {
+            Route::get('/trial-balance', fn () => Inertia::render('Reports/Financial/TrialBalance'))->name('trial-balance');
+            Route::get('/profit-loss', fn () => Inertia::render('Reports/Financial/ProfitLoss'))->name('profit-loss');
+            Route::get('/balance-sheet', fn () => Inertia::render('Reports/Financial/BalanceSheet'))->name('balance-sheet');
+            Route::get('/cash-flow', fn () => Inertia::render('Reports/Financial/CashFlow'))->name('cash-flow');
+        });
+        
+        // Aging Reports
+        Route::prefix('aging')->name('aging.')->group(function () {
+            Route::get('/accounts-receivable', fn () => Inertia::render('Reports/Aging/AccountsReceivable'))->name('ar');
+            Route::get('/accounts-payable', fn () => Inertia::render('Reports/Aging/AccountsPayable'))->name('ap');
+        });
+        
+        // Inventory Reports
+        Route::prefix('inventory')->name('inventory.')->group(function () {
+            Route::get('/valuation', fn () => Inertia::render('Reports/Inventory/Valuation'))->name('valuation');
+        });
+        
+        // VAT Reports
+        Route::prefix('vat')->name('vat.')->group(function () {
+            Route::get('/', fn () => Inertia::render('Reports/VAT/Index'))->name('index');
+            Route::get('/liability', fn () => Inertia::render('Reports/VAT/Liability'))->name('liability');
+            Route::get('/mushak63', fn () => Inertia::render('Reports/VAT/Mushak63'))->name('mushak63');
+        });
+        
+        // Comparative Reports
+        Route::prefix('comparative')->name('comparative.')->group(function () {
+            Route::get('/yoy-profit-loss', fn () => Inertia::render('Reports/Comparative/YoYProfitLoss'))->name('yoy-profit-loss');
+        });
+        
+        // Report Builder
+        Route::get('/builder', fn () => Inertia::render('Reports/Builder/Index'))->name('builder.index');
+    });
 
     // Settings Routes
     Route::get('/settings/company', fn () => Inertia::render('Settings/Company'))->name('settings.company');
@@ -225,6 +300,26 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
     Route::get('/settings/roles', fn () => Inertia::render('Settings/Roles'))->name('settings.roles');
     Route::get('/settings/workflows', fn () => Inertia::render('Settings/Workflows'))->name('settings.workflows');
     Route::get('/settings/integrations', fn () => Inertia::render('Settings/Integrations'))->name('settings.integrations');
+
+    // Integrations Routes
+    Route::prefix('integrations')->name('integrations.')->group(function () {
+        Route::get('/', fn () => Inertia::render('Integrations/Index'))->name('index');
+        Route::get('/{id}/configure', fn ($id) => Inertia::render('Integrations/Configure', ['id' => $id]))->name('configure');
+    });
+
+    // Subscription Routes
+    Route::prefix('subscription')->name('subscription.')->group(function () {
+        Route::get('/', fn () => Inertia::render('Subscription/Index'))->name('index');
+        Route::get('/plans', fn () => Inertia::render('Subscription/Plans'))->name('plans');
+    });
+
+    // Admin Subscription Routes (Master Admin & Dev Admin only)
+    Route::prefix('admin/subscription')->name('admin.subscription.')->group(function () {
+        Route::get('/dashboard', fn () => Inertia::render('Admin/SubscriptionDashboard'))->name('dashboard');
+        Route::get('/subscriptions', fn () => Inertia::render('Admin/Subscriptions'))->name('subscriptions');
+        Route::get('/payment-requests', fn () => Inertia::render('Admin/PaymentRequests'))->name('payment-requests');
+        Route::get('/invoices', fn () => Inertia::render('Admin/Invoices'))->name('invoices');
+    });
 
     // Profile Route
     Route::get('/profile', fn () => Inertia::render('Profile/Index'))->name('profile');
@@ -260,15 +355,19 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
             Route::get('/', [\App\Http\Controllers\Document\CustomFieldController::class, 'index'])->name('index');
             Route::get('/overview', [\App\Http\Controllers\Document\CustomFieldController::class, 'overview'])->name('overview');
             Route::get('/create', [\App\Http\Controllers\Document\CustomFieldController::class, 'create'])->name('create');
+            Route::get('/grouped', [\App\Http\Controllers\Document\CustomFieldController::class, 'grouped'])->name('grouped');
+            Route::get('/stats', [\App\Http\Controllers\Document\CustomFieldController::class, 'stats'])->name('stats');
+            Route::get('/domains', [\App\Http\Controllers\Document\CustomFieldController::class, 'domains'])->name('domains');
+            Route::get('/entity-types', [\App\Http\Controllers\Document\CustomFieldController::class, 'entityTypes'])->name('entity-types');
+            Route::get('/api/entity-types', [\App\Http\Controllers\Document\CustomFieldController::class, 'getEntityTypes'])->name('api.entity-types');
+            Route::get('/export', [\App\Http\Controllers\Document\CustomFieldController::class, 'export'])->name('export');
             Route::post('/', [\App\Http\Controllers\Document\CustomFieldController::class, 'store'])->name('store');
+            Route::post('/bulk-action', [\App\Http\Controllers\Document\CustomFieldController::class, 'bulkAction'])->name('bulk-action');
+            Route::post('/update-order', [\App\Http\Controllers\Document\CustomFieldController::class, 'updateOrder'])->name('update-order');
             Route::get('/{customField}', [\App\Http\Controllers\Document\CustomFieldController::class, 'show'])->name('show');
             Route::get('/{customField}/edit', [\App\Http\Controllers\Document\CustomFieldController::class, 'edit'])->name('edit');
             Route::put('/{customField}', [\App\Http\Controllers\Document\CustomFieldController::class, 'update'])->name('update');
             Route::delete('/{customField}', [\App\Http\Controllers\Document\CustomFieldController::class, 'destroy'])->name('destroy');
-            Route::get('/api/entity-types', [\App\Http\Controllers\Document\CustomFieldController::class, 'getEntityTypes'])->name('entity-types');
-            Route::post('/bulk-action', [\App\Http\Controllers\Document\CustomFieldController::class, 'bulkAction'])->name('bulk-action');
-            Route::post('/update-order', [\App\Http\Controllers\Document\CustomFieldController::class, 'updateOrder'])->name('update-order');
-            Route::get('/export', [\App\Http\Controllers\Document\CustomFieldController::class, 'export'])->name('export');
         });
     });
 
@@ -388,6 +487,9 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
         Route::get('/seo', fn () => Inertia::render('CMS/SEO/Index'))->name('seo.index');
     });
 
+    // Calendar Route
+    Route::get('/calendar', fn () => Inertia::render('Calendar/Index'))->name('calendar');
+
     // Logistics Routes
     Route::prefix('logistics')->name('logistics.')->group(function () {
         Route::get('/dashboard', fn () => Inertia::render('Logistics/Dashboard/Index'))->name('dashboard');
@@ -460,11 +562,18 @@ Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
     // Removed redirect from / to /dashboard - home page should be public
 });
 
-// ── Test Route ────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// ⚠️  TEST/DEBUG ROUTES - COMMENTED OUT FOR PRODUCTION
+// ══════════════════════════════════════════════════════════════════════════════
+// Uncomment these routes ONLY in local development environment
+// NEVER enable these in production - they expose sensitive session/auth data
+// ══════════════════════════════════════════════════════════════════════════════
+
+/*
+// ── Test Routes (Development Only) ────────────────────────────────────────────
 Route::inertia('/test', 'Test');
 Route::get('/test-no-middleware', function () {
     \Log::info('[Route] Test no middleware accessed');
-
     return Inertia::render('SimpleTest');
 });
 Route::get('/test-no-auth', function () {
@@ -546,6 +655,11 @@ Route::get('/debug-session', function () {
         ],
     ]);
 })->middleware('auth');
+*/
+
+// ══════════════════════════════════════════════════════════════════════════════
+// END TEST/DEBUG ROUTES
+// ══════════════════════════════════════════════════════════════════════════════
 
 // ── Internal Documentation (Public / Optional Auth) ─────────────────────
 Route::prefix('docs')->name('docs.')->group(function () {

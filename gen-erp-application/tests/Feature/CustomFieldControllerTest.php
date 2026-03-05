@@ -159,7 +159,7 @@ class CustomFieldControllerTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson([
             'success' => true,
-            'message' => 'Custom field deleted successfully',
+            'message' => 'Custom field deleted successfully.',
         ]);
 
         $this->assertDatabaseMissing('custom_field_definitions', [
@@ -349,7 +349,7 @@ class CustomFieldControllerTest extends TestCase
 
     public function test_custom_field_validation_on_create(): void
     {
-        $response = $this->post(route('documents.custom-fields.store'), []);
+        $response = $this->postJson(route('documents.custom-fields.store'), []);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors([

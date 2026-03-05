@@ -18,6 +18,11 @@ class UpdateCustomerBalance implements ShouldQueue
     {
         $transaction = $event->transaction;
         $customer = $transaction->customer;
+        
+        // Skip if customer not found (e.g., for supplier transactions)
+        if (!$customer) {
+            return;
+        }
 
         // Log the transaction
         Log::info('Customer transaction recorded', [

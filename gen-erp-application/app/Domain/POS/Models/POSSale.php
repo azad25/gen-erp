@@ -1,9 +1,13 @@
 <?php
 
-namespace App\Models;
+namespace App\Domain\POS\Models;
 
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Auth\Models\Concerns\BelongsToCompany;
+use App\Domain\Auth\Models\Branch;
+use App\Domain\Invoice\Models\Invoice;
+use Database\Factories\Domain\POS\POSSaleFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class POSSale extends Model
 {
-    use BelongsToCompany;
+    use BelongsToCompany, HasFactory;
 
     protected $table = 'pos_sales';
 
@@ -90,5 +94,10 @@ class POSSale extends Model
     public function items(): HasMany
     {
         return $this->hasMany(POSSaleItem::class, 'pos_sale_id');
+    }
+
+    protected static function newFactory(): POSSaleFactory
+    {
+        return POSSaleFactory::new();
     }
 }

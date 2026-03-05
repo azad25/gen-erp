@@ -220,7 +220,7 @@ class CustomFieldManagementService
     /**
      * Update a custom field definition (with security checks).
      */
-    public function updateCustomField(CustomFieldDefinition $definition, array $data): CustomFieldDefinition
+    public function updateCustomField(CustomFieldDefinition $definition, array $data): ?CustomFieldDefinition
     {
         // Validate domain access
         $this->validateDomainAccess($definition->domain);
@@ -267,7 +267,7 @@ class CustomFieldManagementService
             // Clear cache
             $this->clearCustomFieldCache();
             
-            return $result;
+            return (bool) $result;
         });
     }
 

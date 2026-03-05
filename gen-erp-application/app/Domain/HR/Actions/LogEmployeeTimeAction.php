@@ -18,12 +18,6 @@ class LogEmployeeTimeAction
 
     public function execute(LogTimeData $data): EmployeeTimeEntry
     {
-        $employee = Employee::findOrFail($data->employeeId);
-
-        return $this->timeTrackingService->logTime(
-            $employee,
-            $data->entryDate,
-            $data->toArray()
-        );
+        return $this->timeTrackingService->logTime($data);
     }
 }

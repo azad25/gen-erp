@@ -17,6 +17,8 @@ class PipelineStageFactory extends Factory
 
     public function definition(): array
     {
+        static $sortOrderCounter = [];
+        
         return [
             'uuid' => $this->faker->uuid(),
             'company_id' => Company::factory(),
@@ -25,7 +27,15 @@ class PipelineStageFactory extends Factory
             'name' => $this->faker->words(2, true),
             'description' => $this->faker->sentence(),
             'color' => $this->faker->hexColor(),
-            'sort_order' => $this->faker->numberBetween(1, 10),
+            'sort_order' => function (array $attributes) use (&$sortOrderCounter) {
+                $pipelineId = $attributes['pipeline_id'];
+                if (!isset($sortOrderCounter[$pipelineId])) {
+                    // Get the max sort_order for this pipeline
+                    $maxOrder = PipelineStage::where('pipeline_id', $pipelineId)->max('sort_order') ?? 0;
+                    $sortOrderCounter[$pipelineId] = $maxOrder;
+                }
+                return ++$sortOrderCounter[$pipelineId];
+            },
             'is_active' => true,
             'probability' => $this->faker->numberBetween(10, 90),
             'is_closed_won' => false,

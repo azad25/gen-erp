@@ -57,11 +57,27 @@ class StockLayerAllocation extends Model
     {
         return $this->belongsTo(StockLayer::class, 'stock_layer_id');
     }
+    
+    /**
+     * @return BelongsTo<StockLayer, $this>
+     */
+    public function stockLayer(): BelongsTo
+    {
+        return $this->belongsTo(StockLayer::class, 'stock_layer_id');
+    }
 
     /**
      * @return BelongsTo<StockMovement, $this>
      */
     public function movement(): BelongsTo
+    {
+        return $this->belongsTo(StockMovement::class, 'stock_movement_id');
+    }
+    
+    /**
+     * @return BelongsTo<StockMovement, $this>
+     */
+    public function stockMovement(): BelongsTo
     {
         return $this->belongsTo(StockMovement::class, 'stock_movement_id');
     }

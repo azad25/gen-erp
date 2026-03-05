@@ -216,14 +216,17 @@ class TaskAssignmentService
     public function getEmployeeTaskStatistics(Employee $employee): array
     {
         $tasks = EmployeeTask::where('employee_id', $employee->id)->get();
+        $totalTasks = $tasks->count();
+        $completedTasks = $tasks->where('status', 'completed')->count();
 
         return [
-            'total_tasks' => $tasks->count(),
+            'total_tasks' => $totalTasks,
             'assigned_tasks' => $tasks->where('status', 'assigned')->count(),
             'in_progress_tasks' => $tasks->where('status', 'in_progress')->count(),
-            'completed_tasks' => $tasks->where('status', 'completed')->count(),
+            'completed_tasks' => $completedTasks,
             'on_hold_tasks' => $tasks->where('status', 'on_hold')->count(),
             'overdue_tasks' => $tasks->filter(fn($task) => $task->isOverdue())->count(),
+            'completion_rate' => $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100, 2) : 0,
             'total_estimated_hours' => $tasks->sum('estimated_hours'),
             'total_actual_hours' => $tasks->sum('actual_hours'),
             'average_completion_time' => $this->calculateAverageCompletionTime($tasks),

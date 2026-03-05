@@ -398,8 +398,8 @@ class ActivityServiceTest extends TestCase
             'user_id' => $this->user->id,
             'type' => ActivityType::EMAIL,
             'status' => 'scheduled', // Important: not completed
-            'due_date' => now()->subHours(2), // overdue
-            'scheduled_at' => now()->subHours(2),
+            'due_date' => now()->subDay(), // overdue (yesterday)
+            'scheduled_at' => now()->subDay(),
         ]);
 
         CrmActivity::factory()->count(1)->create([

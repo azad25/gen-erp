@@ -25,6 +25,13 @@ class AuthServiceProvider extends ServiceProvider
         \App\Domain\Sales\Models\Invoice::class => \App\Policies\InvoicePolicy::class,
         \App\Domain\HR\Models\Employee::class => \App\Policies\EmployeePolicy::class,
         \App\Domain\Purchase\Models\PurchaseOrder::class => \App\Policies\PurchaseOrderPolicy::class,
+        
+        // CMS Policies (Sprint 4)
+        \App\Domain\CMS\Models\Wishlist::class => \App\Policies\WishlistPolicy::class,
+        \App\Domain\CMS\Models\Review::class => \App\Policies\ReviewPolicy::class,
+        \App\Domain\CMS\Models\Contact::class => \App\Policies\ContactPolicy::class,
+        \App\Domain\CMS\Models\Menu::class => \App\Policies\MenuPolicy::class,
+        // SEOPolicy doesn't have a model - it's for general SEO management
     ];
 
     /**

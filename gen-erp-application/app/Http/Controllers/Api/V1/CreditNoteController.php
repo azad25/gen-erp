@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Domain\Customer\Contracts\PaymentServiceInterface;
+use App\Domain\Payment\Contracts\PaymentServiceInterface;
 use App\Domain\Customer\Models\CreditNote;
 use App\Domain\Invoice\Models\Invoice;
 use App\Http\Resources\CreditNoteResource;

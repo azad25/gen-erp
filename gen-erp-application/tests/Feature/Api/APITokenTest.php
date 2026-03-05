@@ -136,8 +136,6 @@ test('authenticated user can list their API tokens', function (): void {
     $company = Company::factory()->create();
     $user->companies()->attach($company->id, ['is_active' => true, 'role' => 'member']);
 
-    session(['active_company_id' => $company->id]);
-
     // Create some tokens
     $token1 = $user->createToken('Token 1', ['*']);
     $token2 = $user->createToken('Token 2', ['read:products']);
@@ -147,7 +145,8 @@ test('authenticated user can list their API tokens', function (): void {
 
     $this->actingAs($user);
 
-    $response = $this->getJson('/auth/tokens');
+    $response = $this->withHeader('X-Company-Id', $company->id)
+        ->getJson('/auth/tokens');
 
     $response->assertStatus(200)
         ->assertJson([
@@ -185,10 +184,10 @@ test('user only sees tokens for active company', function (): void {
     PersonalAccessToken::where('id', $token2->accessToken->id)->update(['company_id' => $company2->id]);
 
     // Set active company to company1
-    session(['active_company_id' => $company1->id]);
     $this->actingAs($user);
 
-    $response = $this->getJson('/auth/tokens');
+    $response = $this->withHeader('X-Company-Id', $company1->id)
+        ->getJson('/auth/tokens');
 
     $response->assertStatus(200);
 
@@ -213,14 +212,13 @@ test('user can revoke their own API token', function (): void {
     $company = Company::factory()->create();
     $user->companies()->attach($company->id, ['is_active' => true, 'role' => 'member']);
 
-    session(['active_company_id' => $company->id]);
-
     $token = $user->createToken('Test Token');
     PersonalAccessToken::where('id', $token->accessToken->id)->update(['company_id' => $company->id]);
 
     $this->actingAs($user);
 
-    $response = $this->deleteJson("/auth/tokens/{$token->accessToken->id}");
+    $response = $this->withHeader('X-Company-Id', $company->id)
+        ->deleteJson("/auth/tokens/{$token->accessToken->id}");
 
     $response->assertStatus(200)
         ->assertJson([

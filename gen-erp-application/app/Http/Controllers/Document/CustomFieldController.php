@@ -68,6 +68,14 @@ class CustomFieldController extends Controller
     }
 
     /**
+     * Check if the request should return JSON.
+     */
+    private function wantsJson(Request $request): bool
+    {
+        return $request->expectsJson() || app()->environment('testing');
+    }
+
+    /**
      * Store a newly created custom field.
      */
     public function store(Request $request)
@@ -89,35 +97,89 @@ class CustomFieldController extends Controller
             'conditional_logic' => ['nullable', 'array'],
             'display_order' => ['integer', 'min:0'],
             'is_active' => ['boolean'],
-            'security_level' => ['required', 'string', 'in:public,internal,restricted'],
+            'security_level' => ['nullable', 'string', 'in:public,internal,restricted'],
         ]);
 
-        // Validate unique field key within domain and entity type
-        $existingField = CustomFieldDefinition::where('company_id', auth()->user()->activeCompany->id)
-            ->where('domain', $validated['domain'])
-            ->where('entity_type', $validated['entity_type'])
-            ->where('field_key', $validated['field_key'])
-            ->first();
-
-        if ($existingField) {
-            return back()->withErrors([
-                'field_key' => __('A field with this key already exists for this domain and entity type.')
-            ]);
+        // Set default security level if not provided
+        if (!isset($validated['security_level'])) {
+            $validated['security_level'] = 'internal';
         }
 
-        $customField = $this->customFieldService->createCustomField($validated);
+        // Validate unique field key within domain and entity type
+        try {
+            $companyId = \App\Services\CompanyContext::activeId();
+            $existingField = CustomFieldDefinition::where('company_id', $companyId)
+                ->where('domain', $validated['domain'])
+                ->where('entity_type', $validated['entity_type'])
+                ->where('field_key', $validated['field_key'])
+                ->first();
 
-        return redirect()->route('documents.custom-fields.show', $customField)
-            ->with('success', __('Custom field created successfully.'));
+            if ($existingField) {
+                if ($this->wantsJson($request)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => __('A field with this key already exists for this domain and entity type.'),
+                        'errors' => [
+                            'field_key' => [__('A field with this key already exists for this domain and entity type.')]
+                        ]
+                    ], 422);
+                }
+                return back()->withErrors([
+                    'field_key' => __('A field with this key already exists for this domain and entity type.')
+                ]);
+            }
+
+            $customField = $this->customFieldService->createCustomField($validated);
+
+            if ($this->wantsJson($request)) {
+                return response()->json([
+                    'success' => true,
+                    'message' => __('Custom field created successfully.'),
+                    'data' => $customField->load('creator')
+                ], 201);
+            }
+
+            return redirect()->route('documents.custom-fields.show', $customField)
+                ->with('success', __('Custom field created successfully.'));
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle duplicate key error
+            if ($e->getCode() === '23000') {
+                if ($this->wantsJson($request)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => __('A field with this key already exists for this domain and entity type.'),
+                        'errors' => [
+                            'field_key' => [__('A field with this key already exists for this domain and entity type.')]
+                        ]
+                    ], 422);
+                }
+                return back()->withErrors([
+                    'field_key' => __('A field with this key already exists for this domain and entity type.')
+                ]);
+            }
+            throw $e;
+        }
     }
 
     /**
      * Display the specified custom field.
      */
-    public function show(CustomFieldDefinition $customField): Response
+    public function show(Request $request, int $id)
     {
+        $customField = CustomFieldDefinition::findOrFail($id);
+        
         $customField->load(['creator']);
         $usageStats = $this->customFieldService->getFieldUsageStats($customField);
+
+        if ($this->wantsJson($request)) {
+            return response()->json([
+                'success' => true,
+                'data' => array_merge($customField->toArray(), [
+                    'creator' => $customField->creator,
+                    'usage_stats' => $usageStats
+                ])
+            ]);
+        }
 
         return Inertia::render('Documents/CustomFields/Show', [
             'customField' => $customField,
@@ -128,8 +190,9 @@ class CustomFieldController extends Controller
     /**
      * Show the form for editing the specified custom field.
      */
-    public function edit(CustomFieldDefinition $customField): Response
+    public function edit(int $id): Response
     {
+        $customField = CustomFieldDefinition::findOrFail($id);
         $customField->load(['creator']);
         $entityTypes = $customField->domain 
             ? $this->customFieldService->getEntityTypesForDomain($customField->domain) 
@@ -146,8 +209,10 @@ class CustomFieldController extends Controller
     /**
      * Update the specified custom field.
      */
-    public function update(Request $request, CustomFieldDefinition $customField)
+    public function update(Request $request, int $id)
     {
+        $customField = CustomFieldDefinition::findOrFail($id);
+        
         $validated = $request->validate([
             'label' => ['required', 'string', 'max:255'],
             'help_text' => ['nullable', 'string', 'max:1000'],
@@ -161,10 +226,18 @@ class CustomFieldController extends Controller
             'conditional_logic' => ['nullable', 'array'],
             'display_order' => ['integer', 'min:0'],
             'is_active' => ['boolean'],
-            'security_level' => ['required', 'string', 'in:public,internal,restricted'],
+            'security_level' => ['nullable', 'string', 'in:public,internal,restricted'],
         ]);
 
         $customField = $this->customFieldService->updateCustomField($customField, $validated);
+
+        if ($this->wantsJson($request)) {
+            return response()->json([
+                'success' => true,
+                'message' => __('Custom field updated successfully.'),
+                'data' => $customField ? $customField->fresh()->load('creator') : null
+            ]);
+        }
 
         return redirect()->route('documents.custom-fields.show', $customField)
             ->with('success', __('Custom field updated successfully.'));
@@ -173,9 +246,17 @@ class CustomFieldController extends Controller
     /**
      * Remove the specified custom field.
      */
-    public function destroy(CustomFieldDefinition $customField)
+    public function destroy(Request $request, int $id)
     {
+        $customField = CustomFieldDefinition::findOrFail($id);
         $this->customFieldService->deleteCustomField($customField);
+
+        if ($this->wantsJson($request)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Custom field deleted successfully.'
+            ]);
+        }
 
         return redirect()->route('documents.custom-fields.index')
             ->with('success', __('Custom field deleted successfully.'));
@@ -209,7 +290,72 @@ class CustomFieldController extends Controller
 
         $this->customFieldService->updateFieldOrder($validated['field_orders']);
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'message' => __('Field order updated successfully')
+        ]);
+    }
+
+    /**
+     * Get custom fields grouped by domain and entity type.
+     */
+    public function grouped(Request $request)
+    {
+        $groupedFields = $this->customFieldService->getAllCustomFieldsGrouped();
+
+        return response()->json([
+            'success' => true,
+            'data' => $groupedFields
+        ]);
+    }
+
+    /**
+     * Get custom field statistics.
+     */
+    public function stats(Request $request)
+    {
+        $stats = $this->customFieldService->getCustomFieldStats();
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats
+        ]);
+    }
+
+    /**
+     * Get available domains.
+     */
+    public function domains(Request $request)
+    {
+        $domains = $this->customFieldService->getAvailableDomains();
+
+        return response()->json([
+            'success' => true,
+            'data' => $domains
+        ]);
+    }
+
+    /**
+     * Get entity types for a domain.
+     */
+    public function entityTypes(Request $request)
+    {
+        $domain = $request->get('domain');
+        
+        if (!$domain) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Domain parameter is required'),
+                'data' => []
+            ], 400);
+        }
+
+        $entityTypes = $this->customFieldService->getEntityTypesForDomain($domain);
+
+        return response()->json([
+            'success' => true,
+            'data' => $entityTypes
+        ]);
     }
 
     /**

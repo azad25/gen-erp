@@ -4,7 +4,7 @@ namespace App\Domain\Report\Services;
 
 use App\Domain\Auth\Models\Company;
 use App\Domain\Report\Services\DimensionalReportService;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 
 /**
  * Generates comparative financial reports (Year-over-Year, Period-over-Period).

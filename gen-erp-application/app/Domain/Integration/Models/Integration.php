@@ -4,12 +4,15 @@ namespace App\Domain\Integration\Models;
 
 use App\Support\Enums\IntegrationCategory;
 use App\Support\Enums\IntegrationTier;
+use Database\Factories\Domain\Integration\IntegrationFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** Integration registry — master catalogue of all available integrations. */
 class Integration extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'slug',
         'name',
@@ -57,5 +60,10 @@ class Integration extends Model
     public function hasCapability(string $capability): bool
     {
         return in_array($capability, $this->capabilities ?? [], true);
+    }
+
+    protected static function newFactory(): IntegrationFactory
+    {
+        return IntegrationFactory::new();
     }
 }

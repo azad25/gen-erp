@@ -26,6 +26,12 @@ createInertiaApp({
         throw error
       })
   },
+  progress: {
+    delay: 250,
+    color: '#14B8A6',
+    includeCSS: true,
+    showSpinner: false,
+  },
   setup({ el, App, props, plugin }) {
     console.log('[Inertia] Setup called, current page:', props.initialPage.component)
     console.log('[Inertia] Page URL:', props.initialPage.url)
@@ -58,7 +64,7 @@ createInertiaApp({
   progress: { color: '#14B8A6', showSpinner: false },
 })
 
-// Add Inertia error handler
+// Add Inertia error handler and scroll restoration
 import { router } from '@inertiajs/vue3'
 
 router.on('error', (event) => {
@@ -67,6 +73,8 @@ router.on('error', (event) => {
 
 router.on('navigate', (event) => {
   console.log('[Inertia] Navigating to:', event.detail.page.url)
+  // Scroll to top on navigation
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 })
 
 router.on('finish', (event) => {

@@ -4,7 +4,7 @@ namespace App\Domain\Report\Services;
 
 use App\Domain\Accounting\Models\JournalEntryLine;
 use App\Domain\Auth\Models\Company;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -42,9 +42,9 @@ class DimensionalReportService
             ->whereHas('account', function ($q) {
                 // Revenue accounts (4000-4999) and Expense accounts (5000-5999, 6000-6999)
                 $q->where(function ($subQ) {
-                    $subQ->whereBetween('account_code', ['4000', '4999'])  // Revenue
-                        ->orWhereBetween('account_code', ['5000', '5999'])  // COGS
-                        ->orWhereBetween('account_code', ['6000', '6999']); // Operating Expenses
+                    $subQ->whereBetween('code', ['4000', '4999'])  // Revenue
+                        ->orWhereBetween('code', ['5000', '5999'])  // COGS
+                        ->orWhereBetween('code', ['6000', '6999']); // Operating Expenses
                 });
             });
 
@@ -68,12 +68,12 @@ class DimensionalReportService
 
         // Categorize accounts
         $revenueLines = $lines->filter(function ($line) {
-            $code = $line->account->account_code ?? '';
+            $code = $line->account->code ?? '';
             return $code >= '4000' && $code <= '4999';
         });
 
         $expenseLines = $lines->filter(function ($line) {
-            $code = $line->account->account_code ?? '';
+            $code = $line->account->code ?? '';
             return ($code >= '5000' && $code <= '5999') || ($code >= '6000' && $code <= '6999');
         });
 
@@ -120,9 +120,9 @@ class DimensionalReportService
             ->whereHas('account', function ($q) {
                 // Assets (1000-1999), Liabilities (2000-2999), Equity (3000-3999)
                 $q->where(function ($subQ) {
-                    $subQ->whereBetween('account_code', ['1000', '1999'])  // Assets
-                        ->orWhereBetween('account_code', ['2000', '2999'])  // Liabilities
-                        ->orWhereBetween('account_code', ['3000', '3999']); // Equity
+                    $subQ->whereBetween('code', ['1000', '1999'])  // Assets
+                        ->orWhereBetween('code', ['2000', '2999'])  // Liabilities
+                        ->orWhereBetween('code', ['3000', '3999']); // Equity
                 });
             });
 
@@ -145,17 +145,17 @@ class DimensionalReportService
 
         // Categorize accounts
         $assetLines = $lines->filter(function ($line) {
-            $code = $line->account->account_code ?? '';
+            $code = $line->account->code ?? '';
             return $code >= '1000' && $code <= '1999';
         });
 
         $liabilityLines = $lines->filter(function ($line) {
-            $code = $line->account->account_code ?? '';
+            $code = $line->account->code ?? '';
             return $code >= '2000' && $code <= '2999';
         });
 
         $equityLines = $lines->filter(function ($line) {
-            $code = $line->account->account_code ?? '';
+            $code = $line->account->code ?? '';
             return $code >= '3000' && $code <= '3999';
         });
 
@@ -210,8 +210,8 @@ class DimensionalReportService
 
             return [
                 'account_id' => $accountId,
-                'account_code' => $account->account_code ?? '',
-                'account_name' => $account->account_name ?? '',
+                'account_code' => $account->code ?? '',
+                'account_name' => $account->name ?? '',
                 'total_debits' => $totalDebits,
                 'total_credits' => $totalCredits,
                 'net_amount' => $netAmount,

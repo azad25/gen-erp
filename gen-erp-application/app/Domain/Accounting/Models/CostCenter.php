@@ -3,6 +3,7 @@
 namespace App\Domain\Accounting\Models;
 
 use App\Domain\Auth\Models\Concerns\BelongsToCompany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class CostCenter extends Model
 {
-    use BelongsToCompany;
+    use BelongsToCompany, HasFactory;
 
     protected $fillable = [
         'company_id',

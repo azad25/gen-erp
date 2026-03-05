@@ -2,7 +2,10 @@
 
 namespace App\Domain\Integration\Models;
 
+use App\Domain\Auth\Models\Company;
 use App\Domain\Auth\Models\Concerns\BelongsToCompany;
+use Database\Factories\Domain\Integration\CompanyIntegrationFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /** Per-company installed integration instance with config and status. */
 class CompanyIntegration extends Model
 {
-    use BelongsToCompany;
+    use BelongsToCompany, HasFactory;
 
     protected $fillable = [
         'company_id',
@@ -87,5 +90,10 @@ class CompanyIntegration extends Model
     public function hasError(): bool
     {
         return $this->status === 'error';
+    }
+
+    protected static function newFactory(): CompanyIntegrationFactory
+    {
+        return CompanyIntegrationFactory::new();
     }
 }

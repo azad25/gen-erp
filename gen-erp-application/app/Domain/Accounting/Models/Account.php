@@ -6,6 +6,7 @@ use App\Support\Enums\AccountSubType;
 use App\Support\Enums\AccountType;
 use App\Domain\Auth\Models\Concerns\BelongsToCompany;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Account extends Model
 {
-    use BelongsToCompany, SoftDeletes;
+    use BelongsToCompany, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'company_id',
@@ -108,5 +109,21 @@ class Account extends Model
     public function scopeSystem(Builder $query): Builder
     {
         return $query->where('is_system', true);
+    }
+
+    /**
+     * Accessor for account_code (alias for code).
+     */
+    public function getAccountCodeAttribute(): string
+    {
+        return $this->code;
+    }
+
+    /**
+     * Accessor for account_name (alias for name).
+     */
+    public function getAccountNameAttribute(): string
+    {
+        return $this->name;
     }
 }

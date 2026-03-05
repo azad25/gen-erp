@@ -7,7 +7,7 @@ use App\Domain\Inventory\Models\StockLayer;
 use App\Domain\Inventory\Models\StockLayerAllocation;
 use App\Domain\Inventory\Models\StockMovement;
 use App\Domain\Product\Models\Product;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -38,7 +38,7 @@ class InventoryValuationReportService
         // Get all stock layers as of the date
         $stockLayers = StockLayer::where('company_id', $company->id)
             ->where('layer_date', '<=', $asOfDate)
-            ->where('qty_remaining', '>', 0)
+            ->where('quantity_remaining', '>', 0)
             ->with(['product', 'warehouse'])
             ->get();
 
@@ -47,9 +47,9 @@ class InventoryValuationReportService
             
             $warehouseBreakdown = $productLayers->groupBy('warehouse_id')->map(function ($warehouseLayers, $warehouseId) {
                 $warehouse = $warehouseLayers->first()->warehouse;
-                $totalQty = $warehouseLayers->sum('qty_remaining');
+                $totalQty = $warehouseLayers->sum('quantity_remaining');
                 $totalValue = $warehouseLayers->sum(function ($layer) {
-                    return $layer->qty_remaining * $layer->unit_cost;
+                    return $layer->quantity_remaining * $layer->unit_cost;
                 });
                 $avgCost = $totalQty > 0 ? $totalValue / $totalQty : 0;
 
@@ -65,9 +65,9 @@ class InventoryValuationReportService
                 ];
             });
 
-            $totalQty = $productLayers->sum('qty_remaining');
+            $totalQty = $productLayers->sum('quantity_remaining');
             $totalValue = $productLayers->sum(function ($layer) {
-                return $layer->qty_remaining * $layer->unit_cost;
+                return $layer->quantity_remaining * $layer->unit_cost;
             });
             $avgCost = $totalQty > 0 ? $totalValue / $totalQty : 0;
 
@@ -124,7 +124,7 @@ class InventoryValuationReportService
         // Get all stock layer allocations (COGS) for the period
         $allocations = StockLayerAllocation::whereHas('stockMovement', function ($q) use ($company, $fromDate, $toDate) {
             $q->where('company_id', $company->id)
-                ->where('type', 'out')
+                ->where('movement_type', 'out')
                 ->whereBetween('movement_date', [$fromDate, $toDate]);
         })
             ->with(['stockMovement.product', 'stockLayer'])
@@ -215,23 +215,23 @@ class InventoryValuationReportService
                 'layer_date' => $layer->layer_date,
                 'warehouse_name' => $layer->warehouse->name ?? 'Unknown',
                 'source_movement_type' => $layer->sourceMovement->type ?? 'unknown',
-                'qty_in' => $layer->qty_in,
-                'qty_remaining' => $layer->qty_remaining,
+                'qty_in' => $layer->quantity_in,
+                'qty_remaining' => $layer->quantity_remaining,
                 'qty_allocated' => $totalAllocated,
                 'unit_cost' => $layer->unit_cost,
-                'total_value_remaining' => $layer->qty_remaining * $layer->unit_cost,
+                'total_value_remaining' => $layer->quantity_remaining * $layer->unit_cost,
                 'total_cogs_generated' => $totalCogsGenerated,
                 'allocation_count' => $allocations->count(),
-                'is_fully_consumed' => $layer->qty_remaining <= 0,
+                'is_fully_consumed' => $layer->quantity_remaining <= 0,
                 'age_days' => $asOfDate->diffInDays(Carbon::parse($layer->layer_date)),
             ];
         });
 
         // Calculate summary
         $totalValue = $layers->sum(function ($layer) {
-            return $layer->qty_remaining * $layer->unit_cost;
+            return $layer->quantity_remaining * $layer->unit_cost;
         });
-        $totalQty = $layers->sum('qty_remaining');
+        $totalQty = $layers->sum('quantity_remaining');
         $avgCost = $totalQty > 0 ? $totalValue / $totalQty : 0;
 
         return [
@@ -247,7 +247,7 @@ class InventoryValuationReportService
                 'total_value' => $totalValue,
                 'average_unit_cost' => round($avgCost, 2),
                 'layer_count' => $layers->count(),
-                'active_layers' => $layers->where('qty_remaining', '>', 0)->count(),
+                'active_layers' => $layers->where('quantity_remaining', '>', 0)->count(),
                 'oldest_layer_date' => $layers->min('layer_date'),
                 'newest_layer_date' => $layers->max('layer_date'),
             ],

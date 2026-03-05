@@ -1,8 +1,12 @@
 <?php
 
-namespace App\Models;
+namespace App\Domain\POS\Models;
 
 use App\Domain\Auth\Models\Concerns\BelongsToCompany;
+use App\Domain\Auth\Models\Branch;
+use App\Domain\Auth\Models\User;
+use Database\Factories\Domain\POS\POSSessionFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class POSSession extends Model
 {
-    use BelongsToCompany;
+    use BelongsToCompany, HasFactory;
 
     protected $table = 'pos_sessions';
 
@@ -70,5 +74,10 @@ class POSSession extends Model
     public function isOpen(): bool
     {
         return $this->status === 'open';
+    }
+
+    protected static function newFactory(): POSSessionFactory
+    {
+        return POSSessionFactory::new();
     }
 }

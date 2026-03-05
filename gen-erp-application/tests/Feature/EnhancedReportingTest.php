@@ -10,7 +10,7 @@ use App\Domain\Product\Models\Product;
 use App\Domain\Report\Services\AgingReportService;
 use App\Domain\Report\Services\DimensionalReportService;
 use App\Domain\Report\Services\InventoryValuationReportService;
-use App\Support\CompanyContext;
+use App\Services\CompanyContext;
 use App\Support\Enums\InvoiceStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -21,21 +21,21 @@ test('dimensional P&L report filters by branch correctly', function (): void {
     // Arrange
     $company = Company::factory()->create();
     $user = \App\Domain\Auth\Models\User::factory()->create();
-    $company->users()->attach($user);
+    $company->users()->attach($user, ['role' => 'member']);
     $this->actingAs($user);
     CompanyContext::setActive($company);
 
     // Create accounts
     $revenueAccount = Account::factory()->create([
         'company_id' => $company->id,
-        'account_code' => '4001',
-        'account_name' => 'Sales Revenue',
+        'code' => '4001',
+        'name' => 'Sales Revenue',
     ]);
 
     $expenseAccount = Account::factory()->create([
         'company_id' => $company->id,
-        'account_code' => '6001',
-        'account_name' => 'Office Expenses',
+        'code' => '6001',
+        'name' => 'Office Expenses',
     ]);
 
     // Create journal entries with different branch_ids
@@ -141,14 +141,14 @@ test('dimensional P&L report filters by custom dimensions', function (): void {
     // Arrange
     $company = Company::factory()->create();
     $user = \App\Domain\Auth\Models\User::factory()->create();
-    $company->users()->attach($user);
+    $company->users()->attach($user, ['role' => 'member']);
     $this->actingAs($user);
     CompanyContext::setActive($company);
 
     $revenueAccount = Account::factory()->create([
         'company_id' => $company->id,
-        'account_code' => '4001',
-        'account_name' => 'Sales Revenue',
+        'code' => '4001',
+        'name' => 'Sales Revenue',
     ]);
 
     // Create journal entry with custom dimensions
@@ -217,7 +217,7 @@ test('AR aging report calculates buckets correctly', function (): void {
     // Arrange
     $company = Company::factory()->create();
     $user = \App\Domain\Auth\Models\User::factory()->create();
-    $company->users()->attach($user);
+    $company->users()->attach($user, ['role' => 'member']);
     $this->actingAs($user);
     CompanyContext::setActive($company);
 
@@ -233,7 +233,6 @@ test('AR aging report calculates buckets correctly', function (): void {
             'status' => InvoiceStatus::SENT,
             'total_amount' => 100000,
             'amount_paid' => 0,
-            'balance_due' => 100000,
         ]),
         // 15 days old (1-30 bucket)
         Invoice::factory()->create([
@@ -243,7 +242,6 @@ test('AR aging report calculates buckets correctly', function (): void {
             'status' => InvoiceStatus::SENT,
             'total_amount' => 200000,
             'amount_paid' => 0,
-            'balance_due' => 200000,
         ]),
         // 45 days old (31-60 bucket)
         Invoice::factory()->create([
@@ -253,7 +251,6 @@ test('AR aging report calculates buckets correctly', function (): void {
             'status' => InvoiceStatus::SENT,
             'total_amount' => 300000,
             'amount_paid' => 0,
-            'balance_due' => 300000,
         ]),
         // 75 days old (61-90 bucket)
         Invoice::factory()->create([
@@ -263,7 +260,6 @@ test('AR aging report calculates buckets correctly', function (): void {
             'status' => InvoiceStatus::SENT,
             'total_amount' => 400000,
             'amount_paid' => 0,
-            'balance_due' => 400000,
         ]),
         // 120 days old (over 90 bucket)
         Invoice::factory()->create([
@@ -273,7 +269,6 @@ test('AR aging report calculates buckets correctly', function (): void {
             'status' => InvoiceStatus::SENT,
             'total_amount' => 500000,
             'amount_paid' => 0,
-            'balance_due' => 500000,
         ]),
     ];
 
@@ -302,7 +297,7 @@ test('customer aging detail shows invoice breakdown', function (): void {
     // Arrange
     $company = Company::factory()->create();
     $user = \App\Domain\Auth\Models\User::factory()->create();
-    $company->users()->attach($user);
+    $company->users()->attach($user, ['role' => 'member']);
     $this->actingAs($user);
     CompanyContext::setActive($company);
 
@@ -316,7 +311,6 @@ test('customer aging detail shows invoice breakdown', function (): void {
         'status' => InvoiceStatus::SENT,
         'total_amount' => 100000,
         'amount_paid' => 30000,
-        'balance_due' => 70000,
     ]);
 
     $reportService = app(AgingReportService::class);
@@ -342,7 +336,7 @@ test('inventory valuation report calculates correct values', function (): void {
     // For now, we'll create a basic test structure
     $company = Company::factory()->create();
     $user = \App\Domain\Auth\Models\User::factory()->create();
-    $company->users()->attach($user);
+    $company->users()->attach($user, ['role' => 'member']);
     $this->actingAs($user);
     CompanyContext::setActive($company);
 
@@ -362,7 +356,7 @@ test('inventory valuation report calculates correct values', function (): void {
 test('COGS analysis report structure is correct', function (): void {
     $company = Company::factory()->create();
     $user = \App\Domain\Auth\Models\User::factory()->create();
-    $company->users()->attach($user);
+    $company->users()->attach($user, ['role' => 'member']);
     $this->actingAs($user);
     CompanyContext::setActive($company);
 
@@ -384,7 +378,7 @@ test('COGS analysis report structure is correct', function (): void {
 test('inventory turnover analysis calculates ratios correctly', function (): void {
     $company = Company::factory()->create();
     $user = \App\Domain\Auth\Models\User::factory()->create();
-    $company->users()->attach($user);
+    $company->users()->attach($user, ['role' => 'member']);
     $this->actingAs($user);
     CompanyContext::setActive($company);
 

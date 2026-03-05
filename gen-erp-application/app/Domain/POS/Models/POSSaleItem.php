@@ -1,8 +1,11 @@
 <?php
 
-namespace App\Models;
+namespace App\Domain\POS\Models;
 
 use App\Domain\Auth\Models\Concerns\BelongsToCompany;
+use App\Domain\Product\Models\Product;
+use Database\Factories\Domain\POS\POSSaleItemFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -11,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class POSSaleItem extends Model
 {
-    use BelongsToCompany;
+    use BelongsToCompany, HasFactory;
 
     protected $table = 'pos_sale_items';
 
@@ -49,5 +52,10 @@ class POSSaleItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    protected static function newFactory(): POSSaleItemFactory
+    {
+        return POSSaleItemFactory::new();
     }
 }

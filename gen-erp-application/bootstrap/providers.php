@@ -7,4 +7,5 @@ return [
     App\Providers\CqrsServiceProvider::class,
     App\Providers\CRMServiceProvider::class,
     App\Domain\Logistics\Providers\LogisticsServiceProvider::class,
+    App\Domain\POS\Providers\POSServiceProvider::class,
 ];

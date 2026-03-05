@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\ApprovalRequestController;
 use App\Http\Controllers\Api\V1\AttendanceController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BranchController;
+use App\Http\Controllers\Api\V1\CalendarController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\ContactGroupController;
 use App\Http\Controllers\Api\V1\CostCenterController;
@@ -19,6 +20,8 @@ use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\DocumentFolderController;
 use App\Http\Controllers\Api\V1\EmployeeController;
 use App\Http\Controllers\Api\V1\ERPIntegrationController;
+use App\Domain\Integration\Http\Controllers\CompanyIntegrationController;
+use App\Domain\Integration\Http\Controllers\IntegrationController;
 use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\ImportJobController;
 use App\Http\Controllers\Api\V1\InvitationController;
@@ -39,6 +42,7 @@ use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SalesOrderController;
+use App\Http\Controllers\Api\V1\VatReportController;
 use App\Http\Controllers\Api\V1\SectionController;
 use App\Http\Controllers\Api\V1\SiteController;
 use App\Http\Controllers\Api\V1\StockMovementController;
@@ -164,6 +168,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
 
         // HR Enhancement - Employee Tasks
         Route::prefix('hr/employees/{employeeId}')->group(function (): void {
+            Route::get('tasks/statistics', [\App\Http\Controllers\Api\V1\HR\EmployeeTaskController::class, 'statistics']);
             Route::get('tasks', [\App\Http\Controllers\Api\V1\HR\EmployeeTaskController::class, 'index']);
             Route::post('tasks', [\App\Http\Controllers\Api\V1\HR\EmployeeTaskController::class, 'store']);
             Route::get('tasks/{taskId}', [\App\Http\Controllers\Api\V1\HR\EmployeeTaskController::class, 'show']);
@@ -171,15 +176,17 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
             Route::delete('tasks/{taskId}', [\App\Http\Controllers\Api\V1\HR\EmployeeTaskController::class, 'destroy']);
             Route::post('tasks/{taskId}/start', [\App\Http\Controllers\Api\V1\HR\EmployeeTaskController::class, 'start']);
             Route::post('tasks/{taskId}/complete', [\App\Http\Controllers\Api\V1\HR\EmployeeTaskController::class, 'complete']);
-            Route::get('tasks/statistics', [\App\Http\Controllers\Api\V1\HR\EmployeeTaskController::class, 'statistics']);
         });
 
         // HR Enhancement - Time Tracking
         Route::prefix('hr/employees/{employeeId}')->group(function (): void {
+            Route::get('time-entries/summary', [\App\Http\Controllers\Api\V1\HR\EmployeeTimeEntryController::class, 'summary']);
             Route::get('time-entries', [\App\Http\Controllers\Api\V1\HR\EmployeeTimeEntryController::class, 'index']);
             Route::post('time-entries', [\App\Http\Controllers\Api\V1\HR\EmployeeTimeEntryController::class, 'store']);
             Route::get('timesheet', [\App\Http\Controllers\Api\V1\HR\EmployeeTimeEntryController::class, 'timesheet']);
             Route::get('time-statistics', [\App\Http\Controllers\Api\V1\HR\EmployeeTimeEntryController::class, 'statistics']);
+            Route::get('capacity', [\App\Http\Controllers\Api\V1\HR\EmployeeTimeEntryController::class, 'capacity']);
+            Route::put('capacity', [\App\Http\Controllers\Api\V1\HR\EmployeeTimeEntryController::class, 'updateCapacity']);
         });
 
         Route::prefix('hr/time-entries')->group(function (): void {
@@ -189,10 +196,31 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
             Route::post('approve', [\App\Http\Controllers\Api\V1\HR\EmployeeTimeEntryController::class, 'approve']);
         });
 
-        // HR Enhancement - Capacity Planning
+        // Inbox / Messaging System
+        Route::prefix('inbox')->group(function (): void {
+            Route::get('conversations', [\App\Http\Controllers\Api\V1\InboxController::class, 'conversations']);
+            Route::post('conversations/direct', [\App\Http\Controllers\Api\V1\InboxController::class, 'createDirectConversation']);
+            Route::post('conversations/group', [\App\Http\Controllers\Api\V1\InboxController::class, 'createGroupConversation']);
+            Route::delete('conversations/{conversationId}', [\App\Http\Controllers\Api\V1\InboxController::class, 'deleteConversation']);
+            Route::post('conversations/{conversationId}/star', [\App\Http\Controllers\Api\V1\InboxController::class, 'toggleStar']);
+            Route::post('conversations/{conversationId}/mute', [\App\Http\Controllers\Api\V1\InboxController::class, 'toggleMute']);
+            Route::post('conversations/{conversationId}/read', [\App\Http\Controllers\Api\V1\InboxController::class, 'markAsRead']);
+            Route::post('conversations/{conversationId}/participants', [\App\Http\Controllers\Api\V1\InboxController::class, 'addParticipants']);
+            Route::delete('conversations/{conversationId}/participants/{userId}', [\App\Http\Controllers\Api\V1\InboxController::class, 'removeParticipant']);
+            
+            Route::get('conversations/{conversationId}/messages', [\App\Http\Controllers\Api\V1\InboxController::class, 'messages']);
+            Route::post('conversations/{conversationId}/messages', [\App\Http\Controllers\Api\V1\InboxController::class, 'sendMessage']);
+            Route::put('messages/{messageId}', [\App\Http\Controllers\Api\V1\InboxController::class, 'editMessage']);
+            Route::delete('messages/{messageId}', [\App\Http\Controllers\Api\V1\InboxController::class, 'deleteMessage']);
+            
+            Route::get('attachments/{attachmentId}/download', [\App\Http\Controllers\Api\V1\InboxController::class, 'downloadAttachment'])->name('api.v1.inbox.attachments.download');
+            Route::get('users', [\App\Http\Controllers\Api\V1\InboxController::class, 'companyUsers']);
+        });
+
+        // HR Enhancement - Capacity Planning (detailed with date ranges)
         Route::prefix('hr/employees/{employeeId}/capacity')->group(function (): void {
-            Route::get('/', [\App\Http\Controllers\Api\V1\HR\EmployeeCapacityController::class, 'index']);
-            Route::put('/', [\App\Http\Controllers\Api\V1\HR\EmployeeCapacityController::class, 'update']);
+            Route::get('detailed', [\App\Http\Controllers\Api\V1\HR\EmployeeCapacityController::class, 'index']);
+            Route::put('detailed', [\App\Http\Controllers\Api\V1\HR\EmployeeCapacityController::class, 'update']);
             Route::get('trends', [\App\Http\Controllers\Api\V1\HR\EmployeeCapacityController::class, 'trends']);
         });
 
@@ -201,6 +229,49 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
             Route::get('available', [\App\Http\Controllers\Api\V1\HR\EmployeeCapacityController::class, 'available']);
             Route::get('overallocated', [\App\Http\Controllers\Api\V1\HR\EmployeeCapacityController::class, 'overallocated']);
         });
+
+        // HR Enhancement - Employee Skills
+        Route::prefix('hr')->group(function (): void {
+            Route::get('skills', [\App\Http\Controllers\Api\V1\HR\EmployeeSkillController::class, 'all']);
+            Route::get('skills/statistics', [\App\Http\Controllers\Api\V1\HR\EmployeeSkillController::class, 'statistics']);
+        });
+
+        Route::prefix('hr/employees/{employeeId}/skills')->group(function (): void {
+            Route::get('/', [\App\Http\Controllers\Api\V1\HR\EmployeeSkillController::class, 'index']);
+            Route::post('/', [\App\Http\Controllers\Api\V1\HR\EmployeeSkillController::class, 'store']);
+            Route::get('{skillId}', [\App\Http\Controllers\Api\V1\HR\EmployeeSkillController::class, 'show']);
+            Route::put('{skillId}', [\App\Http\Controllers\Api\V1\HR\EmployeeSkillController::class, 'update']);
+            Route::delete('{skillId}', [\App\Http\Controllers\Api\V1\HR\EmployeeSkillController::class, 'destroy']);
+        });
+
+        // HR Enhancement - Employee Availability
+        Route::prefix('hr')->group(function (): void {
+            Route::get('availability/calendar', [\App\Http\Controllers\Api\V1\HR\EmployeeAvailabilityController::class, 'calendar']);
+            Route::get('availability/statistics', [\App\Http\Controllers\Api\V1\HR\EmployeeAvailabilityController::class, 'statistics']);
+        });
+
+        Route::prefix('hr/employees/{employeeId}/availability')->group(function (): void {
+            Route::get('/', [\App\Http\Controllers\Api\V1\HR\EmployeeAvailabilityController::class, 'index']);
+            Route::post('/', [\App\Http\Controllers\Api\V1\HR\EmployeeAvailabilityController::class, 'store']);
+            Route::post('bulk', [\App\Http\Controllers\Api\V1\HR\EmployeeAvailabilityController::class, 'bulkStore']);
+            Route::get('{availabilityId}', [\App\Http\Controllers\Api\V1\HR\EmployeeAvailabilityController::class, 'show']);
+            Route::put('{availabilityId}', [\App\Http\Controllers\Api\V1\HR\EmployeeAvailabilityController::class, 'update']);
+            Route::delete('{availabilityId}', [\App\Http\Controllers\Api\V1\HR\EmployeeAvailabilityController::class, 'destroy']);
+        });
+
+        // HR Enhancement - Performance Reviews
+        Route::prefix('hr/performance-reviews')->group(function (): void {
+            Route::get('/', [\App\Http\Controllers\Api\V1\HR\PerformanceReviewController::class, 'index']);
+            Route::post('/', [\App\Http\Controllers\Api\V1\HR\PerformanceReviewController::class, 'store']);
+            Route::get('statistics', [\App\Http\Controllers\Api\V1\HR\PerformanceReviewController::class, 'statistics']);
+            Route::get('{id}', [\App\Http\Controllers\Api\V1\HR\PerformanceReviewController::class, 'show']);
+            Route::put('{id}', [\App\Http\Controllers\Api\V1\HR\PerformanceReviewController::class, 'update']);
+            Route::delete('{id}', [\App\Http\Controllers\Api\V1\HR\PerformanceReviewController::class, 'destroy']);
+            Route::post('{id}/submit', [\App\Http\Controllers\Api\V1\HR\PerformanceReviewController::class, 'submit']);
+            Route::post('{id}/acknowledge', [\App\Http\Controllers\Api\V1\HR\PerformanceReviewController::class, 'acknowledge']);
+        });
+
+        Route::get('hr/employees/{employeeId}/performance-reviews', [\App\Http\Controllers\Api\V1\HR\PerformanceReviewController::class, 'employeeReviews']);
 
         // Workflows
         Route::apiResource('workflow-instances', WorkflowInstanceController::class);
@@ -213,6 +284,38 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
         Route::apiResource('reports', ReportController::class);
         Route::get('reports/{report}/generate', [ReportController::class, 'generate']);
 
+        // VAT Reports (Bangladesh Mushak)
+        Route::prefix('vat-reports')->name('vat-reports.')->group(function (): void {
+            Route::get('/mushak-61', [VatReportController::class, 'mushak61']);
+            Route::get('/mushak-62', [VatReportController::class, 'mushak62']);
+            Route::get('/mushak-66', [VatReportController::class, 'mushak66']);
+            Route::get('/mushak-91', [VatReportController::class, 'mushak91']);
+        });
+
+        // Calendar & Events
+        Route::prefix('calendar')->name('calendar.')->group(function (): void {
+            Route::get('/', [CalendarController::class, 'index']);
+            Route::post('/', [CalendarController::class, 'store']);
+            Route::get('/user-events', [CalendarController::class, 'userEvents']);
+            Route::get('/{calendar}', [CalendarController::class, 'show']);
+            Route::put('/{calendar}', [CalendarController::class, 'update']);
+            Route::delete('/{calendar}', [CalendarController::class, 'destroy']);
+            Route::get('/{calendar}/events', [CalendarController::class, 'events']);
+            Route::get('/{calendar}/upcoming', [CalendarController::class, 'upcoming']);
+            Route::get('/{calendar}/statistics', [CalendarController::class, 'statistics']);
+            Route::post('/{calendar}/check-conflicts', [CalendarController::class, 'checkConflicts']);
+        });
+
+        // Calendar Events
+        Route::prefix('events')->name('events.')->group(function (): void {
+            Route::post('/', [CalendarController::class, 'storeEvent']);
+            Route::put('/{event}', [CalendarController::class, 'updateEvent']);
+            Route::delete('/{event}', [CalendarController::class, 'destroyEvent']);
+            Route::post('/{event}/complete', [CalendarController::class, 'completeEvent']);
+            Route::post('/{event}/cancel', [CalendarController::class, 'cancelEvent']);
+            Route::post('/{event}/reschedule', [CalendarController::class, 'rescheduleEvent']);
+        });
+
         // Settings
         Route::apiResource('companies', CompanyController::class);
         Route::apiResource('branches', BranchController::class);
@@ -222,12 +325,52 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
         Route::apiResource('departments', DepartmentController::class);
         Route::apiResource('designations', DesignationController::class);
 
-        // Notifications (Legacy)
-        Route::apiResource('notifications', NotificationController::class);
-        Route::post('notifications/{notification}/mark-read', [NotificationController::class, 'markRead']);
-        Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
+        // Integrations
+        Route::prefix('integrations')->name('integrations.')->group(function (): void {
+            // Company-specific installed integrations (must come before {id} routes)
+            Route::prefix('company')->name('company.')->group(function (): void {
+                Route::get('/', [CompanyIntegrationController::class, 'index']);
+                Route::get('/{id}', [CompanyIntegrationController::class, 'show']);
+                Route::post('/', [CompanyIntegrationController::class, 'store']);
+                Route::put('/{id}', [CompanyIntegrationController::class, 'update']);
+                Route::delete('/{id}', [CompanyIntegrationController::class, 'destroy']);
+                Route::post('/{id}/activate', [CompanyIntegrationController::class, 'activate']);
+                Route::post('/{id}/deactivate', [CompanyIntegrationController::class, 'deactivate']);
+                Route::post('/{id}/sync', [CompanyIntegrationController::class, 'sync']);
+            });
 
-        // ERP Notifications (New Domain-Driven System)
+            // Available integrations catalog
+            Route::get('/', [IntegrationController::class, 'index']);
+            Route::get('/{id}', [IntegrationController::class, 'show']);
+            Route::post('/', [IntegrationController::class, 'store']);
+            Route::put('/{id}', [IntegrationController::class, 'update']);
+            Route::delete('/{id}', [IntegrationController::class, 'destroy']);
+        });
+
+        // Subscription (Customer)
+        Route::prefix('subscription')->name('subscription.')->group(function (): void {
+            Route::get('/current', [SubscriptionController::class, 'current']);
+            Route::get('/usage', [SubscriptionController::class, 'usage']);
+            Route::get('/plans', [SubscriptionController::class, 'plans']);
+            Route::get('/plans/{id}', [SubscriptionController::class, 'plan']);
+        });
+
+        // Admin Subscription (Master Admin & Dev Admin only)
+        Route::prefix('admin/subscription')->name('admin.subscription.')->group(function (): void {
+            Route::get('/dashboard', [AdminSubscriptionController::class, 'dashboard']);
+            Route::get('/subscriptions', [AdminSubscriptionController::class, 'index']);
+            Route::get('/subscriptions/{id}', [AdminSubscriptionController::class, 'show']);
+            Route::post('/subscriptions/{id}/pause', [AdminSubscriptionController::class, 'pause']);
+            Route::post('/subscriptions/{id}/activate', [AdminSubscriptionController::class, 'activate']);
+            Route::delete('/subscriptions/{id}', [AdminSubscriptionController::class, 'destroy']);
+            Route::get('/payment-requests', [AdminSubscriptionController::class, 'paymentRequests']);
+            Route::post('/payment-requests/{id}/verify', [AdminSubscriptionController::class, 'verifyPaymentRequest']);
+            Route::post('/payment-requests/{id}/reject', [AdminSubscriptionController::class, 'rejectPaymentRequest']);
+            Route::get('/invoices', [AdminSubscriptionController::class, 'invoices']);
+            Route::get('/analytics', [AdminSubscriptionController::class, 'analytics']);
+        });
+
+        // ERP Notifications (Domain-Driven System)
         Route::prefix('erp-notifications')->name('erp-notifications.')->group(function (): void {
             Route::get('/', [\App\Domain\Notification\Http\Controllers\NotificationController::class, 'index']);
             Route::get('/unread-count', [\App\Domain\Notification\Http\Controllers\NotificationController::class, 'unreadCount']);
@@ -238,11 +381,11 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
 
         // Logistics Domain
         Route::prefix('logistics')->name('logistics.')->group(function (): void {
-            // Shipments
-            Route::apiResource('shipments', \App\Domain\Logistics\Http\Controllers\ShipmentController::class);
+            // Shipments - specific routes before resource routes
             Route::post('shipments/bulk', [\App\Domain\Logistics\Http\Controllers\ShipmentController::class, 'bulkCreate']);
             Route::post('shipments/{id}/generate-label', [\App\Domain\Logistics\Http\Controllers\ShipmentController::class, 'generateLabel']);
             Route::post('shipments/{id}/schedule-pickup', [\App\Domain\Logistics\Http\Controllers\ShipmentController::class, 'schedulePickup']);
+            Route::apiResource('shipments', \App\Domain\Logistics\Http\Controllers\ShipmentController::class);
             
             // Tracking
             Route::get('tracking/statistics', [\App\Domain\Logistics\Http\Controllers\TrackingController::class, 'statistics']);
@@ -415,6 +558,13 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
             Route::post('pages/{page}/sections/reorder', [SectionController::class, 'reorder']);
             Route::get('section-types', [SectionController::class, 'sectionTypes']);
 
+            // Menus
+            Route::apiResource('menus', \App\Http\Controllers\Api\V1\CMS\MenuController::class);
+            Route::post('menus/{menu}/items', [\App\Http\Controllers\Api\V1\CMS\MenuController::class, 'addItem']);
+            Route::put('menus/items/{item}', [\App\Http\Controllers\Api\V1\CMS\MenuController::class, 'updateItem']);
+            Route::delete('menus/items/{item}', [\App\Http\Controllers\Api\V1\CMS\MenuController::class, 'deleteItem']);
+            Route::post('menus/{menu}/reorder', [\App\Http\Controllers\Api\V1\CMS\MenuController::class, 'reorderItems']);
+
             // Media Management
             Route::prefix('media')->group(function (): void {
                 Route::get('/', [\App\Http\Controllers\Api\V1\CMS\MediaController::class, 'index']);
@@ -491,6 +641,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
             Route::post('/{id}/archive', [\App\Http\Controllers\Api\V1\ProjectController::class, 'archive']);
             Route::post('/{id}/duplicate', [\App\Http\Controllers\Api\V1\ProjectController::class, 'duplicate']);
             Route::get('/{id}/statistics', [\App\Http\Controllers\Api\V1\ProjectController::class, 'statistics']);
+            Route::get('/{id}/board', [\App\Http\Controllers\Api\V1\ProjectController::class, 'board']);
             
             // Project Members
             Route::post('/{id}/members', [\App\Http\Controllers\Api\V1\ProjectController::class, 'addMember']);
@@ -520,6 +671,23 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
 
         // Employee Tasks
         Route::get('employees/{employeeId}/tasks', [\App\Http\Controllers\Api\V1\TaskController::class, 'employeeTasks']);
+
+        // POS (Point of Sale) Domain
+        Route::prefix('pos')->name('pos.')->group(function (): void {
+            // POS Sessions
+            Route::get('sessions', [\App\Domain\POS\Http\Controllers\POSSessionController::class, 'index'])->name('sessions.index');
+            Route::get('sessions/active', [\App\Domain\POS\Http\Controllers\POSSessionController::class, 'active'])->name('sessions.active');
+            Route::post('sessions', [\App\Domain\POS\Http\Controllers\POSSessionController::class, 'store'])->name('sessions.store');
+            Route::get('sessions/{session}', [\App\Domain\POS\Http\Controllers\POSSessionController::class, 'show'])->name('sessions.show');
+            Route::post('sessions/{session}/close', [\App\Domain\POS\Http\Controllers\POSSessionController::class, 'close'])->name('sessions.close');
+            Route::get('sessions/{session}/summary', [\App\Domain\POS\Http\Controllers\POSSessionController::class, 'summary'])->name('sessions.summary');
+            
+            // POS Sales
+            Route::get('sessions/{sessionId}/sales', [\App\Domain\POS\Http\Controllers\POSSaleController::class, 'index'])->name('sales.index');
+            Route::post('sales', [\App\Domain\POS\Http\Controllers\POSSaleController::class, 'store'])->name('sales.store');
+            Route::get('sales/{sale}', [\App\Domain\POS\Http\Controllers\POSSaleController::class, 'show'])->name('sales.show');
+            Route::post('sales/{sale}/void', [\App\Domain\POS\Http\Controllers\POSSaleController::class, 'void'])->name('sales.void');
+        });
     }); // End of company-required routes
 });
 

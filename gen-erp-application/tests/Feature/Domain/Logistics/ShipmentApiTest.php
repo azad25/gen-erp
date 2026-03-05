@@ -272,7 +272,7 @@ class ShipmentApiTest extends TestCase
     /** @test */
     public function it_can_update_shipment()
     {
-        $shipment = Shipment::factory()->create([
+        $shipment = Shipment::factory()->pending()->create([
             'company_id' => $this->company->id,
             'carrier_id' => $this->carrier->id,
             'customer_id' => $this->customer->id,

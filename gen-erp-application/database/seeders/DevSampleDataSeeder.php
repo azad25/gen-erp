@@ -39,6 +39,10 @@ class DevSampleDataSeeder extends Seeder
 
         $this->call(PlanSeeder::class);
 
+        // ── 3. Seed Integrations (Native Tier 1) ───────────
+
+        $this->call(IntegrationSeeder::class);
+
         // ── 3. Ruposhi Retail (Retail Shop) ─────────────────
 
         $this->command?->info('🏪 Seeding Ruposhi Retail...');

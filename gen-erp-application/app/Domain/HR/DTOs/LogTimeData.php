@@ -18,7 +18,7 @@ class LogTimeData
         public readonly ?int $taskId = null,
         public readonly ?int $projectId = null,
         public readonly ?string $description = null,
-        public readonly string $entryType = 'task',
+        public readonly string $entryType = 'task', // Must match enum: task, project, general, break, meeting
         public readonly bool $isBillable = true,
     ) {}
 
@@ -33,7 +33,7 @@ class LogTimeData
             taskId: $data['task_id'] ?? null,
             projectId: $data['project_id'] ?? null,
             description: $data['description'] ?? null,
-            entryType: $data['entry_type'] ?? 'task',
+            entryType: $data['entry_type'] ?? 'task', // Must match enum
             isBillable: $data['is_billable'] ?? true,
         );
     }

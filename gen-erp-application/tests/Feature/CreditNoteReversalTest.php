@@ -3,26 +3,40 @@
 use App\Domain\Accounting\Models\JournalEntry;
 use App\Domain\Auth\Models\Company;
 use App\Domain\Customer\Models\CreditNote;
-use App\Domain\Customer\Services\PaymentService;
+use App\Domain\Payment\Services\PaymentService;
 use App\Domain\Invoice\Models\Invoice;
 use App\Events\CreditNoteApplied;
 use App\Listeners\CreateCreditNoteReversal;
 use App\Support\Enums\CreditNoteStatus;
 use App\Support\Enums\InvoiceStatus;
 use App\Support\Enums\JournalEntryStatus;
-use App\Support\CompanyContext;
+use App\Services\CompanyContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 
 uses(RefreshDatabase::class);
 
 test('credit note application creates automatic journal reversal', function (): void {
-    // Arrange
+    // Arrange - Don't fake events so the listener runs
     $company = Company::factory()->create();
     $user = \App\Domain\Auth\Models\User::factory()->create();
-    $company->users()->attach($user);
+    $company->users()->attach($user, ['role' => 'member']);
     $this->actingAs($user);
     CompanyContext::setActive($company);
+    
+    // Create accounts for the journal entry
+    $arAccount = \App\Domain\Accounting\Models\Account::factory()->create([
+        'company_id' => $company->id,
+        'code' => '1200',
+        'name' => 'Accounts Receivable',
+        'account_type' => 'asset',
+    ]);
+    $revenueAccount = \App\Domain\Accounting\Models\Account::factory()->create([
+        'company_id' => $company->id,
+        'code' => '4000',
+        'name' => 'Sales Revenue',
+        'account_type' => 'income',
+    ]);
     
     // Create an invoice with a posted journal entry
     $invoice = Invoice::factory()->create([
@@ -47,6 +61,26 @@ test('credit note application creates automatic journal reversal', function (): 
         'is_system' => true,
         'posted_at' => now(),
     ]);
+    
+    // Add journal entry lines
+    \App\Domain\Accounting\Models\JournalEntryLine::create([
+        'company_id' => $company->id,
+        'journal_entry_id' => $originalJournal->id,
+        'account_id' => $arAccount->id,
+        'line_no' => 1,
+        'description' => 'AR for invoice',
+        'debit' => 100000,
+        'credit' => 0,
+    ]);
+    \App\Domain\Accounting\Models\JournalEntryLine::create([
+        'company_id' => $company->id,
+        'journal_entry_id' => $originalJournal->id,
+        'account_id' => $revenueAccount->id,
+        'line_no' => 2,
+        'description' => 'Revenue from sale',
+        'debit' => 0,
+        'credit' => 100000,
+    ]);
 
     // Create a credit note
     $paymentService = app(PaymentService::class);
@@ -68,12 +102,6 @@ test('credit note application creates automatic journal reversal', function (): 
     $creditNote->refresh();
     expect($creditNote->status)->toBe(CreditNoteStatus::APPLIED);
 
-    // Check that the event was fired
-    Event::assertDispatched(CreditNoteApplied::class, function ($event) use ($creditNote, $invoice) {
-        return $event->creditNote->id === $creditNote->id 
-            && $event->invoice->id === $invoice->id;
-    });
-
     // Check that the original journal entry has been marked as reversed
     $originalJournal->refresh();
     expect($originalJournal->reversed_by_id)->not->toBeNull();
@@ -91,9 +119,23 @@ test('credit note reversal is idempotent', function (): void {
     // Arrange
     $company = Company::factory()->create();
     $user = \App\Domain\Auth\Models\User::factory()->create();
-    $company->users()->attach($user);
+    $company->users()->attach($user, ['role' => 'member']);
     $this->actingAs($user);
     CompanyContext::setActive($company);
+    
+    // Create accounts for the journal entry
+    $arAccount = \App\Domain\Accounting\Models\Account::factory()->create([
+        'company_id' => $company->id,
+        'code' => '1200',
+        'name' => 'Accounts Receivable',
+        'account_type' => 'asset',
+    ]);
+    $revenueAccount = \App\Domain\Accounting\Models\Account::factory()->create([
+        'company_id' => $company->id,
+        'code' => '4000',
+        'name' => 'Sales Revenue',
+        'account_type' => 'income',
+    ]);
     
     $invoice = Invoice::factory()->create([
         'company_id' => $company->id,
@@ -115,6 +157,26 @@ test('credit note reversal is idempotent', function (): void {
         'status' => JournalEntryStatus::POSTED,
         'is_system' => true,
         'posted_at' => now(),
+    ]);
+    
+    // Add journal entry lines
+    \App\Domain\Accounting\Models\JournalEntryLine::create([
+        'company_id' => $company->id,
+        'journal_entry_id' => $originalJournal->id,
+        'account_id' => $arAccount->id,
+        'line_no' => 1,
+        'description' => 'AR for invoice',
+        'debit' => 100000,
+        'credit' => 0,
+    ]);
+    \App\Domain\Accounting\Models\JournalEntryLine::create([
+        'company_id' => $company->id,
+        'journal_entry_id' => $originalJournal->id,
+        'account_id' => $revenueAccount->id,
+        'line_no' => 2,
+        'description' => 'Revenue from sale',
+        'debit' => 0,
+        'credit' => 100000,
     ]);
 
     $paymentService = app(PaymentService::class);
@@ -151,7 +213,7 @@ test('credit note reversal handles missing original journal gracefully', functio
     // Arrange
     $company = Company::factory()->create();
     $user = \App\Domain\Auth\Models\User::factory()->create();
-    $company->users()->attach($user);
+    $company->users()->attach($user, ['role' => 'member']);
     $this->actingAs($user);
     CompanyContext::setActive($company);
     

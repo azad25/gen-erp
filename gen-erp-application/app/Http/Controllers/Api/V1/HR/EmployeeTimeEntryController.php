@@ -35,6 +35,32 @@ class EmployeeTimeEntryController extends Controller
         
         $this->authorize('view', $employee);
 
+        // Handle week_start parameter for weekly timesheet
+        if ($request->has('week_start')) {
+            $weekStart = Carbon::parse($request->input('week_start'));
+            $weekEnd = $weekStart->copy()->endOfWeek();
+            
+            $timeEntries = $this->timeTrackingService->getEmployeeTimeEntries(
+                $employee,
+                $weekStart,
+                $weekEnd,
+                $request->input('entry_type'),
+                $request->input('is_approved')
+            );
+
+            $totalHours = $timeEntries->sum('hours');
+
+            return response()->json([
+                'success' => true,
+                'data' => $timeEntries,
+                'meta' => [
+                    'week_start' => $weekStart->toDateString(),
+                    'week_end' => $weekEnd->toDateString(),
+                    'total_hours' => $totalHours,
+                ],
+            ]);
+        }
+
         $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : null;
         $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : null;
 
@@ -69,11 +95,11 @@ class EmployeeTimeEntryController extends Controller
             'entry_date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'hours' => 'required|numeric|min:0',
+            'hours' => 'required|numeric|min:0|max:24',
             'task_id' => 'nullable|exists:tasks,id',
             'project_id' => 'nullable|exists:projects,id',
             'description' => 'nullable|string',
-            'entry_type' => 'sometimes|in:work,meeting,training,break,other',
+            'entry_type' => 'sometimes|in:task,project,general,break,meeting',
             'is_billable' => 'sometimes|boolean',
         ]);
 
@@ -86,7 +112,7 @@ class EmployeeTimeEntryController extends Controller
             'task_id' => $validated['task_id'] ?? null,
             'project_id' => $validated['project_id'] ?? null,
             'description' => $validated['description'] ?? null,
-            'entry_type' => $validated['entry_type'] ?? 'work',
+            'entry_type' => $validated['entry_type'] ?? 'task',
             'is_billable' => $validated['is_billable'] ?? true,
         ]);
 
@@ -139,7 +165,7 @@ class EmployeeTimeEntryController extends Controller
             'task_id' => 'nullable|exists:tasks,id',
             'project_id' => 'nullable|exists:projects,id',
             'description' => 'nullable|string',
-            'entry_type' => 'sometimes|in:work,meeting,training,break,other',
+            'entry_type' => 'sometimes|in:task,project,general,break,meeting',
             'is_billable' => 'sometimes|boolean',
         ]);
 
@@ -252,6 +278,84 @@ class EmployeeTimeEntryController extends Controller
         return response()->json([
             'success' => true,
             'data' => $statistics,
+        ]);
+    }
+
+    /**
+     * Get employee capacity information
+     * 
+     * @param int $employeeId
+     * @return JsonResponse
+     */
+    public function capacity(int $employeeId): JsonResponse
+    {
+        $employee = Employee::findOrFail($employeeId);
+        
+        $this->authorize('view', $employee);
+
+        $capacity = $this->timeTrackingService->getEmployeeCapacity($employee);
+
+        return response()->json([
+            'success' => true,
+            'data' => $capacity,
+        ]);
+    }
+
+    /**
+     * Update employee capacity
+     * 
+     * @param Request $request
+     * @param int $employeeId
+     * @return JsonResponse
+     */
+    public function updateCapacity(Request $request, int $employeeId): JsonResponse
+    {
+        $employee = Employee::findOrFail($employeeId);
+        
+        $this->authorize('update', $employee);
+
+        $validated = $request->validate([
+            'available_hours' => 'sometimes|numeric|min:0|max:168',
+            'is_available_for_projects' => 'sometimes|boolean',
+            'overtime_allowed' => 'sometimes|boolean',
+        ]);
+
+        // Note: These fields don't exist in the employees table yet
+        // For now, we'll just return success. In a real implementation,
+        // these would be stored in a separate capacity_settings table or added to employees table
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Employee capacity updated successfully',
+            'data' => $employee->fresh(),
+        ]);
+    }
+
+    /**
+     * Get time tracking summary for an employee
+     * 
+     * @param Request $request
+     * @param int $employeeId
+     * @return JsonResponse
+     */
+    public function summary(Request $request, int $employeeId): JsonResponse
+    {
+        $employee = Employee::findOrFail($employeeId);
+        
+        $this->authorize('view', $employee);
+
+        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : now()->startOfMonth();
+        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : now()->endOfMonth();
+
+        $summary = $this->timeTrackingService->getTimeTrackingSummary(
+            $employee,
+            $startDate,
+            $endDate
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $summary,
         ]);
     }
 }

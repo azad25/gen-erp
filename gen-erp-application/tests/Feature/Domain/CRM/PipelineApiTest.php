@@ -516,11 +516,24 @@ class PipelineApiTest extends TestCase
             'description' => 'Original description',
         ]);
 
-        // Create stages for original pipeline
-        PipelineStage::factory()->count(3)->create([
+        // Create stages for original pipeline with sequential sort_order
+        PipelineStage::factory()->create([
             'company_id' => $this->company->id,
             'pipeline_id' => $originalPipeline->id,
             'created_by' => $this->user->id,
+            'sort_order' => 1,
+        ]);
+        PipelineStage::factory()->create([
+            'company_id' => $this->company->id,
+            'pipeline_id' => $originalPipeline->id,
+            'created_by' => $this->user->id,
+            'sort_order' => 2,
+        ]);
+        PipelineStage::factory()->create([
+            'company_id' => $this->company->id,
+            'pipeline_id' => $originalPipeline->id,
+            'created_by' => $this->user->id,
+            'sort_order' => 3,
         ]);
 
         $response = $this->postJson("/api/v1/crm/pipelines/{$originalPipeline->uuid}/duplicate", [

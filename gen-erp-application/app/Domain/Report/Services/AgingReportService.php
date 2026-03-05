@@ -7,7 +7,7 @@ use App\Domain\Customer\Models\Customer;
 use App\Domain\Invoice\Models\Invoice;
 use App\Domain\Purchase\Models\Supplier;
 use App\Domain\Purchase\Models\GoodsReceipt;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -172,7 +172,8 @@ class AgingReportService
             ->get();
 
         $invoiceDetails = $invoices->map(function ($invoice) use ($asOfDate) {
-            $daysOutstanding = $asOfDate->diffInDays(Carbon::parse($invoice->invoice_date));
+            $invoiceDate = Carbon::parse($invoice->invoice_date);
+            $daysOutstanding = (int) $invoiceDate->diffInDays($asOfDate);
             $agingBucket = $this->getAgingBucket($daysOutstanding);
 
             return [
@@ -221,7 +222,8 @@ class AgingReportService
 
         foreach ($documents as $document) {
             $amount = $document->{$amountField};
-            $daysOutstanding = $asOfDate->diffInDays(Carbon::parse($document->{$dateField}));
+            $documentDate = Carbon::parse($document->{$dateField});
+            $daysOutstanding = (int) $documentDate->diffInDays($asOfDate);
             
             $buckets['total'] += $amount;
 

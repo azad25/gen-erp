@@ -32,7 +32,8 @@ use App\Domain\Customer\Services\ContactService;
 use App\Domain\Product\Services\ProductService;
 use App\Domain\Purchase\Services\PurchaseService;
 use App\Domain\Inventory\Services\InventoryService;
-use App\Domain\Customer\Services\PaymentService;
+use App\Domain\Payment\Contracts\PaymentServiceInterface;
+use App\Domain\Payment\Services\PaymentService;
 use App\Domain\Accounting\Services\AccountingService;
 use App\Domain\Accounting\Contracts\AccountingServiceInterface;
 use App\Domain\Auth\Services\AuthService;
@@ -100,7 +101,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(InventoryServiceInterface::class, InventoryService::class);
         $this->app->singleton(\App\Domain\Inventory\Services\InventoryValuationService::class);
         $this->app->singleton(PaymentService::class);
-        $this->app->bind(\App\Domain\Customer\Contracts\PaymentServiceInterface::class, PaymentService::class);
+        $this->app->bind(PaymentServiceInterface::class, PaymentService::class);
         $this->app->singleton(AccountingService::class);
         $this->app->bind(AccountingServiceInterface::class, AccountingService::class);
         $this->app->singleton(\App\Domain\Accounting\Services\PostingService::class);

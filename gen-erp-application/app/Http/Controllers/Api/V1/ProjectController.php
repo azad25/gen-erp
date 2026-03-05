@@ -350,4 +350,41 @@ class ProjectController extends Controller
             'data' => $project,
         ], Response::HTTP_CREATED);
     }
+
+    /**
+     * Get project board with columns and tasks
+     * 
+     * @group Projects
+     * @urlParam id integer required Project ID
+     */
+    public function board(Request $request, int $id): JsonResponse
+    {
+        $project = $this->projectService->getProjectById($id, $request->user()->activeCompany()->id);
+
+        if (!$project) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Project not found',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        // Load board with columns and tasks
+        $project->load([
+            'board.columns.tasks' => function ($query) {
+                $query->with(['assignees', 'tags', 'attachments'])
+                    ->orderBy('position');
+            },
+            'board.columns' => function ($query) {
+                $query->orderBy('position');
+            }
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'project' => $project,
+                'board' => $project->board,
+            ],
+        ]);
+    }
 }

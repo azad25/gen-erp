@@ -108,6 +108,15 @@
           </div>
         </div>
 
+        <!-- Workflows -->
+        <div>
+          <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">Workflows</p>
+          <div class="space-y-1">
+            <NavItem icon="📋" label="Instances" route="/workflows" :page-url="pageUrl" />
+            <NavItem icon="🔀" label="Approvals" route="/approvals" :page-url="pageUrl" />
+          </div>
+        </div>
+
         <!-- POS -->
         <div>
           <p class="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-white/25 px-2 mb-2">POS</p>

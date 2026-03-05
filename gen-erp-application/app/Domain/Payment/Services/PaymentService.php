@@ -4,29 +4,39 @@ namespace App\Domain\Payment\Services;
 
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Customer\Models\CustomerPayment;
+use App\Domain\Customer\Models\CustomerPaymentAllocation;
 use App\Domain\Customer\Models\CustomerTransaction;
-use App\Domain\Invoice\Models\Invoice;
-use App\Domain\Purchase\Models\Supplier;
 use App\Domain\Customer\Models\CreditNote;
+use App\Domain\Customer\Models\CreditNoteItem;
+use App\Domain\Customer\Models\SalesReturn;
+use App\Domain\Customer\Models\SalesReturnItem;
+use App\Domain\Customer\Services\ContactService;
+use App\Domain\Invoice\Models\Invoice;
+use App\Domain\Inventory\Services\InventoryService;
+use App\Domain\Payment\Contracts\PaymentServiceInterface;
 use App\Domain\Purchase\Models\GoodsReceipt;
 use App\Domain\Purchase\Models\PurchaseReturn;
-use App\Domain\Customer\Models\SalesReturn;
+use App\Domain\Purchase\Models\PurchaseReturnItem;
+use App\Domain\Purchase\Models\Supplier;
 use App\Domain\Purchase\Models\SupplierPayment;
-use App\Domain\Inventory\Services\InventoryService;
+use App\Domain\Purchase\Models\SupplierPaymentAllocation;
 use App\Domain\System\Services\SequenceService;
+use App\Events\CreditNoteApplied;
 use App\Support\Enums\CreditNoteStatus;
 use App\Support\Enums\InvoiceStatus;
 use App\Support\Enums\StockMovementType;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 /**
  * Manages payment operations - customer payments, supplier payments, returns.
  */
-class PaymentService
+class PaymentService implements PaymentServiceInterface
 {
     public function __construct(
-        private SequenceService $sequenceService,
-        private InventoryService $inventoryService
+        private readonly SequenceService $sequenceService,
+        private readonly InventoryService $inventoryService,
+        private readonly ContactService $contactService
     ) {}
 
     /**
@@ -38,44 +48,55 @@ class PaymentService
             // Validate allocations don't exceed payment amount
             $totalAllocated = array_sum(array_column($allocations, 'amount'));
             if ($totalAllocated > $paymentData['amount']) {
-                throw new \InvalidArgumentException('Total allocation exceeds payment amount.');
+                throw new InvalidArgumentException('Total allocation exceeds payment amount.');
             }
 
             // Create payment record
-            $payment = CustomerPayment::create([
+            $payment = CustomerPayment::withoutGlobalScopes()->create(array_merge($paymentData, [
                 'company_id' => $customer->company_id,
                 'customer_id' => $customer->id,
-                'receipt_number' => $this->sequenceService->next('rcp', $customer->company_id),
-                'payment_date' => $paymentData['payment_date'],
-                'amount' => $paymentData['amount'],
-                'payment_method' => $paymentData['payment_method'] ?? 'cash',
-                'reference' => $paymentData['reference'] ?? null,
-                'notes' => $paymentData['notes'] ?? null,
-            ]);
+                'created_by' => auth()->id(),
+            ]));
 
             // Apply allocations to invoices
             foreach ($allocations as $allocation) {
-                $invoice = Invoice::findOrFail($allocation['invoice_id']);
-                
-                $payment->allocations()->create([
-                    'company_id' => $customer->company_id,
-                    'invoice_id' => $invoice->id,
-                    'allocated_amount' => $allocation['amount'],
-                ]);
-
-                // Update invoice amount paid
-                $invoice->increment('amount_paid', $allocation['amount']);
-
-                // Update invoice status based on payment
-                if ($invoice->amount_paid >= $invoice->total_amount) {
-                    $invoice->update(['status' => InvoiceStatus::PAID]);
-                } elseif ($invoice->amount_paid > 0) {
-                    $invoice->update(['status' => InvoiceStatus::PARTIAL]);
-                }
+                $this->allocatePayment($payment, $allocation['invoice_id'], (int) $allocation['amount']);
             }
+
+            // Record customer transaction (credit — they paid us, reduces balance)
+            $this->contactService->recordCustomerTransaction(
+                $customer,
+                'payment',
+                -$payment->amount,
+                "Payment {$payment->receipt_number}",
+                $payment,
+            );
 
             return $payment;
         });
+    }
+
+    /**
+     * Allocate a payment amount to a specific invoice.
+     */
+    public function allocatePayment(CustomerPayment $payment, int $invoiceId, int $amount): void
+    {
+        CustomerPaymentAllocation::withoutGlobalScopes()->create([
+            'customer_payment_id' => $payment->id,
+            'company_id' => $payment->company_id,
+            'invoice_id' => $invoiceId,
+            'allocated_amount' => $amount,
+        ]);
+
+        $invoice = Invoice::withoutGlobalScopes()->findOrFail($invoiceId);
+        $invoice->update(['amount_paid' => $invoice->amount_paid + $amount]);
+
+        // Recalculate invoice status
+        if ($invoice->amount_paid >= $invoice->total_amount) {
+            $invoice->update(['status' => InvoiceStatus::PAID]);
+        } elseif ($invoice->amount_paid > 0) {
+            $invoice->update(['status' => InvoiceStatus::PARTIAL]);
+        }
     }
 
     /**
@@ -84,24 +105,28 @@ class PaymentService
     public function makePayment(Supplier $supplier, array $paymentData): SupplierPayment
     {
         return DB::transaction(function () use ($supplier, $paymentData) {
-            $grossAmount = $paymentData['gross_amount'];
-            $tdsAmount = (int) round($grossAmount * ($supplier->tds_rate / 100));
-            $vdsAmount = (int) round($grossAmount * ($supplier->vds_rate / 100));
-            $netAmount = $grossAmount - $tdsAmount - $vdsAmount;
+            $grossAmount = (int) $paymentData['gross_amount'];
+            $tdsAmount = (int) ($paymentData['tds_amount'] ?? (int) round($grossAmount * ($supplier->tds_rate / 100)));
+            $vdsAmount = (int) ($paymentData['vds_amount'] ?? (int) round($grossAmount * ($supplier->vds_rate / 100)));
 
-            return SupplierPayment::create([
+            $payment = SupplierPayment::withoutGlobalScopes()->create(array_merge($paymentData, [
                 'company_id' => $supplier->company_id,
                 'supplier_id' => $supplier->id,
-                'payment_number' => $this->sequenceService->next('supplier_payment', $supplier->company_id),
-                'payment_date' => $paymentData['payment_date'],
-                'gross_amount' => $grossAmount,
                 'tds_amount' => $tdsAmount,
                 'vds_amount' => $vdsAmount,
-                'net_amount' => $netAmount,
-                'payment_method' => $paymentData['payment_method'] ?? 'bank',
-                'reference' => $paymentData['reference'] ?? null,
-                'notes' => $paymentData['notes'] ?? null,
-            ]);
+                'created_by' => auth()->id(),
+            ]));
+
+            // Record supplier transaction (debit — we paid them, reduces our payable)
+            $this->contactService->recordSupplierTransaction(
+                $supplier,
+                'payment',
+                -$payment->fresh()->net_amount,
+                "Payment {$payment->payment_number}",
+                $payment,
+            );
+
+            return $payment;
         });
     }
 
@@ -112,31 +137,45 @@ class PaymentService
     {
         return DB::transaction(function () use ($invoice, $data, $items) {
             $subtotal = 0;
-            foreach ($items as $item) {
-                $subtotal += $item['quantity'] * $item['unit_price'];
-            }
+            $taxTotal = 0;
 
-            $creditNote = CreditNote::create([
+            $creditNote = CreditNote::withoutGlobalScopes()->create(array_merge($data, [
                 'company_id' => $invoice->company_id,
-                'customer_id' => $invoice->customer_id,
                 'invoice_id' => $invoice->id,
-                'credit_number' => $this->sequenceService->next('credit_note', $invoice->company_id),
-                'credit_date' => $data['credit_date'],
-                'reason' => $data['reason'],
-                'total_amount' => $subtotal,
+                'customer_id' => $invoice->customer_id,
                 'status' => CreditNoteStatus::ISSUED,
-            ]);
+                'created_by' => auth()->id(),
+            ]));
 
             foreach ($items as $item) {
-                $lineTotal = $item['quantity'] * $item['unit_price'];
-                $creditNote->items()->create([
+                $unitPrice = (int) $item['unit_price'];
+                $qty = (float) $item['quantity'];
+                $taxRate = (float) ($item['tax_rate'] ?? 0);
+
+                $lineGross = (int) round($unitPrice * $qty);
+                $lineTax = (int) round($lineGross * ($taxRate / 100));
+
+                CreditNoteItem::withoutGlobalScopes()->create([
+                    'credit_note_id' => $creditNote->id,
                     'company_id' => $invoice->company_id,
+                    'product_id' => $item['product_id'] ?? null,
                     'description' => $item['description'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'line_total' => $lineTotal,
+                    'quantity' => $qty,
+                    'unit_price' => $unitPrice,
+                    'tax_rate' => $taxRate,
+                    'tax_amount' => $lineTax,
+                    'line_total' => $lineGross + $lineTax,
                 ]);
+
+                $subtotal += $lineGross;
+                $taxTotal += $lineTax;
             }
+
+            $creditNote->update([
+                'subtotal' => $subtotal,
+                'tax_amount' => $taxTotal,
+                'total_amount' => $subtotal + $taxTotal,
+            ]);
 
             return $creditNote->load('items');
         });
@@ -148,15 +187,31 @@ class PaymentService
     public function applyCreditNote(CreditNote $creditNote, Invoice $invoice): void
     {
         DB::transaction(function () use ($creditNote, $invoice) {
-            $invoice->increment('amount_paid', $creditNote->total_amount);
-            $creditNote->update(['status' => CreditNoteStatus::APPLIED]);
+            $invoice->update([
+                'amount_paid' => $invoice->amount_paid + $creditNote->total_amount,
+            ]);
 
-            // Update invoice status
+            // Recalculate status
             if ($invoice->amount_paid >= $invoice->total_amount) {
                 $invoice->update(['status' => InvoiceStatus::PAID]);
             } elseif ($invoice->amount_paid > 0) {
                 $invoice->update(['status' => InvoiceStatus::PARTIAL]);
             }
+
+            $creditNote->update(['status' => CreditNoteStatus::APPLIED]);
+
+            // Record customer transaction
+            $customer = Customer::withoutGlobalScopes()->findOrFail($invoice->customer_id);
+            $this->contactService->recordCustomerTransaction(
+                $customer,
+                'credit_note',
+                -$creditNote->total_amount,
+                "Credit Note {$creditNote->credit_note_number}",
+                $creditNote,
+            );
+
+            // Fire event to trigger automatic journal reversal
+            event(new CreditNoteApplied($creditNote, $invoice));
         });
     }
 
@@ -167,32 +222,35 @@ class PaymentService
     {
         return DB::transaction(function () use ($invoice, $items, $warehouseId) {
             $totalAmount = 0;
-            foreach ($items as $item) {
-                $totalAmount += $item['quantity'] * $item['unit_price'];
-            }
 
-            $return = SalesReturn::create([
+            $return = SalesReturn::withoutGlobalScopes()->create([
                 'company_id' => $invoice->company_id,
-                'customer_id' => $invoice->customer_id,
                 'invoice_id' => $invoice->id,
+                'customer_id' => $invoice->customer_id,
                 'warehouse_id' => $warehouseId,
-                'return_number' => $this->sequenceService->next('sales_return', $invoice->company_id),
                 'return_date' => now()->toDateString(),
-                'total_amount' => $totalAmount,
-                'status' => 'pending',
+                'status' => 'draft',
+                'created_by' => auth()->id(),
             ]);
 
             foreach ($items as $item) {
-                $lineTotal = $item['quantity'] * $item['unit_price'];
-                $return->items()->create([
+                $lineTotal = (int) round($item['unit_price'] * $item['quantity']);
+
+                SalesReturnItem::withoutGlobalScopes()->create([
+                    'sales_return_id' => $return->id,
                     'company_id' => $invoice->company_id,
-                    'product_id' => $item['product_id'],
+                    'product_id' => $item['product_id'] ?? null,
+                    'variant_id' => $item['variant_id'] ?? null,
                     'description' => $item['description'],
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
                     'line_total' => $lineTotal,
                 ]);
+
+                $totalAmount += $lineTotal;
             }
+
+            $return->update(['total_amount' => $totalAmount]);
 
             return $return->load('items');
         });
@@ -204,6 +262,8 @@ class PaymentService
     public function approveSalesReturn(SalesReturn $return): void
     {
         DB::transaction(function () use ($return) {
+            $return->load('items');
+            
             foreach ($return->items as $item) {
                 if ($item->product_id) {
                     $this->inventoryService->stockIn(
@@ -211,10 +271,10 @@ class PaymentService
                         $item->product_id,
                         $item->quantity,
                         StockMovementType::SALE_RETURN,
-                        $item->variant_id, // Use the item's variant_id
-                        null, // unit_cost
-                        "Sales return {$return->return_number}", // notes
-                        $return // reference
+                        $item->variant_id,
+                        null,
+                        "Sales return {$return->return_number}",
+                        $return
                     );
                 }
             }
@@ -223,6 +283,18 @@ class PaymentService
                 'status' => 'approved',
                 'stock_restored' => true,
             ]);
+
+            // Record customer transaction (credit — they returned goods)
+            if ($return->customer_id !== null) {
+                $customer = Customer::withoutGlobalScopes()->findOrFail($return->customer_id);
+                $this->contactService->recordCustomerTransaction(
+                    $customer,
+                    'sales_return',
+                    -$return->total_amount,
+                    "Sales Return {$return->return_number}",
+                    $return,
+                );
+            }
         });
     }
 
@@ -233,32 +305,35 @@ class PaymentService
     {
         return DB::transaction(function () use ($receipt, $items) {
             $totalAmount = 0;
-            foreach ($items as $item) {
-                $totalAmount += $item['quantity'] * $item['unit_cost'];
-            }
 
-            $return = PurchaseReturn::create([
+            $return = PurchaseReturn::withoutGlobalScopes()->create([
                 'company_id' => $receipt->company_id,
-                'supplier_id' => $receipt->supplier_id,
                 'goods_receipt_id' => $receipt->id,
+                'supplier_id' => $receipt->supplier_id,
                 'warehouse_id' => $receipt->warehouse_id,
-                'return_number' => $this->sequenceService->next('purchase_return', $receipt->company_id),
                 'return_date' => now()->toDateString(),
-                'total_amount' => $totalAmount,
-                'status' => 'pending',
+                'status' => 'draft',
+                'created_by' => auth()->id(),
             ]);
 
             foreach ($items as $item) {
-                $lineTotal = $item['quantity'] * $item['unit_cost'];
-                $return->items()->create([
+                $lineTotal = (int) round($item['unit_cost'] * $item['quantity']);
+
+                PurchaseReturnItem::withoutGlobalScopes()->create([
+                    'purchase_return_id' => $return->id,
                     'company_id' => $receipt->company_id,
-                    'product_id' => $item['product_id'],
+                    'product_id' => $item['product_id'] ?? null,
+                    'variant_id' => $item['variant_id'] ?? null,
                     'description' => $item['description'],
                     'quantity' => $item['quantity'],
                     'unit_cost' => $item['unit_cost'],
                     'line_total' => $lineTotal,
                 ]);
+
+                $totalAmount += $lineTotal;
             }
+
+            $return->update(['total_amount' => $totalAmount]);
 
             return $return->load('items');
         });
@@ -270,6 +345,8 @@ class PaymentService
     public function approvePurchaseReturn(PurchaseReturn $return): void
     {
         DB::transaction(function () use ($return) {
+            $return->load('items');
+            
             foreach ($return->items as $item) {
                 if ($item->product_id) {
                     $this->inventoryService->stockOut(
@@ -277,9 +354,9 @@ class PaymentService
                         $item->product_id,
                         $item->quantity,
                         StockMovementType::PURCHASE_RETURN,
-                        $item->variant_id, // Use the item's variant_id
-                        "Purchase return {$return->return_number}", // notes
-                        $return // reference
+                        $item->variant_id,
+                        "Purchase return {$return->return_number}",
+                        $return
                     );
                 }
             }
@@ -288,6 +365,18 @@ class PaymentService
                 'status' => 'approved',
                 'stock_removed' => true,
             ]);
+
+            // Record supplier transaction (credit — they owe us back)
+            if ($return->supplier_id !== null) {
+                $supplier = Supplier::withoutGlobalScopes()->findOrFail($return->supplier_id);
+                $this->contactService->recordSupplierTransaction(
+                    $supplier,
+                    'purchase_return',
+                    -$return->total_amount,
+                    "Purchase Return {$return->return_number}",
+                    $return,
+                );
+            }
         });
     }
 }

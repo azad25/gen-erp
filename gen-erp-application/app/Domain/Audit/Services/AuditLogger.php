@@ -36,7 +36,7 @@ class AuditLogger
                 'company_id' => $companyId,
                 'user_id' => Auth::id(),
                 'event' => $event,
-                'auditable_type' => $model->getMorphClass(),
+                'auditable_type' => get_class($model), // Use full class name, not morphMap
                 'auditable_id' => $model->getKey(),
                 'old_values' => ! empty($old) ? $old : null,
                 'new_values' => ! empty($new) ? $new : null,

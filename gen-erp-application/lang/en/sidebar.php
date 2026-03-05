@@ -8,11 +8,20 @@ return [
     'sales' => [
         'title' => 'Sales',
         'dashboard' => 'Sales Dashboard',
+        'invoice_dashboard' => 'Invoice Dashboard',
         'orders' => 'Sales Orders',
         'invoices' => 'Invoices',
         'customers' => 'Customers',
         'credit_notes' => 'Credit Notes',
         'returns' => 'Returns',
+    ],
+    
+    'pos' => [
+        'title' => 'POS',
+        'dashboard' => 'POS Dashboard',
+        'terminal' => 'POS Terminal',
+        'sessions' => 'Sessions',
+        'sales' => 'Sales',
     ],
     
     'purchase' => [
@@ -43,6 +52,15 @@ return [
         'trial_balance' => 'Trial Balance',
         'profit_loss' => 'Profit & Loss',
         'balance_sheet' => 'Balance Sheet',
+        'lock_date' => 'Lock Date Management',
+    ],
+    
+    'payments' => [
+        'title' => 'Payments',
+        'dashboard' => 'Payments Dashboard',
+        'customer_payments' => 'Customer Payments',
+        'supplier_payments' => 'Supplier Payments',
+        'payment_methods' => 'Payment Methods',
     ],
     
     'hr' => [
@@ -54,6 +72,10 @@ return [
         'payroll' => 'Payroll',
         'tasks' => 'Tasks',
         'timesheet' => 'Timesheet',
+        'capacity' => 'Capacity Planning',
+        'skills' => 'Employee Skills',
+        'availability' => 'Availability',
+        'performance' => 'Performance Reviews',
     ],
     
     'projects' => [
@@ -71,6 +93,13 @@ return [
         'opportunities' => 'Opportunities',
         'pipelines' => 'Pipelines',
         'activities' => 'Activities',
+        'crm_contacts' => 'CRM Contacts',
+        'contacts' => 'Contacts',
+    ],
+    
+    'calendar' => [
+        'title' => 'Calendar',
+        'view' => 'Calendar',
     ],
     
     'cms' => [
@@ -106,6 +135,28 @@ return [
         'workflows' => 'Workflows',
     ],
     
+    'integrations' => [
+        'title' => 'Integrations',
+        'dashboard' => 'Integrations',
+        'available' => 'Available',
+        'installed' => 'Installed',
+        'configure' => 'Configure',
+    ],
+    
+    'subscription' => [
+        'title' => 'Subscription',
+        'plans' => 'Plans',
+        'manage' => 'Manage',
+    ],
+    
+    'admin_subscription' => [
+        'title' => 'Admin Subscription',
+        'dashboard' => 'Subscription Dashboard',
+        'subscriptions' => 'All Subscriptions',
+        'payment_requests' => 'Payment Requests',
+        'invoices' => 'Invoices',
+    ],
+    
     'notifications' => [
         'title' => 'Notifications',
         'all' => 'All Notifications',
@@ -121,5 +172,22 @@ return [
         'shared' => 'Shared',
         'forms' => 'Forms',
         'custom_fields' => 'Custom Fields',
+    ],
+    
+    'reports' => [
+        'title' => 'Reports',
+        'dashboard' => 'Reports Dashboard',
+        'trial_balance' => 'Trial Balance',
+        'profit_loss' => 'Profit & Loss',
+        'balance_sheet' => 'Balance Sheet',
+        'cash_flow' => 'Cash Flow',
+        'aging_ar' => 'AR Aging',
+        'aging_ap' => 'AP Aging',
+        'inventory_valuation' => 'Inventory Valuation',
+        'vat_reports' => 'VAT Reports',
+        'vat_liability' => 'VAT Liability',
+        'mushak63' => 'Mushak 6.3',
+        'yoy_profit_loss' => 'YoY P&L',
+        'builder' => 'Report Builder',
     ],
 ];

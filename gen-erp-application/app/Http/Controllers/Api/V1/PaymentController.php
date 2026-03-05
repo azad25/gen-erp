@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Domain\Customer\Contracts\PaymentServiceInterface;
+use App\Domain\Payment\Contracts\PaymentServiceInterface;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Customer\Models\CustomerPayment;
 use App\Http\Resources\CustomerPaymentResource;

@@ -67,7 +67,7 @@ class LogTimeDataTest extends TestCase
         $this->assertNull($data->taskId);
         $this->assertNull($data->projectId);
         $this->assertNull($data->description);
-        $this->assertEquals('work', $data->entryType);
+        $this->assertEquals('task', $data->entryType); // Changed to match enum
         $this->assertTrue($data->isBillable);
     }
 

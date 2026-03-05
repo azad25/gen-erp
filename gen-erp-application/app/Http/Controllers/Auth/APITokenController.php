@@ -18,13 +18,23 @@ class APITokenController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $companyId = session('active_company_id');
+        
+        // Get company ID from session (web) or request header (API tests)
+        $companyId = session('active_company_id') ?? $request->header('X-Company-Id');
+        
+        // Cast to integer if it's a string from header
+        $companyId = $companyId ? (int) $companyId : null;
 
-        $tokens = PersonalAccessToken::where('tokenable_id', $user->id)
-            ->where('tokenable_type', get_class($user))
-            ->where('company_id', $companyId)
-            ->orderBy('created_at', 'desc')
-            ->get()
+        $query = PersonalAccessToken::where('tokenable_id', $user->id)
+            ->where('tokenable_type', $user->getMorphClass()) // Use morphClass instead of get_class
+            ->orderBy('created_at', 'desc');
+        
+        // Only filter by company if we have one
+        if ($companyId) {
+            $query->where('company_id', $companyId);
+        }
+
+        $tokens = $query->get()
             ->map(function ($token) {
                 return [
                     'id' => $token->id,
@@ -55,7 +65,12 @@ class APITokenController extends Controller
         ]);
 
         $user = $request->user();
-        $companyId = session('active_company_id');
+        
+        // Get company ID from session (web) or request header (API tests)
+        $companyId = session('active_company_id') ?? $request->header('X-Company-Id');
+        
+        // Cast to integer if it's a string from header
+        $companyId = $companyId ? (int) $companyId : null;
 
         if (! $companyId) {
             return response()->json([
@@ -113,13 +128,23 @@ class APITokenController extends Controller
     public function destroy(Request $request, int $tokenId): JsonResponse
     {
         $user = $request->user();
-        $companyId = session('active_company_id');
+        
+        // Get company ID from session (web) or request header (API tests)
+        $companyId = session('active_company_id') ?? $request->header('X-Company-Id');
+        
+        // Cast to integer if it's a string from header
+        $companyId = $companyId ? (int) $companyId : null;
 
-        $token = PersonalAccessToken::where('id', $tokenId)
+        $query = PersonalAccessToken::where('id', $tokenId)
             ->where('tokenable_id', $user->id)
-            ->where('tokenable_type', get_class($user))
-            ->where('company_id', $companyId)
-            ->first();
+            ->where('tokenable_type', $user->getMorphClass()); // Use morphClass instead of get_class
+        
+        // Only filter by company if we have one
+        if ($companyId) {
+            $query->where('company_id', $companyId);
+        }
+        
+        $token = $query->first();
 
         if (! $token) {
             return response()->json([

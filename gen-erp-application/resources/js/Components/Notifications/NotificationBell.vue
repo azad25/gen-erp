@@ -147,7 +147,7 @@ const closeDropdown = () => {
 
 const fetchNotifications = async () => {
   try {
-    const response = await fetch('/api/v1/notifications?per_page=10&unread_first=true', {
+    const response = await fetch('/api/v1/erp-notifications?per_page=10', {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
         'Accept': 'application/json',
@@ -165,7 +165,7 @@ const fetchNotifications = async () => {
 
 const fetchUnreadCount = async () => {
   try {
-    const response = await fetch('/api/v1/notifications/unread-count', {
+    const response = await fetch('/api/v1/erp-notifications/unread-count', {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
         'Accept': 'application/json',
@@ -174,7 +174,7 @@ const fetchUnreadCount = async () => {
     
     if (response.ok) {
       const data = await response.json()
-      unreadCount.value = data.data.count
+      unreadCount.value = data.count
     }
   } catch (error) {
     console.error('Failed to fetch unread count:', error)
@@ -183,7 +183,7 @@ const fetchUnreadCount = async () => {
 
 const markAllAsRead = async () => {
   try {
-    const response = await fetch('/api/v1/notifications/mark-all-read', {
+    const response = await fetch('/api/v1/erp-notifications/read-all', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -210,7 +210,7 @@ const handleNotificationClick = async (notification) => {
   // Mark as read if unread
   if (!notification.read_at) {
     try {
-      const response = await fetch(`/api/v1/notifications/${notification.uuid}/mark-read`, {
+      const response = await fetch(`/api/v1/erp-notifications/${notification.id}/read`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -239,7 +239,7 @@ const setupRealTimeNotifications = () => {
   const token = localStorage.getItem('token')
   if (!token) return
   
-  eventSource.value = new EventSource(`/api/v1/notifications/stream?token=${token}`)
+  eventSource.value = new EventSource(`/api/v1/erp-notifications/stream?token=${token}`)
   
   eventSource.value.onmessage = (event) => {
     const notification = JSON.parse(event.data)
@@ -294,7 +294,7 @@ const showBrowserNotification = (notification) => {
     new Notification(notification.title, {
       body: notification.message,
       icon: '/favicon.ico',
-      tag: notification.uuid
+      tag: notification.id
     })
   }
 }

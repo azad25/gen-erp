@@ -74,9 +74,9 @@ use App\Domain\CRM\Models\Pipeline;
 use App\Domain\CRM\Models\PipelineStage;
 use App\Domain\Payment\Models\Payment;
 use App\Domain\Accounting\Models\PaymentMethod as PaymentMethodModel;
-use App\Models\POSSale;
-use App\Models\POSSaleItem;
-use App\Models\POSSession;
+use App\Domain\POS\Models\POSSale;
+use App\Domain\POS\Models\POSSaleItem;
+use App\Domain\POS\Models\POSSession;
 use App\Domain\Logistics\Models\Carrier;
 use App\Domain\Logistics\Models\Shipment;
 use App\Domain\Logistics\Models\ShipmentItem;
@@ -91,8 +91,6 @@ use App\Domain\CMS\Models\Section;
 use App\Models\SavedReport;
 use App\Domain\System\Models\SystemSetting;
 use App\Domain\Audit\Models\AuditLog;
-use App\Domain\Contact\Models\Contact;
-use App\Domain\Contact\Models\ContactGroup;
 use App\Domain\Shared\Models\CustomFieldDefinition;
 use App\Domain\Shared\Models\CustomFieldValue;
 use App\Services\CompanyContext;
@@ -172,8 +170,8 @@ class RuposhiRetailSeeder
         $this->seedActivities($company, $customers, $leads, $employees, $users, 200);
 
         // ── POS System (3 sessions + 200 sales) ──────────────
-        // $sessions = $this->seedPOS($company, $branches, $products, $users, 3);
-        // $this->seedPOSSales($company, $sessions, $products, $customers, 200);
+        $sessions = $this->seedPOS($company, $branches, $products, $users, 3);
+        $this->seedPOSSales($company, $sessions, $products, $customers, 200);
 
         // ── Payments (150 payment records) ────────────────────
         // $this->seedPayments($company, $invoices, 150);
@@ -1047,16 +1045,17 @@ class RuposhiRetailSeeder
                 
                 $sale = POSSale::create([
                     'company_id' => $company->id,
-                    'session_id' => $session->id,
+                    'branch_id' => $session->branch_id,
+                    'pos_session_id' => $session->id,
                     'customer_id' => $customer?->id,
                     'sale_date' => $saleTime,
                     'subtotal' => 0,
                     'tax_amount' => 0,
                     'discount_amount' => 0,
                     'total_amount' => 0,
-                    'amount_paid' => 0,
+                    'amount_tendered' => 0,
                     'change_amount' => 0,
-                    'payment_method' => collect(['cash', 'card', 'mobile'])->random(),
+                    'status' => 'completed',
                 ]);
 
                 // Add sale items
@@ -1072,22 +1071,25 @@ class RuposhiRetailSeeder
                     POSSaleItem::create([
                         'pos_sale_id' => $sale->id,
                         'product_id' => $product->id,
+                        'description' => $product->name,
                         'quantity' => $quantity,
                         'unit_price' => $unitPrice,
+                        'discount_amount' => 0,
+                        'tax_amount' => 0,
                         'line_total' => $lineTotal,
                     ]);
                 }
 
                 $taxAmount = (int)($subtotal * 0.15);
                 $totalAmount = $subtotal + $taxAmount;
-                $amountPaid = $totalAmount + rand(0, 50000); // Some change
+                $amountTendered = $totalAmount + rand(0, 50000); // Some change
                 
                 $sale->update([
                     'subtotal' => $subtotal,
                     'tax_amount' => $taxAmount,
                     'total_amount' => $totalAmount,
-                    'amount_paid' => $amountPaid,
-                    'change_amount' => $amountPaid - $totalAmount,
+                    'amount_tendered' => $amountTendered,
+                    'change_amount' => $amountTendered - $totalAmount,
                 ]);
             }
         }

@@ -17,6 +17,12 @@
         <button class="relative h-9 w-9 flex items-center justify-center rounded-lg border border-stroke bg-white text-gray-1 hover:border-primary/40 hover:text-primary transition-all">
           🔔 <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger border-2 border-white" />
         </button>
+        <Link href="/inbox" class="relative h-9 w-9 flex items-center justify-center rounded-lg border border-stroke bg-white text-gray-1 hover:border-primary/40 hover:text-primary transition-all">
+          💬
+          <span v-if="unreadMessagesCount > 0" class="absolute -right-1 -top-1 h-5 min-w-[20px] px-1 flex items-center justify-center rounded-full bg-danger text-white text-xs font-semibold">
+            {{ unreadMessagesCount > 99 ? '99+' : unreadMessagesCount }}
+          </span>
+        </Link>
         <div class="flex items-center gap-2">
           <img 
             src="/user.jpg" 
@@ -33,13 +39,15 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { usePage } from '@inertiajs/vue3'
+import { computed, ref, onMounted } from 'vue'
+import { usePage, Link } from '@inertiajs/vue3'
+import axios from 'axios'
 
 defineEmits(['toggle'])
 
 const page = usePage()
 const title = computed(() => page.props.pageTitle || 'Dashboard')
+const unreadMessagesCount = ref(0)
 
 const userProfileImage = computed(() => {
   const userImage = page.props.auth?.user?.profile_image
@@ -48,4 +56,20 @@ const userProfileImage = computed(() => {
   }
   return '/user.jpg?v=' + Date.now()
 })
+
+onMounted(() => {
+  loadUnreadCount()
+  // Poll for new messages every 30 seconds
+  setInterval(loadUnreadCount, 30000)
+})
+
+async function loadUnreadCount() {
+  try {
+    const response = await axios.get('/api/v1/inbox/conversations')
+    const conversations = response.data.data
+    unreadMessagesCount.value = conversations.reduce((sum, conv) => sum + conv.unread_count, 0)
+  } catch (error) {
+    console.error('Failed to load unread count:', error)
+  }
+}
 </script>

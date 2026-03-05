@@ -282,7 +282,7 @@ describe('CMS Sections', function () {
 
         $response->assertCreated();
         
-        $this->assertDatabaseCount('cms_sections', 2);
+        $this->assertEquals(2, Section::where('page_id', $this->page->id)->count());
     });
 
     it('can reorder sections', function () {
