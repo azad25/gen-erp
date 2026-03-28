@@ -12,6 +12,7 @@ readonly class UserRegistrationData
         public string $email,
         public string $password,
         public ?string $phone = null,
+        public ?string $companyName = null,
     ) {}
 
     /**
@@ -24,6 +25,7 @@ readonly class UserRegistrationData
             email: $data['email'],
             password: $data['password'],
             phone: $data['phone'] ?? null,
+            companyName: $data['company_name'] ?? null,
         );
     }
 
@@ -37,6 +39,7 @@ readonly class UserRegistrationData
             'email' => $this->email,
             'password' => $this->password,
             'phone' => $this->phone,
+            'company_name' => $this->companyName,
         ];
     }
 }

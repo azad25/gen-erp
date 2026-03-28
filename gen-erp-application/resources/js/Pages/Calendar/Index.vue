@@ -1,5 +1,5 @@
 <template>
-  <AppLayout title="Calendar">
+  <AdminLayout title="Calendar">
     <div class="p-6">
       <!-- Header -->
       <div class="mb-6 flex items-center justify-between">
@@ -169,12 +169,12 @@
         </div>
       </div>
     </div>
-  </AppLayout>
+  </AdminLayout>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import AppLayout from '../../Layouts/AppLayout.vue'
+import AdminLayout from '@/Layouts/AppLayout.vue'
 import { useApi } from '../../Composables/useApi.js'
 import { useToast } from '../../Composables/useToast.js'
 import FullCalendar from '@fullcalendar/vue3'
@@ -213,6 +213,139 @@ const eventTypes = [
 const getColorForType = (type) => {
   const eventType = eventTypes.find(t => t.value === type)
   return eventType ? eventType.color : '#6B7280'
+}
+
+const openModal = () => {
+  isModalOpen.value = true
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  resetModalFields()
+}
+
+const resetModalFields = () => {
+  eventTitle.value = ''
+  eventDescription.value = ''
+  eventStartDate.value = ''
+  eventEndDate.value = ''
+  eventType.value = 'meeting'
+  eventAllDay.value = false
+  selectedEvent.value = null
+}
+
+const formatDateTimeLocal = (date) => {
+  if (!date) return ''
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+const handleDateSelect = (selectInfo) => {
+  resetModalFields()
+  eventStartDate.value = selectInfo.startStr
+  eventEndDate.value = selectInfo.endStr || selectInfo.startStr
+  openModal()
+}
+
+const handleEventClick = (clickInfo) => {
+  const event = clickInfo.event
+  selectedEvent.value = event
+  eventTitle.value = event.title
+  eventDescription.value = event.extendedProps.description || ''
+  eventStartDate.value = formatDateTimeLocal(event.start)
+  eventEndDate.value = event.end ? formatDateTimeLocal(event.end) : formatDateTimeLocal(event.start)
+  eventType.value = event.extendedProps.type
+  eventAllDay.value = event.allDay
+  openModal()
+}
+
+const handleEventDrop = async (info) => {
+  try {
+    await put(`/api/v1/events/${info.event.id}`, {
+      start_at: info.event.start.toISOString(),
+      end_at: info.event.end ? info.event.end.toISOString() : info.event.start.toISOString(),
+    })
+    showToast('Event rescheduled', 'success')
+    await fetchEvents()
+  } catch (error) {
+    info.revert()
+    showToast('Failed to reschedule event', 'error')
+  }
+}
+
+const handleEventResize = async (info) => {
+  try {
+    await put(`/api/v1/events/${info.event.id}`, {
+      start_at: info.event.start.toISOString(),
+      end_at: info.event.end ? info.event.end.toISOString() : info.event.start.toISOString(),
+    })
+    showToast('Event updated', 'success')
+    await fetchEvents()
+  } catch (error) {
+    info.revert()
+    showToast('Failed to update event', 'error')
+  }
+}
+
+const fetchCalendars = async () => {
+  try {
+    const response = await get('/api/v1/calendar')
+    calendars.value = response.data || response || []
+    
+    // Auto-select first calendar if none selected
+    if (!selectedCalendarId.value && calendars.value.length > 0) {
+      selectedCalendarId.value = calendars.value[0].id
+    }
+  } catch (error) {
+    console.error('Failed to load calendars:', error)
+    calendars.value = []
+    // Don't show toast on initial load to avoid noise
+  }
+}
+
+const fetchEvents = async () => {
+  try {
+    // Get current month range from FullCalendar
+    const calendarApi = calendarRef.value?.getApi()
+    const view = calendarApi?.view
+    
+    let startDate, endDate
+    if (view) {
+      startDate = view.activeStart
+      endDate = view.activeEnd
+    } else {
+      // Fallback to current month
+      const now = new Date()
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    }
+    
+    const response = await get('/api/v1/calendar/user-events', {
+      start_date: startDate.toISOString().split('T')[0],
+      end_date: endDate.toISOString().split('T')[0],
+      calendar_id: selectedCalendarId.value
+    })
+    
+    events.value = response.data || response || []
+  } catch (error) {
+    console.error('Failed to load events:', error)
+    events.value = []
+    // Don't show toast on initial load to avoid noise
+  }
+}
+
+const toggleEventType = (type) => {
+  const index = selectedEventTypes.value.indexOf(type)
+  if (index > -1) {
+    selectedEventTypes.value.splice(index, 1)
+  } else {
+    selectedEventTypes.value.push(type)
+  }
 }
 
 const filteredCalendarEvents = computed(() => {
@@ -255,44 +388,6 @@ const calendarOptions = reactive({
   contentHeight: 'auto',
 })
 
-const openModal = () => {
-  isModalOpen.value = true
-}
-
-const closeModal = () => {
-  isModalOpen.value = false
-  resetModalFields()
-}
-
-const resetModalFields = () => {
-  eventTitle.value = ''
-  eventDescription.value = ''
-  eventStartDate.value = ''
-  eventEndDate.value = ''
-  eventType.value = 'meeting'
-  eventAllDay.value = false
-  selectedEvent.value = null
-}
-
-const handleDateSelect = (selectInfo) => {
-  resetModalFields()
-  eventStartDate.value = selectInfo.startStr
-  eventEndDate.value = selectInfo.endStr || selectInfo.startStr
-  openModal()
-}
-
-const handleEventClick = (clickInfo) => {
-  const event = clickInfo.event
-  selectedEvent.value = event
-  eventTitle.value = event.title
-  eventDescription.value = event.extendedProps.description || ''
-  eventStartDate.value = formatDateTimeLocal(event.start)
-  eventEndDate.value = event.end ? formatDateTimeLocal(event.end) : formatDateTimeLocal(event.start)
-  eventType.value = event.extendedProps.type
-  eventAllDay.value = event.allDay
-  openModal()
-}
-
 const handleSaveEvent = async () => {
   if (!eventTitle.value || !eventStartDate.value) {
     showToast('Please fill in required fields', 'error')
@@ -313,11 +408,11 @@ const handleSaveEvent = async () => {
 
     if (selectedEvent.value) {
       // Update existing event
-      await put(`/events/${selectedEvent.value.id}`, eventData)
+      await put(`/api/v1/events/${selectedEvent.value.id}`, eventData)
       showToast('Event updated successfully', 'success')
     } else {
       // Create new event
-      await post('/events', eventData)
+      await post('/api/v1/events', eventData)
       showToast('Event created successfully', 'success')
     }
 
@@ -334,7 +429,7 @@ const handleDeleteEvent = async () => {
   if (!confirm('Are you sure you want to delete this event?')) return
 
   try {
-    await del(`/events/${selectedEvent.value.id}`)
+    await del(`/api/v1/events/${selectedEvent.value.id}`)
     showToast('Event deleted successfully', 'success')
     closeModal()
     await fetchEvents()
@@ -343,105 +438,18 @@ const handleDeleteEvent = async () => {
   }
 }
 
-const handleEventDrop = async (info) => {
-  try {
-    await put(`/events/${info.event.id}`, {
-      start_at: info.event.start.toISOString(),
-      end_at: info.event.end ? info.event.end.toISOString() : info.event.start.toISOString(),
-    })
-    showToast('Event rescheduled', 'success')
-    await fetchEvents()
-  } catch (error) {
-    info.revert()
-    showToast('Failed to reschedule event', 'error')
-  }
-}
-
-const handleEventResize = async (info) => {
-  try {
-    await put(`/events/${info.event.id}`, {
-      start_at: info.event.start.toISOString(),
-      end_at: info.event.end ? info.event.end.toISOString() : info.event.start.toISOString(),
-    })
-    showToast('Event updated', 'success')
-    await fetchEvents()
-  } catch (error) {
-    info.revert()
-    showToast('Failed to update event', 'error')
-  }
-}
-
-const fetchCalendars = async () => {
-  try {
-    const response = await get('/calendar')
-    calendars.value = response
-    
-    // Auto-select first calendar if none selected
-    if (!selectedCalendarId.value && calendars.value.length > 0) {
-      selectedCalendarId.value = calendars.value[0].id
-    }
-  } catch (error) {
-    showToast('Failed to load calendars', 'error')
-  }
-}
-
-const fetchEvents = async () => {
-  try {
-    // Get current month range from FullCalendar
-    const calendarApi = calendarRef.value?.getApi()
-    const view = calendarApi?.view
-    
-    let startDate, endDate
-    if (view) {
-      startDate = view.activeStart
-      endDate = view.activeEnd
-    } else {
-      // Fallback to current month
-      const now = new Date()
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    }
-    
-    const response = await get('/calendar/user-events', {
-      start_date: startDate.toISOString().split('T')[0],
-      end_date: endDate.toISOString().split('T')[0],
-      calendar_id: selectedCalendarId.value
-    })
-    
-    events.value = response
-  } catch (error) {
-    showToast('Failed to load events', 'error')
-  }
-}
-
-const toggleEventType = (type) => {
-  const index = selectedEventTypes.value.indexOf(type)
-  if (index > -1) {
-    selectedEventTypes.value.splice(index, 1)
-  } else {
-    selectedEventTypes.value.push(type)
-  }
-}
-
-const formatDateTimeLocal = (date) => {
-  if (!date) return ''
-  const d = new Date(date)
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hours = String(d.getHours()).padStart(2, '0')
-  const minutes = String(d.getMinutes()).padStart(2, '0')
-  return `${year}-${month}-${day}T${hours}:${minutes}`
-}
-
 // Watch for calendar changes
 watch(selectedCalendarId, () => {
   fetchEvents()
 })
 
 onMounted(async () => {
-  await fetchCalendars()
-  await fetchEvents()
+  try {
+    await fetchCalendars()
+    await fetchEvents()
+  } catch (error) {
+    console.error('Error initializing calendar:', error)
+  }
 })
 </script>
 
@@ -494,168 +502,3 @@ onMounted(async () => {
   font-weight: 600;
 }
 </style>
-
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import AppLayout from '../../Layouts/AppLayout.vue'
-import { useApi } from '../../Composables/useApi.js'
-import { useToast } from '../../Composables/useToast.js'
-
-const { get } = useApi()
-const { showToast } = useToast()
-
-const loading = ref(false)
-const calendars = ref([])
-const events = ref([])
-const selectedCalendarId = ref(null)
-const currentView = ref('month')
-const currentDate = ref(new Date())
-const showCreateEventModal = ref(false)
-const selectedEventTypes = ref(['meeting', 'call', 'task', 'deadline', 'leave', 'milestone', 'personal', 'company'])
-
-const views = [
-  { value: 'month', label: 'Month' },
-  { value: 'week', label: 'Week' },
-  { value: 'day', label: 'Day' },
-  { value: 'agenda', label: 'Agenda' },
-]
-
-const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-const eventTypes = [
-  { value: 'meeting', label: 'Meeting', color: '#3B82F6' },
-  { value: 'call', label: 'Call', color: '#10B981' },
-  { value: 'task', label: 'Task', color: '#F59E0B' },
-  { value: 'deadline', label: 'Deadline', color: '#EF4444' },
-  { value: 'leave', label: 'Leave', color: '#8B5CF6' },
-  { value: 'milestone', label: 'Milestone', color: '#EC4899' },
-  { value: 'personal', label: 'Personal', color: '#6B7280' },
-  { value: 'company', label: 'Company', color: '#6366F1' },
-]
-
-const currentPeriodLabel = computed(() => {
-  const options = { year: 'numeric', month: 'long' }
-  return currentDate.value.toLocaleDateString('en-US', options)
-})
-
-const calendarDays = computed(() => {
-  const year = currentDate.value.getFullYear()
-  const month = currentDate.value.getMonth()
-  
-  const firstDay = new Date(year, month, 1)
-  const lastDay = new Date(year, month + 1, 0)
-  const startDate = new Date(firstDay)
-  startDate.setDate(startDate.getDate() - startDate.getDay())
-  
-  const days = []
-  const currentDay = new Date(startDate)
-  
-  for (let i = 0; i < 42; i++) {
-    const dayEvents = events.value.filter(event => {
-      const eventDate = new Date(event.start_at)
-      return eventDate.toDateString() === currentDay.toDateString()
-    })
-    
-    days.push({
-      date: new Date(currentDay),
-      isCurrentMonth: currentDay.getMonth() === month,
-      isToday: currentDay.toDateString() === new Date().toDateString(),
-      events: dayEvents
-    })
-    
-    currentDay.setDate(currentDay.getDate() + 1)
-  }
-  
-  return days
-})
-
-const filteredEvents = computed(() => {
-  return events.value.filter(event => {
-    if (selectedCalendarId.value && event.calendar_id !== selectedCalendarId.value) {
-      return false
-    }
-    return selectedEventTypes.value.includes(event.type)
-  })
-})
-
-const fetchCalendars = async () => {
-  try {
-    const response = await get('/calendar')
-    calendars.value = response
-  } catch (error) {
-    showToast('Failed to load calendars', 'error')
-  }
-}
-
-const fetchEvents = async () => {
-  loading.value = true
-  try {
-    const startDate = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth(), 1)
-    const endDate = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1, 0)
-    
-    const response = await get('/calendar/user-events', {
-      start_date: startDate.toISOString().split('T')[0],
-      end_date: endDate.toISOString().split('T')[0],
-      calendar_id: selectedCalendarId.value
-    })
-    
-    events.value = response
-  } catch (error) {
-    showToast('Failed to load events', 'error')
-  } finally {
-    loading.value = false
-  }
-}
-
-const previousPeriod = () => {
-  currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() - 1, 1)
-  fetchEvents()
-}
-
-const nextPeriod = () => {
-  currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1, 1)
-  fetchEvents()
-}
-
-const goToToday = () => {
-  currentDate.value = new Date()
-  fetchEvents()
-}
-
-const toggleEventType = (type) => {
-  const index = selectedEventTypes.value.indexOf(type)
-  if (index > -1) {
-    selectedEventTypes.value.splice(index, 1)
-  } else {
-    selectedEventTypes.value.push(type)
-  }
-}
-
-const selectDay = (day) => {
-  console.log('Selected day:', day)
-}
-
-const viewEvent = (event) => {
-  console.log('View event:', event)
-}
-
-const formatEventTime = (event) => {
-  const start = new Date(event.start_at)
-  const end = event.end_at ? new Date(event.end_at) : null
-  
-  if (event.all_day) {
-    return 'All day'
-  }
-  
-  const timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  if (end) {
-    return `${timeStr} - ${end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
-  }
-  return timeStr
-}
-
-onMounted(() => {
-  fetchCalendars()
-  fetchEvents()
-})
-</script>

@@ -12,8 +12,7 @@
 
 <script setup>
 import AppSidebar from '@/Components/Layout/AppSidebar.vue'
-import AppHeader from '@/Components/Layout/AppHeader.vue'
 import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import Backdrop from '@/Components/Layout/Backdrop.vue'
-import AppLayoutMain from '@/Components/Layout/AppLayoutMain.vue'
+import AppLayoutMain from '@/Components/Layout/AppLayout.vue'
 </script>

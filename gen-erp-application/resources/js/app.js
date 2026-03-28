@@ -23,6 +23,12 @@ createInertiaApp({
       })
       .catch(error => {
         console.error('[Inertia] Failed to resolve page component:', name, error)
+        console.error('[Inertia] Error details:', {
+          message: error.message,
+          stack: error.stack,
+          pageName: name
+        })
+        // Re-throw to let Inertia handle it
         throw error
       })
   },
@@ -44,6 +50,17 @@ createInertiaApp({
       console.log('[Company Sync] Set active_company_id to:', companyId)
     } else {
       console.warn('[Company Sync] No company ID found in props')
+      console.warn('[Company Sync] Auth props:', props.initialPage.props.auth)
+      
+      // Try to get company ID from user's companies
+      const userCompanies = props.initialPage.props.auth?.user?.companies
+      if (userCompanies && userCompanies.length > 0) {
+        const firstCompanyId = userCompanies[0].id
+        sessionStorage.setItem('active_company_id', firstCompanyId)
+        console.log('[Company Sync] Using first company ID:', firstCompanyId)
+      } else {
+        console.error('[Company Sync] No companies found for user')
+      }
     }
 
     const app = createApp({
@@ -69,19 +86,41 @@ import { router } from '@inertiajs/vue3'
 
 router.on('error', (event) => {
   console.error('[Inertia] Navigation error:', event.detail.errors)
+  console.error('[Inertia] Error page component:', event.detail.page?.component)
+  console.error('[Inertia] Error page URL:', event.detail.page?.url)
 })
 
 router.on('navigate', (event) => {
   console.log('[Inertia] Navigating to:', event.detail.page.url)
+  console.log('[Inertia] Page component:', event.detail.page.component)
   // Scroll to top on navigation
   window.scrollTo({ top: 0, behavior: 'smooth' })
 })
 
 router.on('finish', (event) => {
   console.log('[Inertia] Navigation finished:', event.detail.visit.url)
+  console.log('[Inertia] Final page component:', event.detail.page?.component)
 })
 
 router.on('exception', (event) => {
   console.error('[Inertia] Exception during navigation:', event.detail.exception)
-  event.preventDefault() // Prevent default error handling
+  console.error('[Inertia] Exception stack:', event.detail.exception?.stack)
+  console.error('[Inertia] Page component:', event.detail.page?.component)
+  console.error('[Inertia] Page URL:', event.detail.page?.url)
+  console.error('[Inertia] Visit details:', event.detail.visit)
+  // DON'T prevent default - let the error show
+  // event.preventDefault()
+})
+
+router.on('start', (event) => {
+  console.log('[Inertia] Navigation started:', event.detail.visit.url)
+})
+
+router.on('progress', (event) => {
+  console.log('[Inertia] Navigation progress:', event.detail.percentage + '%')
+})
+
+router.on('success', (event) => {
+  console.log('[Inertia] Navigation success:', event.detail.page.url)
+  console.log('[Inertia] Success page component:', event.detail.page.component)
 })

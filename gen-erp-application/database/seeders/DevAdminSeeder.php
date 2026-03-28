@@ -39,14 +39,14 @@ class DevAdminSeeder extends Seeder
             $this->command->info('✓ Dev Admin user updated: dev@generp.test');
         }
 
-        // Create or get dev company
-        $devCompany = Company::where('name', 'Dev Company')->first();
+        // Create or get dev master company
+        $devCompany = Company::where('name', 'Dev Master Company')->first();
 
         if (! $devCompany) {
             $devCompany = Company::create([
                 'uuid' => \Illuminate\Support\Str::uuid(),
-                'name' => 'Dev Company',
-                'slug' => 'dev-company',
+                'name' => 'Dev Master Company',
+                'slug' => 'dev-master-company',
                 'email' => 'dev@generp.test',
                 'phone' => '+880 1700-000000',
                 'address_line1' => 'Dhaka',
@@ -55,9 +55,12 @@ class DevAdminSeeder extends Seeder
                 'country' => 'BD',
                 'business_type' => 'service',
                 'is_active' => true,
+                'is_master_company' => true,
+                'company_type' => 'master',
+                'show_aggregated_data' => true,
             ]);
 
-            $this->command->info('✓ Dev Company created');
+            $this->command->info('✓ Dev Master Company created');
         }
 
         // Attach dev admin to dev company if not already attached
@@ -69,7 +72,7 @@ class DevAdminSeeder extends Seeder
                 'joined_at' => now(),
             ]);
 
-            $this->command->info('✓ Dev Admin attached to Dev Company');
+            $this->command->info('✓ Dev Admin attached to Dev Master Company');
         }
 
         // Set as last active company
@@ -81,7 +84,7 @@ class DevAdminSeeder extends Seeder
         $this->command->info('═══════════════════════════════════════════════════');
         $this->command->info('  Email:    dev@generp.test');
         $this->command->info('  Password: DevAdmin@123');
-        $this->command->info('  Company:  Dev Company');
+        $this->command->info('  Company:  Dev Master Company');
         $this->command->info('═══════════════════════════════════════════════════');
         $this->command->info('');
     }

@@ -1,7 +1,7 @@
 <template>
-  <ThemeProvider>
-    <SidebarProvider>
-      <AdminLayout>
+  
+    
+      <AppLayout>
         <div class="space-y-6">
           <!-- Header -->
           <div class="flex items-center gap-4">
@@ -211,17 +211,15 @@
             </div>
           </div>
         </Modal>
-      </AdminLayout>
-    </SidebarProvider>
-  </ThemeProvider>
+      </AppLayout>
+    
+  
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { usePage } from '@inertiajs/vue3'
-import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
-import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
-import AdminLayout from '@/Components/Layout/AdminLayout.vue'
+import AppLayout from "@/Layouts/AppLayout.vue"
 import Card from '@/Components/ui/Card.vue'
 import Button from '@/Components/ui/Button.vue'
 import Badge from '@/Components/UI/Badge.vue'

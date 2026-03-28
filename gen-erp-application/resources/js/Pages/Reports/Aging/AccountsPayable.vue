@@ -1,7 +1,7 @@
 <template>
-  <ThemeProvider>
-    <SidebarProvider>
-      <AdminLayout>
+  
+    
+      <AppLayout>
         <div class="py-6">
           <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="mb-6">
@@ -103,16 +103,14 @@
         </div>
           </div>
         </div>
-      </AdminLayout>
-    </SidebarProvider>
-  </ThemeProvider>
+      </AppLayout>
+    
+  
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import ThemeProvider from '@/Components/Layout/ThemeProvider.vue';
-import SidebarProvider from '@/Components/Layout/SidebarProvider.vue';
-import AdminLayout from '@/Components/Layout/AdminLayout.vue';
+import AppLayout from "@/Layouts/AppLayout.vue"
 
 const filters = ref({
   as_of_date: new Date().toISOString().split('T')[0],

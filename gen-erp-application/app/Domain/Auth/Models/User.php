@@ -136,6 +136,72 @@ class User extends Authenticatable
     }
 
     /**
+     * Get user's master companies (companies where user is owner and company is master)
+     */
+    public function masterCompanies(): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->companies()
+            ->where('is_master_company', true)
+            ->where('parent_company_id', null)
+            ->wherePivot('is_owner', true)
+            ->get();
+    }
+
+    /**
+     * Get all accessible companies including subsidiaries of owned master companies
+     */
+    public function getAccessibleCompanies(): \Illuminate\Database\Eloquent\Collection
+    {
+        $companies = collect();
+        
+        // Add directly accessible companies
+        $directCompanies = $this->companies()->wherePivot('is_active', true)->get();
+        $companies = $companies->merge($directCompanies);
+        
+        // Add subsidiaries of master companies where user is owner
+        foreach ($this->masterCompanies() as $masterCompany) {
+            $companies = $companies->merge($masterCompany->allSubsidiaries());
+        }
+        
+        return $companies->unique('id');
+    }
+
+    /**
+     * Get companies grouped by hierarchy for display
+     */
+    public function getCompanyHierarchy(): array
+    {
+        $hierarchy = [];
+        $masterCompanies = $this->masterCompanies();
+        
+        foreach ($masterCompanies as $master) {
+            $hierarchy[] = [
+                'master' => $master,
+                'subsidiaries' => $master->activeSubsidiaries,
+                'can_aggregate' => $master->canShowAggregatedData(),
+            ];
+        }
+        
+        // Add standalone companies (companies user belongs to but doesn't own as master)
+        $standaloneCompanies = $this->companies()
+            ->where('is_master_company', true)
+            ->where('parent_company_id', null)
+            ->wherePivot('is_active', true)
+            ->wherePivot('is_owner', false)
+            ->get();
+            
+        foreach ($standaloneCompanies as $company) {
+            $hierarchy[] = [
+                'master' => $company,
+                'subsidiaries' => collect(),
+                'can_aggregate' => false,
+            ];
+        }
+        
+        return $hierarchy;
+    }
+
+    /**
      * Get user permissions for a specific company.
      */
     public function getPermissionsForCompany(int $companyId): array

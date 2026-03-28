@@ -1,5 +1,5 @@
 <template>
-  <SidebarProvider>
+  
     <AppLayout :title="$t('documents.folders')">
       <div class="p-6">
       <!-- Header -->
@@ -86,14 +86,13 @@
       @updated="handleFolderUpdated"
     />
   </AppLayout>
-</SidebarProvider>
+
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useTranslations } from '@/Composables/useTranslations'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import CreateFolderModal from '@/Components/Documents/CreateFolderModal.vue'
 import EditFolderModal from '@/Components/Documents/EditFolderModal.vue'
 import FolderTreeItem from '@/Components/Documents/FolderTreeItem.vue'

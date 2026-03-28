@@ -1,5 +1,5 @@
 <template>
-    <AdminLayout>
+    <AppLayout>
         <div class="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
             <!-- Top Bar -->
             <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
@@ -473,13 +473,13 @@
                 </div>
             </div>
         </Transition>
-    </AdminLayout>
+    </AppLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
-import AdminLayout from '@/Components/Layout/AdminLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import axios from 'axios';
 

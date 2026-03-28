@@ -6,7 +6,7 @@
         'lg:w-[290px]': isExpanded || isMobileOpen || isHovered,
         'lg:w-[90px]': !isExpanded && !isHovered,
         'translate-x-0 w-[290px]': isMobileOpen,
-        '-translate-x-full': !isMobileOpen,
+        '-translate-x-full': !isMobileOpen && !isExpanded,
         'lg:translate-x-0': true,
       },
     ]"
@@ -191,7 +191,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import { Link } from "@inertiajs/vue3";
 import { useTranslations } from "@/Composables/useTranslations";
@@ -273,8 +273,50 @@ const isAnyRouteActive = (items, groupKey) => {
   return items.some(item => isCurrentRoute(item.routeName));
 };
 
-// Collapsible groups state
+// Collapsible groups state - Initialize with all groups collapsed by default
+// But expand the group if any of its routes are currently active
 const collapsedGroups = ref(new Set());
+
+// Initialize collapsed groups on mount
+const initializeCollapsedGroups = () => {
+  const allGroupKeys = [
+    'documents',
+    'sales',
+    'pos',
+    'purchase',
+    'inventory',
+    'accounting',
+    'payments',
+    'hr',
+    'projects',
+    'crm',
+    'cms',
+    'reports',
+    'logistics',
+    'integrations',
+    'subscription',
+    'admin_subscription',
+    'settings'
+  ];
+  
+  // Start with all groups collapsed
+  const collapsed = new Set(allGroupKeys);
+  
+  // Check each group to see if any of its routes are active
+  menuGroups.value.forEach(group => {
+    if (group.items.length > 1 && isAnyRouteActive(group.items, group.key)) {
+      // If this group has an active route, remove it from collapsed set (expand it)
+      collapsed.delete(group.key);
+    }
+  });
+  
+  collapsedGroups.value = collapsed;
+};
+
+// Initialize on component mount
+onMounted(() => {
+  initializeCollapsedGroups();
+});
 
 const menuGroups = computed(() => [
   {

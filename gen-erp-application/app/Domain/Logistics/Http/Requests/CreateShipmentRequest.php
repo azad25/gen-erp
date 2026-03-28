@@ -28,7 +28,6 @@ class CreateShipmentRequest extends FormRequest
             'recipient_city' => 'required|string|max:100',
             'recipient_state' => 'nullable|string|max:100',
             'recipient_postal_code' => 'nullable|string|max:20',
-            'recipient_country' => 'required|string|max:100',
             
             // Sender information
             'sender_name' => 'required|string|max:255',
@@ -38,7 +37,6 @@ class CreateShipmentRequest extends FormRequest
             'sender_city' => 'required|string|max:100',
             'sender_state' => 'nullable|string|max:100',
             'sender_postal_code' => 'nullable|string|max:20',
-            'sender_country' => 'required|string|max:100',
             
             // Shipment details
             'delivery_type' => ['required', Rule::enum(DeliveryType::class)],

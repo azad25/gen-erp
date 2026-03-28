@@ -33,8 +33,6 @@ class DevSampleDataSeeder extends Seeder
             ],
         );
 
-        $this->command?->info("👤 Dev admin: {$devAdmin->email}");
-
         // ── 2. Seed Plans ──────────────────────────────────
 
         $this->call(PlanSeeder::class);
@@ -43,12 +41,25 @@ class DevSampleDataSeeder extends Seeder
 
         $this->call(IntegrationSeeder::class);
 
-        // ── 3. Ruposhi Retail (Retail Shop) ─────────────────
+        $this->command?->info("👤 Dev admin: {$devAdmin->email}");
+
+        // Get the dev master company (should exist from DevAdminSeeder)
+        $devMasterCompany = Company::where('slug', 'dev-master-company')->first();
+        
+        if (!$devMasterCompany) {
+            $this->command?->error('Dev Master Company not found! Make sure DevAdminSeeder ran first.');
+            return;
+        }
+        
+        $this->command?->info("🏢 Using Dev Master Company: {$devMasterCompany->name}");
+
+        // ── 4. Ruposhi Retail (Subsidiary) ─────────────────
 
         $this->command?->info('🏪 Seeding Ruposhi Retail...');
-        $ruposhi = $this->createCompany(
+        $ruposhi = $this->createSubsidiaryCompany(
             'Ruposhi Retail',
             BusinessType::RETAIL,
+            $devMasterCompany,
             $devAdmin,
             vatBin: '123456789012',
         );
@@ -56,12 +67,13 @@ class DevSampleDataSeeder extends Seeder
         $ruposhiSeeder->setCommand($this->command);
         $ruposhiSeeder->run($ruposhi, $devAdmin);
 
-        // ── 4. Shifa Pharmacy ──────────────────────────────
+        // ── 5. Shifa Pharmacy (Subsidiary) ──────────────────────────────
 
         $this->command?->info('💊 Seeding Shifa Pharmacy...');
-        $shifa = $this->createCompany(
+        $shifa = $this->createSubsidiaryCompany(
             'Shifa Pharmacy',
             BusinessType::PHARMACY,
+            $devMasterCompany,
             $devAdmin,
             vatBin: '234567890123',
         );
@@ -69,12 +81,13 @@ class DevSampleDataSeeder extends Seeder
         $shifaSeeder->setCommand($this->command);
         $shifaSeeder->run($shifa, $devAdmin);
 
-        // ── 5. Apex Garments ───────────────────────────────
+        // ── 6. Apex Garments (Subsidiary) ───────────────────────────────
 
         $this->command?->info('🏭 Seeding Apex Garments...');
-        $apex = $this->createCompany(
+        $apex = $this->createSubsidiaryCompany(
             'Apex Garments Ltd',
             BusinessType::MANUFACTURING,
+            $devMasterCompany,
             $devAdmin,
             vatBin: '345678901234',
         );
@@ -84,7 +97,62 @@ class DevSampleDataSeeder extends Seeder
     }
 
     /**
-     * Create a company with the dev admin as owner.
+     * Create a subsidiary company under a master company.
+     */
+    private function createSubsidiaryCompany(
+        string $name,
+        BusinessType $businessType,
+        Company $parentCompany,
+        User $owner,
+        string $vatBin = '',
+    ): Company {
+        $company = Company::firstOrCreate(
+            ['slug' => Str::slug($name)],
+            [
+                'uuid' => Str::uuid(),
+                'name' => $name,
+                'slug' => Str::slug($name),
+                'parent_company_id' => $parentCompany->id,
+                'is_master_company' => false,
+                'company_type' => 'subsidiary',
+                'business_type' => $businessType,
+                'country' => 'BD',
+                'currency' => 'BDT',
+                'timezone' => 'Asia/Dhaka',
+                'locale' => 'en',
+                'vat_registered' => ! empty($vatBin),
+                'vat_bin' => $vatBin ?: null,
+                'address_line1' => 'Mirpur Road',
+                'city' => 'Dhaka',
+                'district' => 'Dhaka',
+                'postal_code' => '1205',
+                'phone' => '01712000000',
+                'email' => strtolower(Str::slug($name, '.')).'@example.com',
+                'is_active' => true,
+                'plan' => 'enterprise',
+                'onboarding_completed_at' => now(),
+            ],
+        );
+
+        // Attach owner if not already
+        CompanyUser::firstOrCreate(
+            ['company_id' => $company->id, 'user_id' => $owner->id],
+            [
+                'role' => CompanyRole::OWNER->value,
+                'is_owner' => true,
+                'is_active' => true,
+                'joined_at' => now(),
+            ],
+        );
+
+        // Seed default tax groups
+        TaxGroupSeeder::createForCompany($company->id);
+
+        return $company;
+    }
+
+    /**
+     * Create a master company with the dev admin as owner.
      */
     private function createCompany(
         string $name,
@@ -98,6 +166,8 @@ class DevSampleDataSeeder extends Seeder
                 'uuid' => Str::uuid(),
                 'name' => $name,
                 'slug' => Str::slug($name),
+                'is_master_company' => true,
+                'company_type' => 'master',
                 'business_type' => $businessType,
                 'country' => 'BD',
                 'currency' => 'BDT',

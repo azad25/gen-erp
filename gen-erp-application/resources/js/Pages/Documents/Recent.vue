@@ -1,5 +1,5 @@
 <template>
-  <SidebarProvider>
+  
     <AppLayout :title="$t('documents.recent')">
       <div class="p-6">
       <!-- Header -->
@@ -131,14 +131,13 @@
       @close="viewingDocument = null"
     />
   </AppLayout>
-</SidebarProvider>
+
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useTranslations } from '@/Composables/useTranslations'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import DocumentViewer from '@/Components/Documents/DocumentViewer.vue'
 import {
   DocumentIcon,

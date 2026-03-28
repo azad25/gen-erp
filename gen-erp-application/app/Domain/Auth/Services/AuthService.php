@@ -3,6 +3,7 @@
 namespace App\Domain\Auth\Services;
 
 use App\Domain\Auth\Actions\AuthenticateUserAction;
+use App\Domain\Auth\Actions\CreateMasterCompanyAction;
 use App\Domain\Auth\Actions\RegisterUserAction;
 use App\Domain\Auth\Actions\SetupCompanyAction;
 use App\Domain\Auth\DataTransferObjects\CompanySetupData;
@@ -30,6 +31,7 @@ class AuthService
         private AuthenticateUserAction $authenticateUserAction,
         private RegisterUserAction $registerUserAction,
         private SetupCompanyAction $setupCompanyAction,
+        private CreateMasterCompanyAction $createMasterCompanyAction,
     ) {}
 
     /**
@@ -102,14 +104,24 @@ class AuthService
     }
 
     /**
-     * Register a new user (without company)
+     * Register a new user and automatically create master company
      */
     public function register(UserRegistrationData $userData): array
     {
         $user = $this->registerUserAction->execute($userData);
 
-        // Create token without company context (user needs to setup company first)
+        // Automatically create master company if company name provided
+        $company = null;
+        if ($userData->companyName) {
+            $company = $this->createMasterCompanyAction->execute($user, $userData->companyName);
+        }
+
+        // Create token with company context if company was created
         $token = $user->createToken('auth-token', ['*']);
+        
+        if ($company) {
+            $token->accessToken->update(['company_id' => $company->id]);
+        }
 
         return [
             'success' => true,
@@ -117,8 +129,11 @@ class AuthService
             'token' => $token->plainTextToken,
             'token_type' => 'Bearer',
             'expires_at' => null,
-            'requires_company_setup' => true,
-            'message' => __('Registration successful. Please setup your company.'),
+            'company' => $company,
+            'requires_company_setup' => $company === null,
+            'message' => $company 
+                ? __('Registration successful. Welcome to :company!', ['company' => $company->name])
+                : __('Registration successful. Please setup your company.'),
         ];
     }
 
@@ -242,7 +257,7 @@ class AuthService
     }
 
     /**
-     * Get user data with company context
+     * Get user data with company context and hierarchy
      */
     public function getUserData(User $user): array
     {
@@ -258,6 +273,7 @@ class AuthService
             'permissions' => $company ? $user->getPermissionsForCompany($company->id) : [],
             'subscription' => $company?->activeSubscription?->plan?->slug,
             'companies' => $user->companies,
+            'company_hierarchy' => $user->getCompanyHierarchy(),
             'requires_company_setup' => $user->companies()->count() === 0,
         ];
     }

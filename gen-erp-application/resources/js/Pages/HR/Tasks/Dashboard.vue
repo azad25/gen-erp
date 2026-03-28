@@ -1,5 +1,5 @@
 <template>
-  <SidebarProvider>
+  
     <AppLayout>
       <div class="space-y-6">
         <!-- Page Header -->
@@ -203,14 +203,13 @@
         @saved="handleTimeLogged"
       />
     </AppLayout>
-  </SidebarProvider>
+  
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import StatCard from '@/Components/UI/StatCard.vue'
 import Card from '@/Components/UI/Card.vue'
 import TimeLogModal from '@/Components/HR/TimeLogModal.vue'

@@ -1,7 +1,7 @@
 <template>
-  <ThemeProvider>
-    <SidebarProvider>
-      <AdminLayout>
+  
+    
+      <AppLayout>
         <div class="space-y-6">
           <!-- Page Header -->
           <div class="flex items-center justify-between">
@@ -203,16 +203,14 @@
             </div>
           </div>
         </Modal>
-      </AdminLayout>
-    </SidebarProvider>
-  </ThemeProvider>
+      </AppLayout>
+    
+  
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
-import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
-import AdminLayout from '@/Components/Layout/AdminLayout.vue'
+import AppLayout from "@/Layouts/AppLayout.vue"
 import Card from '@/Components/UI/Card.vue'
 import Button from '@/Components/ui/Button.vue'
 import Badge from '@/Components/UI/Badge.vue'

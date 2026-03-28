@@ -24,7 +24,7 @@
 <script setup>
 import { computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
-import AppLayout from '../../Components/Layout/AppLayout.vue'
+import AppLayout from '@/Layouts/AppLayout.vue'
 import Card from '../../Components/UI/Card.vue'
 import Button from '../../Components/UI/Button.vue'
 

@@ -163,6 +163,7 @@ class AuthController extends Controller
                 'token' => $result['token'],
                 'token_type' => $result['token_type'],
                 'expires_at' => $result['expires_at'],
+                'company' => $result['company'] ? new CompanyResource($result['company']) : null,
                 'requires_company_setup' => $result['requires_company_setup'],
             ],
             'message' => $result['message'],
@@ -238,6 +239,7 @@ class AuthController extends Controller
                 'permissions' => $result['permissions'],
                 'subscription' => $result['subscription'],
                 'companies' => CompanyResource::collection($result['companies']),
+                'company_hierarchy' => $result['company_hierarchy'],
             ],
         ]);
     }

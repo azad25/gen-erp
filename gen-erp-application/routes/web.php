@@ -15,34 +15,6 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LanguageController;
 use Illuminate\Support\Facades\Route;
 
-// ── Emergency Company Fix Route (bypasses middleware) ──────
-Route::get('/emergency-company-fix', function () {
-    if (!auth()->check()) {
-        return redirect()->route('login');
-    }
-    
-    $user = auth()->user();
-    
-    // Get any active company for this user
-    $company = $user->companies()
-        ->where('companies.is_active', true)
-        ->wherePivot('is_active', true)
-        ->first();
-    
-    if (!$company) {
-        return redirect()->route('company.setup')->with('error', 'No active companies found. Please create a company.');
-    }
-    
-    // Force set session
-    session(['active_company_id' => $company->id]);
-    $user->update(['last_active_company_id' => $company->id]);
-    
-    // Clear any cached data
-    \App\Services\CompanyContext::setActive($company);
-    
-    return redirect()->route('dashboard')->with('success', "Emergency fix applied. Active company: {$company->name}");
-})->middleware('auth')->name('emergency.company.fix');
-
 // ── Home Page (Vue) ────────────────────────────────────────
 Route::inertia('/', 'Home')->name('home');
 // Removed duplicate locale route - use POST /language/switch instead
@@ -619,6 +591,7 @@ Route::middleware(['auth:web'])->group(function () {
 Route::middleware(['auth', 'verified', 'ensure.company'])->group(function () {
     Route::get('/test-simple', fn () => Inertia::render('TestSimple'))->name('test.simple');
     Route::get('/debug-auth', fn () => Inertia::render('DebugAuth'))->name('debug.auth');
+    Route::get('/diagnostic-test', fn () => Inertia::render('DiagnosticTest'))->name('diagnostic.test');
 });
 
 // Debug route to check session and auth state

@@ -47,12 +47,12 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { useTranslations } from '@/Composables/useTranslations'
 
 // Import TailAdmin components
-import EcommerceMetrics from '@ta/ecommerce/EcommerceMetrics.vue'
-import MonthlyTarget from '@ta/ecommerce/MonthlySale.vue'
-import MonthlySale from '@ta/ecommerce/MonthlyTarget.vue'
-import CustomerDemographic from '@ta/ecommerce/CustomerDemographic.vue'
-import StatisticsChart from '@ta/ecommerce/StatisticsChart.vue'
-import RecentOrders from '@ta/ecommerce/RecentOrders.vue'
+import EcommerceMetrics from '@/Components/ecommerce/EcommerceMetrics.vue'
+import MonthlyTarget from '@/Components/ecommerce/MonthlySale.vue'
+import MonthlySale from '@/Components/ecommerce/MonthlyTarget.vue'
+import CustomerDemographic from '@/Components/ecommerce/CustomerDemographic.vue'
+import StatisticsChart from '@/Components/ecommerce/StatisticsChart.vue'
+import RecentOrders from '@/Components/ecommerce/RecentOrders.vue'
 
 const props = defineProps({
   stats: { type: Object, default: () => ({}) },

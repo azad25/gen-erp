@@ -46,6 +46,8 @@ use App\Http\Controllers\Api\V1\VatReportController;
 use App\Http\Controllers\Api\V1\SectionController;
 use App\Http\Controllers\Api\V1\SiteController;
 use App\Http\Controllers\Api\V1\StockMovementController;
+use App\Http\Controllers\Api\V1\SubscriptionController;
+use App\Http\Controllers\Api\V1\AdminSubscriptionController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\TaskController;
 use App\Http\Controllers\Api\V1\TaxGroupController;
@@ -73,7 +75,7 @@ Route::prefix('v1/auth')->middleware(['auth:sanctum'])->group(function (): void 
 });
 
 // Authenticated routes
-Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
+Route::prefix('v1')->middleware(['auth:sanctum,web', 'throttle:api'])->group(function (): void {
     // Authentication (requires auth)
     Route::prefix('auth')->group(function (): void {
         Route::post('logout', [AuthController::class, 'logout']);
@@ -133,11 +135,11 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
         Route::apiResource('expenses', ExpenseController::class);
 
         // Documents
-        Route::apiResource('documents', DocumentController::class);
         Route::get('documents/storage-info', [DocumentController::class, 'storageInfo']);
         Route::get('documents/{document}/download', [DocumentController::class, 'download']);
         Route::get('documents/{document}/thumbnail', [DocumentController::class, 'thumbnail']);
         Route::get('documents/{document}/preview', [DocumentController::class, 'preview']);
+        Route::apiResource('documents', DocumentController::class);
 
         // Document Folders
         Route::apiResource('document-folders', DocumentFolderController::class);
@@ -529,9 +531,6 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
             Route::post('validate', [LockDateController::class, 'validateLockDate']);
         });
 
-        // Document Folders
-        Route::apiResource('document-folders', DocumentFolderController::class);
-
         // Invitations
         Route::apiResource('invitations', InvitationController::class);
 
@@ -755,4 +754,38 @@ Route::prefix('public/{tenant}')->group(function (): void {
     
     // Public Shipment Tracking
     Route::get('track/{trackingNumber}', [\App\Domain\Logistics\Http\Controllers\TrackingController::class, 'publicTrack']);
+});
+
+// Debug routes to test company context
+Route::prefix('v1/debug')->middleware(['auth:sanctum,web', 'throttle:api'])->group(function () {
+    Route::get('auth-status', function () {
+        return response()->json([
+            'authenticated' => auth()->check(),
+            'user_id' => auth()->id(),
+            'user_name' => auth()->user()?->name,
+            'session_company_id' => session('active_company_id'),
+            'company_header' => request()->header('X-Company-ID'),
+            'active_company' => activeCompany()?->only(['id', 'name']),
+            'user_companies' => auth()->user()?->companies()->get(['companies.id', 'companies.name']),
+        ]);
+    });
+
+    Route::get('company-context', function () {
+        try {
+            $company = activeCompany();
+            return response()->json([
+                'success' => true,
+                'company' => $company ? $company->only(['id', 'name']) : null,
+                'session_company_id' => session('active_company_id'),
+                'company_header' => request()->header('X-Company-ID'),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'session_company_id' => session('active_company_id'),
+                'company_header' => request()->header('X-Company-ID'),
+            ]);
+        }
+    });
 });

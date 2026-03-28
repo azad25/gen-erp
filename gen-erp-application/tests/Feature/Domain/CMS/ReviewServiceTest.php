@@ -296,10 +296,11 @@ describe('Review Statistics', function () {
             'is_approved' => false,
         ]);
 
-        // Create verified purchase reviews
+        // Create verified purchase reviews (also approved)
         ProductReview::factory()->count(2)->create([
             'site_id' => $this->site->id,
             'is_verified_purchase' => true,
+            'is_approved' => true,
         ]);
 
         $summary = $this->reviewService->getSiteReviewSummary($this->site->id);

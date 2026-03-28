@@ -94,4 +94,27 @@ class PaperFlyCarrier implements CarrierServiceInterface
             'settlement_date' => null,
         ];
     }
+
+    public function getTrackingInfo(string $trackingNumber): array
+    {
+        // TODO: Implement PaperFly tracking info API
+        return [
+            'tracking_number' => $trackingNumber,
+            'status' => 'in_transit',
+            'events' => [
+                [
+                    'status' => 'picked_up',
+                    'location' => 'Dhaka',
+                    'timestamp' => now()->subDays(2)->toIso8601String(),
+                    'description' => 'Package picked up',
+                ],
+                [
+                    'status' => 'in_transit',
+                    'location' => 'Dhaka Hub',
+                    'timestamp' => now()->subDay()->toIso8601String(),
+                    'description' => 'Package in transit',
+                ],
+            ],
+        ];
+    }
 }

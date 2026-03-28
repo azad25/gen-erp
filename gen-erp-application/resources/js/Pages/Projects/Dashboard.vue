@@ -1,5 +1,5 @@
 <template>
-  <SidebarProvider>
+  
     <AppLayout>
       <div class="space-y-6">
         <!-- Header -->
@@ -48,13 +48,12 @@
         </div>
       </div>
     </AppLayout>
-  </SidebarProvider>
+  
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import Button from '@/Components/UI/Button.vue'
 import ProjectSummaryGrid from '@/Components/Projects/ProjectSummaryGrid.vue'
 import ProjectListCard from '@/Components/Projects/ProjectListCard.vue'

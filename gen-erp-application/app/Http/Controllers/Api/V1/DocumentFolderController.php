@@ -45,8 +45,19 @@ class DocumentFolderController extends BaseApiController
      */
     public function index(Request $request): JsonResponse
     {
+        // Debug company context
+        $company = activeCompany();
+        if (!$company) {
+            \Log::error('[DocumentFolderController] No active company found', [
+                'user_id' => auth()->id(),
+                'session_company_id' => session('active_company_id'),
+                'request_headers' => $request->headers->all(),
+            ]);
+            return $this->error('No active company found', 403);
+        }
+
         $folders = $this->documentService->getFolders(
-            activeCompany()->id,
+            $company->id,
             $request->get('search'),
             $request->get('parent_id'),
             $request->integer('per_page', 15)
@@ -77,7 +88,12 @@ class DocumentFolderController extends BaseApiController
      */
     public function show(int $id): JsonResponse
     {
-        $documentFolder = $this->documentService->getFolder(activeCompany()->id, $id);
+        $company = activeCompany();
+        if (!$company) {
+            return $this->error('No active company found', 403);
+        }
+
+        $documentFolder = $this->documentService->getFolder($company->id, $id);
         $documentFolder->load(['parent', 'children', 'documents']);
 
         return $this->success(new DocumentFolderResource($documentFolder));
@@ -115,7 +131,12 @@ class DocumentFolderController extends BaseApiController
      */
     public function store(Request $request): JsonResponse
     {
-        $companyId = activeCompany()->id;
+        $company = activeCompany();
+        if (!$company) {
+            return $this->error('No active company found', 403);
+        }
+
+        $companyId = $company->id;
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -166,7 +187,12 @@ class DocumentFolderController extends BaseApiController
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        $companyId = activeCompany()->id;
+        $company = activeCompany();
+        if (!$company) {
+            return $this->error('No active company found', 403);
+        }
+
+        $companyId = $company->id;
         $documentFolder = $this->documentService->getFolder($companyId, $id);
 
         $validated = $request->validate([
@@ -202,7 +228,12 @@ class DocumentFolderController extends BaseApiController
      */
     public function destroy(int $id): JsonResponse
     {
-        $documentFolder = $this->documentService->getFolder(activeCompany()->id, $id);
+        $company = activeCompany();
+        if (!$company) {
+            return $this->error('No active company found', 403);
+        }
+
+        $documentFolder = $this->documentService->getFolder($company->id, $id);
         $this->documentService->deleteFolder($documentFolder);
 
         return $this->success(null, 'Document folder deleted');

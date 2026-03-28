@@ -5,8 +5,8 @@ namespace App\Domain\SalesOrder\Models;
 use App\Support\Enums\SalesOrderStatus;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Invoice\Models\Invoice;
-use App\Models\Warehouse;
-use App\Models\User;
+use App\Domain\Inventory\Models\Warehouse;
+use App\Domain\Auth\Models\User;
 use App\Domain\Auth\Models\Concerns\BelongsToCompany;
 use App\Domain\Auth\Models\Concerns\DispatchesModelEvents;
 use App\Domain\Auth\Models\Concerns\HasCustomFields;
@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Database\Factories\SalesOrderFactory;
 
 /**
  * Sales order document — the starting point of the sales flow.
@@ -55,9 +56,9 @@ class SalesOrder extends Model
     /**
      * Create a new factory instance for the model.
      */
-    protected static function newFactory(): \Database\Factories\SalesOrderFactory
+    protected static function newFactory(): SalesOrderFactory
     {
-        return \Database\Factories\SalesOrderFactory::new();
+        return SalesOrderFactory::new();
     }
 
     /**

@@ -1,7 +1,7 @@
 <template>
-  <ThemeProvider>
-    <SidebarProvider>
-      <AdminLayout>
+  
+    
+      <AppLayout>
         <Head title="Year-over-Year Profit & Loss" />
         
         <div class="py-6">
@@ -127,16 +127,14 @@
             </div>
           </div>
         </div>
-      </AdminLayout>
-    </SidebarProvider>
-  </ThemeProvider>
+      </AppLayout>
+    
+  
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import ThemeProvider from '@/Components/Layout/ThemeProvider.vue';
-import SidebarProvider from '@/Components/Layout/SidebarProvider.vue';
-import AdminLayout from '@/Components/Layout/AdminLayout.vue';
+import AppLayout from "@/Layouts/AppLayout.vue"
 
 const filters = ref({
   current_from: new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString().split('T')[0],

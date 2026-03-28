@@ -1,8 +1,8 @@
 <template>
-  <AppLayout title="Inbox">
-    <div class="p-4 md:p-6">
+  <AppLayout>
+    <div>
       <!-- Header -->
-      <div class="mb-6 flex items-center justify-between">
+      <div class="mb-4 flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Inbox</h1>
           <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">

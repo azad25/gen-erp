@@ -14,18 +14,43 @@
           <span class="text-[12px] text-gray-1 flex-1">Search...</span>
           <kbd class="text-[10px] bg-white border border-stroke rounded px-1.5 font-mono">⌘K</kbd>
         </div>
-        <button class="relative h-9 w-9 flex items-center justify-center rounded-lg border border-stroke bg-white text-gray-1 hover:border-primary/40 hover:text-primary transition-all">
-          🔔 <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger border-2 border-white" />
-        </button>
-        <Link href="/inbox" class="relative h-9 w-9 flex items-center justify-center rounded-lg border border-stroke bg-white text-gray-1 hover:border-primary/40 hover:text-primary transition-all">
-          💬
+        
+        <!-- Calendar Icon -->
+        <Link 
+          href="/calendar" 
+          class="h-9 w-9 flex items-center justify-center rounded-lg border border-stroke bg-white text-gray-1 hover:border-primary/40 hover:text-primary transition-all"
+          title="Calendar"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </Link>
+        
+        <!-- Inbox Icon -->
+        <Link 
+          href="/inbox" 
+          class="relative h-9 w-9 flex items-center justify-center rounded-lg border border-stroke bg-white text-gray-1 hover:border-primary/40 hover:text-primary transition-all"
+          title="Inbox"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
           <span v-if="unreadMessagesCount > 0" class="absolute -right-1 -top-1 h-5 min-w-[20px] px-1 flex items-center justify-center rounded-full bg-danger text-white text-xs font-semibold">
             {{ unreadMessagesCount > 99 ? '99+' : unreadMessagesCount }}
           </span>
         </Link>
+        
+        <!-- Notifications Icon -->
+        <button class="relative h-9 w-9 flex items-center justify-center rounded-lg border border-stroke bg-white text-gray-1 hover:border-primary/40 hover:text-primary transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger border-2 border-white" />
+        </button>
+        
         <div class="flex items-center gap-2">
           <img 
-            src="/user.jpg" 
+            :src="userProfileImage" 
             alt="User Profile" 
             class="h-9 w-9 rounded-lg object-cover border border-stroke"
           />

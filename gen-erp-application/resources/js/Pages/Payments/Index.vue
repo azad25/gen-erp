@@ -1,7 +1,7 @@
 <template>
-  <ThemeProvider>
-    <SidebarProvider>
-      <AdminLayout>
+  
+    
+      <AppLayout>
         <div class="space-y-6">
           <div class="flex items-center justify-between">
             <div>
@@ -106,17 +106,15 @@
             </div>
           </Card>
         </div>
-      </AdminLayout>
-    </SidebarProvider>
-  </ThemeProvider>
+      </AppLayout>
+    
+  
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { usePage } from '@inertiajs/vue3'
-import ThemeProvider from '@/Components/Layout/ThemeProvider.vue'
-import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
-import AdminLayout from '@/Components/Layout/AdminLayout.vue'
+import AppLayout from "@/Layouts/AppLayout.vue"
 import Card from '@/Components/ui/Card.vue'
 import Button from '@/Components/ui/Button.vue'
 import BanglaAmount from '@/Components/Bangla/BanglaAmount.vue'

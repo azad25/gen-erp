@@ -1,5 +1,5 @@
 <template>
-  <SidebarProvider>
+  
     <AppLayout :title="$t('documents.dashboard')">
       <div class="p-6">
       <!-- Header -->
@@ -218,7 +218,7 @@
       </div>
       </div>
     </AppLayout>
-  </SidebarProvider>
+  
 </template>
 
 <script setup>
@@ -226,7 +226,6 @@ import { ref, onMounted } from 'vue'
 import { useTranslations } from '@/Composables/useTranslations'
 import { Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import SidebarProvider from '@/Components/Layout/SidebarProvider.vue'
 import {
   DocumentIcon,
   FolderIcon,
@@ -266,40 +265,53 @@ const loadDashboardData = async () => {
       recent_uploads: 0
     }
     
-    // Try to load real data from API
-    const [statsResponse, documentsResponse] = await Promise.all([
-      axios.get('/api/v1/documents/storage-info').catch(() => ({ data: { data: {} } })),
-      axios.get('/api/v1/documents', { params: { per_page: 5 } }).catch(() => ({ data: { data: { data: [], total: 0 } } }))
+    console.log('[Documents Dashboard] Loading data...')
+    
+    // Try to load real data from API with better error handling
+    const [statsResponse, documentsResponse] = await Promise.allSettled([
+      axios.get('/api/v1/documents/storage-info'),
+      axios.get('/api/v1/documents', { params: { per_page: 5 } })
     ])
 
-    // Update stats with API data
-    if (statsResponse.data.data) {
-      stats.value.storage_used = statsResponse.data.data.used_formatted || '0 MB'
-      stats.value.storage_quota = statsResponse.data.data.quota_formatted || '50 MB'
-      stats.value.storage_percent = statsResponse.data.data.usage_percent || 0
-      stats.value.storage_remaining = statsResponse.data.data.quota_formatted || '50 MB'
+    // Handle stats response
+    if (statsResponse.status === 'fulfilled' && statsResponse.value.data.data) {
+      console.log('[Documents Dashboard] Storage info loaded successfully')
+      const storageData = statsResponse.value.data.data
+      stats.value.storage_used = storageData.used_formatted || '0 MB'
+      stats.value.storage_quota = storageData.quota_formatted || '50 MB'
+      stats.value.storage_percent = storageData.usage_percent || 0
+      stats.value.storage_remaining = storageData.remaining_formatted || '50 MB'
+    } else {
+      console.warn('[Documents Dashboard] Storage info failed:', statsResponse.reason?.message || 'Unknown error')
     }
     
-    if (documentsResponse.data.data) {
-      recentDocuments.value = documentsResponse.data.data.data || []
-      stats.value.total_documents = documentsResponse.data.data.total || 0
+    // Handle documents response
+    if (documentsResponse.status === 'fulfilled' && documentsResponse.value.data.data) {
+      console.log('[Documents Dashboard] Documents loaded successfully')
+      const documentsData = documentsResponse.value.data.data
+      recentDocuments.value = documentsData.data || []
+      stats.value.total_documents = documentsData.total || 0
       stats.value.recent_uploads = recentDocuments.value.length
+    } else {
+      console.warn('[Documents Dashboard] Documents failed:', documentsResponse.reason?.message || 'Unknown error')
     }
     
-    // Get folder count
+    // Get folder count with error handling
     try {
       const foldersResponse = await axios.get('/api/v1/document-folders', { params: { per_page: 1 } })
       stats.value.total_folders = foldersResponse.data.data.total || 0
+      console.log('[Documents Dashboard] Folders loaded successfully')
     } catch (error) {
-      console.warn('Could not load folder count:', error)
+      console.warn('[Documents Dashboard] Could not load folder count:', error.response?.status, error.message)
       stats.value.total_folders = 0
     }
     
   } catch (error) {
-    console.error('Error loading dashboard data:', error)
-    // Keep default stats on error
+    console.error('[Documents Dashboard] Error loading dashboard data:', error)
+    // Keep default stats on error - don't let this break the page
   } finally {
     loading.value = false
+    console.log('[Documents Dashboard] Data loading completed')
   }
 }
 

@@ -256,15 +256,16 @@ class DocumentController extends BaseApiController
         $used = $this->documentService->companyStorageUsed($companyId);
         $quota = $this->documentService->getStorageQuota($companyId);
         $usagePercent = $this->documentService->storageUsagePercent($companyId);
-        $remaining = $this->documentService->storageRemaining($companyId);
+        $remaining = max(0, $quota - $used);
 
         return $this->success([
             'used_bytes' => $used,
             'quota_bytes' => $quota,
             'usage_percent' => $usagePercent,
-            'remaining' => $remaining,
+            'remaining_bytes' => $remaining,
             'used_formatted' => $this->formatBytes($used),
             'quota_formatted' => $this->formatBytes($quota),
+            'remaining_formatted' => $this->formatBytes($remaining),
         ]);
     }
 

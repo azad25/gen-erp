@@ -19,6 +19,7 @@ use App\Domain\Inventory\Models\Warehouse;
 use App\Domain\Auth\Models\Branch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -66,6 +67,11 @@ class Company extends Model
         'plan_expires_at',
         'settings',
         'onboarding_completed_at',
+        'parent_company_id',
+        'is_master_company',
+        'company_type',
+        'show_aggregated_data',
+        'aggregation_settings',
     ];
 
     /**
@@ -83,6 +89,9 @@ class Company extends Model
             'is_active' => 'boolean',
             'plan_expires_at' => 'datetime',
             'onboarding_completed_at' => 'datetime',
+            'is_master_company' => 'boolean',
+            'show_aggregated_data' => 'boolean',
+            'aggregation_settings' => 'array',
         ];
     }
 
@@ -178,6 +187,36 @@ class Company extends Model
         return $this->hasMany(Branch::class);
     }
 
+    /**
+     * Parent company relationship (for subsidiaries)
+     * 
+     * @return BelongsTo<Company, $this>
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'parent_company_id');
+    }
+
+    /**
+     * Direct subsidiaries relationship
+     * 
+     * @return HasMany<Company, $this>
+     */
+    public function subsidiaries(): HasMany
+    {
+        return $this->hasMany(Company::class, 'parent_company_id');
+    }
+
+    /**
+     * Active subsidiaries only
+     * 
+     * @return HasMany<Company, $this>
+     */
+    public function activeSubsidiaries(): HasMany
+    {
+        return $this->subsidiaries()->where('is_active', true);
+    }
+
     // ── Scopes ───────────────────────────────────────────────
 
     /**
@@ -201,5 +240,72 @@ class Company extends Model
         return $this->users()
             ->wherePivot('is_owner', true)
             ->first();
+    }
+
+    /**
+     * Check if this company is a master company
+     */
+    public function isMaster(): bool
+    {
+        return $this->is_master_company && $this->parent_company_id === null;
+    }
+
+    /**
+     * Check if this company is a subsidiary
+     */
+    public function isSubsidiary(): bool
+    {
+        return !$this->is_master_company && $this->parent_company_id !== null;
+    }
+
+    /**
+     * Get all subsidiaries recursively (including subsidiaries of subsidiaries)
+     */
+    public function allSubsidiaries(): \Illuminate\Database\Eloquent\Collection
+    {
+        $subsidiaries = collect();
+        
+        foreach ($this->subsidiaries as $subsidiary) {
+            $subsidiaries->push($subsidiary);
+            $subsidiaries = $subsidiaries->merge($subsidiary->allSubsidiaries());
+        }
+        
+        return $subsidiaries;
+    }
+
+    /**
+     * Get the root master company (traverse up the hierarchy)
+     */
+    public function getRootMaster(): Company
+    {
+        if ($this->isMaster()) {
+            return $this;
+        }
+        
+        return $this->parent->getRootMaster();
+    }
+
+    /**
+     * Get company hierarchy path (from root to current)
+     */
+    public function getHierarchyPath(): array
+    {
+        $path = [];
+        $current = $this;
+        
+        while ($current) {
+            array_unshift($path, $current);
+            $current = $current->parent;
+        }
+        
+        return $path;
+    }
+
+    /**
+     * Check if company can show aggregated data
+     */
+    public function canShowAggregatedData(): bool
+    {
+        return $this->isMaster() && $this->show_aggregated_data && $this->subsidiaries()->count() > 0;
     }
 }

@@ -12,7 +12,7 @@
 
 <script setup>
 import AppHeader from '@/Components/Layout/AppHeader.vue'
-import { useSidebar } from '@/composables/useSidebar'
+import { useSidebar } from '@/Composables/useSidebar'
 
 const { isExpanded, isHovered } = useSidebar()
 </script>
